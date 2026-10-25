@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-AO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catálogo NZAIDI</title>
+    <link rel="icon" href="assets/favicon-64.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700&display=swap"
+    />
+    <link rel="stylesheet" href="src/tokens.css" />
+    <link rel="stylesheet" href="src/componentes.css" />
+    <style>
+      header { background: var(--cor-superficie); border-bottom: 1px solid var(--cor-borda-suave); }
+      header .nz-contentor { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4); min-height: 72px; }
+      .marca { display: flex; align-items: center; gap: var(--esp-3); text-decoration: none; }
+      .marca img { width: 44px; height: 44px; border-radius: 50%; }
+      .marca strong { font-family: var(--fonte-titulos); color: var(--cor-primaria); letter-spacing: var(--espacamento-letras-marca); font-size: var(--texto-xl); }
+      main { padding-block: var(--esp-10); display: grid; gap: var(--esp-10); }
+      .grelha { display: grid; gap: var(--esp-4); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      .amostra { height: 64px; border-radius: var(--raio-md); border: 1px solid var(--cor-borda-suave); }
+      .linha { display: flex; flex-wrap: wrap; gap: var(--esp-3); align-items: center; }
+      section > h2 { font-size: var(--texto-xl); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="nz-contentor">
+        <a class="marca" href="#"><img src="assets/simbolo.png" alt="" /><strong>NZAIDI</strong></a>
+        <button class="nz-botao nz-botao--secundario" id="tema" type="button">Alternar tema</button>
+      </div>
+    </header>
+    <main class="nz-contentor">
+      <section>
+        <p class="nz-filete">Casa de Câmbios</p>
+        <h1>Sistema de design NZAIDI</h1>
+        <p>Catálogo de referência: cores, tipografia e componentes partilhados por todas as áreas.</p>
+      </section>
+
+      <section>
+        <h2>Cores da marca</h2>
+        <div class="grelha">
+          <div><div class="amostra" style="background: var(--nz-azul-800)"></div><p>Azul corporativo · #052D62</p></div>
+          <div><div class="amostra" style="background: var(--nz-azul-claro-200)"></div><p>Azul-claro · #C9DBF2</p></div>
+          <div><div class="amostra" style="background: var(--nz-branco)"></div><p>Branco · #FFFFFF</p></div>
+          <div><div class="amostra" style="background: var(--nz-preto)"></div><p>Preto · #0B0F17</p></div>
+          <div><div class="amostra" style="background: var(--nz-castanho-600)"></div><p>Castanho · #94671D</p></div>
+          <div><div class="amostra" style="background: var(--nz-dourado-500)"></div><p>Dourado · #CC9638</p></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Indicadores</h2>
+        <div class="grelha">
+          <div class="nz-cartao nz-indicador"><div class="nz-indicador__rotulo">Operações hoje</div><div class="nz-indicador__valor">0</div></div>
+          <div class="nz-cartao nz-indicador"><div class="nz-indicador__rotulo">Casos em revisão</div><div class="nz-indicador__valor">0</div></div>
+          <div class="nz-cartao nz-indicador"><div class="nz-indicador__rotulo">Reporte BNA</div><div class="nz-indicador__valor"><span class="nz-estado nz-estado--pendente">Por gerar</span></div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Tabela de câmbio</h2>
+        <p class="nz-aviso-demo">Dados de demonstração. Não são taxas oficiais da NZAIDI.</p>
+        <div class="nz-tabela-envoltorio">
+          <table class="nz-tabela">
+            <thead><tr><th>Moeda</th><th class="nz-valor">Referência</th><th class="nz-valor">Compra</th><th class="nz-valor">Venda</th></tr></thead>
+            <tbody>
+              <tr><td>USD · Dólar</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td></tr>
+              <tr><td>EUR · Euro</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Botões e estados</h2>
+        <div class="linha">
+          <button class="nz-botao nz-botao--primario" type="button">Confirmar operação</button>
+          <button class="nz-botao nz-botao--secundario" type="button">Simular</button>
+          <button class="nz-botao nz-botao--perigo" type="button">Bloquear</button>
+          <button class="nz-botao nz-botao--primario" type="button" disabled>Indisponível</button>
+        </div>
+        <div class="linha" style="margin-top: var(--esp-4)">
+          <span class="nz-estado nz-estado--sucesso">Concluída</span>
+          <span class="nz-estado nz-estado--pendente">Em revisão</span>
+          <span class="nz-estado nz-estado--aviso">À espera de pagamento</span>
+          <span class="nz-estado nz-estado--erro">Bloqueada</span>
+          <span class="nz-estado nz-estado--info">Cotação válida 90 s</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Formulário</h2>
+        <form class="nz-cartao" style="display: grid; gap: var(--esp-4); max-width: 420px" onsubmit="return false">
+          <div class="nz-campo"><label for="valor">Valor a trocar</label><input class="nz-entrada" id="valor" inputmode="decimal" placeholder="0,00" /><span class="nz-campo__ajuda">Em kwanzas (Kz)</span></div>
+          <div class="nz-campo"><label for="moeda">Moeda</label><select class="nz-seletor" id="moeda"><option>USD</option><option>EUR</option></select></div>
+          <button class="nz-botao nz-botao--primario" type="submit">Pedir cotação</button>
+        </form>
+      </section>
+    </main>
+    <script>
+      document.getElementById("tema").addEventListener("click", () => {
+        const r = document.documentElement;
+        const escuro = r.dataset.tema === "escuro" || (!r.dataset.tema && matchMedia("(prefers-color-scheme: dark)").matches);
+        r.dataset.tema = escuro ? "claro" : "escuro";
+      });
+    </script>
+  </body>
+</html>

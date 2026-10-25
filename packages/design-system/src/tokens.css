@@ -1,0 +1,175 @@
+/*
+ * NZAIDI — tokens de design.
+ * Fonte única de cores, tipografia, espaçamentos e componentes base para
+ * site público, área do cliente, administração e área dos parceiros.
+ * Cores extraídas do logótipo oficial (assets/logotipo-completo.png).
+ *
+ * Hierarquia: azul e branco dominam; preto para texto; azul-claro para fundos
+ * suaves; dourado e castanho só em pormenores (indicadores, filetes, destaques).
+ */
+
+:root {
+  /* --- Paleta da marca (valores fixos) --- */
+  --nz-azul-900: #031d42;
+  --nz-azul-800: #052d62; /* azul corporativo do logótipo */
+  --nz-azul-700: #0c3f82;
+  --nz-azul-600: #1a56a6;
+  --nz-azul-claro-400: #6f9fd8;
+  --nz-azul-claro-200: #c9dbf2;
+  --nz-azul-claro-100: #e6eef9;
+  --nz-azul-claro-50: #f3f7fc;
+  --nz-dourado-500: #cc9638; /* dourado do logótipo */
+  --nz-dourado-300: #eac172;
+  --nz-castanho-600: #94671d; /* sombra do dourado no logótipo */
+  --nz-castanho-800: #5e4012;
+  --nz-preto: #0b0f17;
+  --nz-branco: #ffffff;
+  --nz-cinza-700: #3d4554;
+  --nz-cinza-500: #6b7385;
+  --nz-cinza-300: #c4c9d4;
+  --nz-cinza-100: #eef0f4;
+
+  /* --- Papéis semânticos (modo claro) --- */
+  --cor-fundo: var(--nz-branco);
+  --cor-fundo-suave: var(--nz-azul-claro-50);
+  --cor-superficie: var(--nz-branco);
+  --cor-superficie-elevada: var(--nz-branco);
+  --cor-borda: var(--nz-cinza-300);
+  --cor-borda-suave: var(--nz-cinza-100);
+  --cor-texto: var(--nz-preto);
+  --cor-texto-secundario: var(--nz-cinza-700);
+  --cor-texto-discreto: var(--nz-cinza-500);
+  --cor-texto-inverso: var(--nz-branco);
+  --cor-primaria: var(--nz-azul-800);
+  --cor-primaria-hover: var(--nz-azul-700);
+  --cor-primaria-suave: var(--nz-azul-claro-100);
+  --cor-destaque: var(--nz-dourado-500);
+  --cor-destaque-texto: var(--nz-castanho-600);
+  --cor-foco: var(--nz-azul-600);
+
+  /* Estados (nunca usar dourado como estado) */
+  --cor-sucesso: #13734b;
+  --cor-sucesso-suave: #e3f4ec;
+  --cor-aviso: #8a5a00;
+  --cor-aviso-suave: #fdf3dc;
+  --cor-erro: #b42318;
+  --cor-erro-suave: #fdeceb;
+  --cor-info: var(--nz-azul-600);
+  --cor-info-suave: var(--nz-azul-claro-100);
+  /* Pendente / em revisão: distinto de sucesso e de erro */
+  --cor-pendente: #5b4bb7;
+  --cor-pendente-suave: #eeebfb;
+
+  /* --- Tipografia --- */
+  --fonte-titulos: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  --fonte-texto: "Inter", "Segoe UI", system-ui, sans-serif;
+  /* Valores monetários: algarismos tabulares para alinhar colunas */
+  --fonte-numeros: "Inter", "Segoe UI", system-ui, sans-serif;
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.875rem;
+  --texto-md: 1rem;
+  --texto-lg: 1.125rem;
+  --texto-xl: 1.375rem;
+  --texto-2xl: 1.75rem;
+  --texto-3xl: 2.25rem;
+  --peso-normal: 400;
+  --peso-medio: 500;
+  --peso-forte: 600;
+  --peso-titulo: 700;
+  --altura-linha: 1.55;
+  --espacamento-letras-marca: 0.18em;
+
+  /* --- Espaçamentos (escala de 4 px) --- */
+  --esp-1: 0.25rem;
+  --esp-2: 0.5rem;
+  --esp-3: 0.75rem;
+  --esp-4: 1rem;
+  --esp-5: 1.25rem;
+  --esp-6: 1.5rem;
+  --esp-8: 2rem;
+  --esp-10: 2.5rem;
+  --esp-12: 3rem;
+  --esp-16: 4rem;
+
+  /* --- Formas e profundidade --- */
+  --raio-sm: 4px;
+  --raio-md: 8px;
+  --raio-lg: 12px;
+  --raio-total: 999px;
+  --sombra-1: 0 1px 2px rgb(5 45 98 / 0.08);
+  --sombra-2: 0 4px 16px rgb(5 45 98 / 0.1);
+  --sombra-3: 0 12px 32px rgb(5 45 98 / 0.14);
+
+  /* --- Layout --- */
+  --largura-conteudo: 1200px;
+  --margem-lateral: 16px;
+  --altura-controlo: 44px; /* alvo de toque mínimo */
+
+  /* --- Movimento --- */
+  --duracao-rapida: 120ms;
+  --duracao-media: 200ms;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --cor-fundo: #070d18;
+    --cor-fundo-suave: #0c1626;
+    --cor-superficie: #0f1b2e;
+    --cor-superficie-elevada: #15243b;
+    --cor-borda: #26364f;
+    --cor-borda-suave: #1b2a40;
+    --cor-texto: #eef2f8;
+    --cor-texto-secundario: #b8c2d3;
+    --cor-texto-discreto: #8592a8;
+    --cor-texto-inverso: var(--nz-preto);
+    --cor-primaria: #6f9fd8;
+    --cor-primaria-hover: #8db4e3;
+    --cor-primaria-suave: #132a4a;
+    --cor-destaque: var(--nz-dourado-300);
+    --cor-destaque-texto: var(--nz-dourado-300);
+    --cor-foco: #8db4e3;
+    --cor-sucesso: #4cc38a;
+    --cor-sucesso-suave: #0f2a1f;
+    --cor-aviso: #f0b849;
+    --cor-aviso-suave: #2e2410;
+    --cor-erro: #f2766b;
+    --cor-erro-suave: #33140f;
+    --cor-info: #8db4e3;
+    --cor-info-suave: #132a4a;
+    --cor-pendente: #a99cf0;
+    --cor-pendente-suave: #221d40;
+    color-scheme: dark;
+  }
+}
+
+:root[data-tema="escuro"] {
+  --cor-fundo: #070d18;
+  --cor-fundo-suave: #0c1626;
+  --cor-superficie: #0f1b2e;
+  --cor-superficie-elevada: #15243b;
+  --cor-borda: #26364f;
+  --cor-borda-suave: #1b2a40;
+  --cor-texto: #eef2f8;
+  --cor-texto-secundario: #b8c2d3;
+  --cor-texto-discreto: #8592a8;
+  --cor-texto-inverso: var(--nz-preto);
+  --cor-primaria: #6f9fd8;
+  --cor-primaria-hover: #8db4e3;
+  --cor-primaria-suave: #132a4a;
+  --cor-destaque: var(--nz-dourado-300);
+  --cor-destaque-texto: var(--nz-dourado-300);
+  --cor-foco: #8db4e3;
+  --cor-sucesso: #4cc38a;
+  --cor-sucesso-suave: #0f2a1f;
+  --cor-aviso: #f0b849;
+  --cor-aviso-suave: #2e2410;
+  --cor-erro: #f2766b;
+  --cor-erro-suave: #33140f;
+  --cor-info: #8db4e3;
+  --cor-info-suave: #132a4a;
+  --cor-pendente: #a99cf0;
+  --cor-pendente-suave: #221d40;
+  color-scheme: dark;
+}

@@ -1,0 +1,241 @@
+/*
+ * NZAIDI — componentes base. Depende de tokens.css.
+ * Classes com prefixo "nz-" para não colidir com estilos das aplicações.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: var(--fonte-texto);
+  font-size: var(--texto-md);
+  line-height: var(--altura-linha);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--fonte-titulos);
+  font-weight: var(--peso-titulo);
+  color: var(--cor-primaria);
+  line-height: 1.2;
+  margin: 0 0 var(--esp-4);
+}
+
+:focus-visible {
+  outline: 3px solid var(--cor-foco);
+  outline-offset: 2px;
+}
+
+.nz-contentor {
+  max-width: var(--largura-conteudo);
+  margin-inline: auto;
+  padding-inline: var(--margem-lateral);
+}
+
+/* Filete dourado da marca (como no logótipo, de cada lado do subtítulo) */
+.nz-filete {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  color: var(--cor-destaque-texto);
+  font-family: var(--fonte-titulos);
+  letter-spacing: var(--espacamento-letras-marca);
+  text-transform: uppercase;
+  font-size: var(--texto-sm);
+}
+.nz-filete::before,
+.nz-filete::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--cor-destaque);
+}
+
+/* --- Botões --- */
+.nz-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--esp-2);
+  min-height: var(--altura-controlo);
+  padding: 0 var(--esp-5);
+  border: 1px solid transparent;
+  border-radius: var(--raio-md);
+  font: var(--peso-forte) var(--texto-md) / 1 var(--fonte-texto);
+  cursor: pointer;
+  transition:
+    background var(--duracao-rapida),
+    border-color var(--duracao-rapida);
+  text-decoration: none;
+}
+.nz-botao:disabled,
+.nz-botao[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.nz-botao--primario {
+  background: var(--cor-primaria);
+  color: var(--cor-texto-inverso);
+}
+.nz-botao--primario:hover:not(:disabled) {
+  background: var(--cor-primaria-hover);
+}
+.nz-botao--secundario {
+  background: transparent;
+  color: var(--cor-primaria);
+  border-color: var(--cor-primaria);
+}
+.nz-botao--secundario:hover:not(:disabled) {
+  background: var(--cor-primaria-suave);
+}
+.nz-botao--perigo {
+  background: var(--cor-erro);
+  color: var(--nz-branco);
+}
+
+/* --- Formulários --- */
+.nz-campo {
+  display: grid;
+  gap: var(--esp-1);
+}
+.nz-campo label {
+  font-weight: var(--peso-medio);
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-secundario);
+}
+.nz-entrada,
+.nz-seletor {
+  min-height: var(--altura-controlo);
+  padding: 0 var(--esp-3);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+}
+.nz-entrada:focus {
+  border-color: var(--cor-foco);
+}
+.nz-entrada[aria-invalid="true"] {
+  border-color: var(--cor-erro);
+}
+.nz-campo__ajuda {
+  font-size: var(--texto-xs);
+  color: var(--cor-texto-discreto);
+}
+.nz-campo__erro {
+  font-size: var(--texto-xs);
+  color: var(--cor-erro);
+}
+
+/* --- Cartões e indicadores --- */
+.nz-cartao {
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-1);
+  padding: var(--esp-6);
+}
+.nz-indicador {
+  border-top: 3px solid var(--cor-destaque);
+}
+.nz-indicador__rotulo {
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-secundario);
+}
+.nz-indicador__valor {
+  font-family: var(--fonte-numeros);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--texto-2xl);
+  font-weight: var(--peso-titulo);
+  color: var(--cor-texto);
+}
+
+/* --- Tabelas financeiras --- */
+.nz-tabela-envoltorio {
+  overflow-x: auto;
+  border: 1px solid var(--cor-borda-suave);
+  border-radius: var(--raio-lg);
+}
+.nz-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--texto-sm);
+}
+.nz-tabela th {
+  text-align: left;
+  font-weight: var(--peso-forte);
+  color: var(--cor-texto-secundario);
+  background: var(--cor-fundo-suave);
+  padding: var(--esp-3) var(--esp-4);
+  border-bottom: 1px solid var(--cor-borda);
+}
+.nz-tabela td {
+  padding: var(--esp-3) var(--esp-4);
+  border-bottom: 1px solid var(--cor-borda-suave);
+}
+.nz-tabela .nz-valor,
+.nz-valor {
+  font-family: var(--fonte-numeros);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* --- Etiquetas de estado --- */
+.nz-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-1);
+  padding: 2px var(--esp-2);
+  border-radius: var(--raio-total);
+  font-size: var(--texto-xs);
+  font-weight: var(--peso-forte);
+}
+.nz-estado--sucesso {
+  background: var(--cor-sucesso-suave);
+  color: var(--cor-sucesso);
+}
+.nz-estado--aviso {
+  background: var(--cor-aviso-suave);
+  color: var(--cor-aviso);
+}
+.nz-estado--erro {
+  background: var(--cor-erro-suave);
+  color: var(--cor-erro);
+}
+.nz-estado--pendente {
+  background: var(--cor-pendente-suave);
+  color: var(--cor-pendente);
+}
+.nz-estado--info {
+  background: var(--cor-info-suave);
+  color: var(--cor-info);
+}
+
+/* Aviso de dados de demonstração: obrigatório onde houver taxas não oficiais */
+.nz-aviso-demo {
+  border: 1px dashed var(--cor-aviso);
+  background: var(--cor-aviso-suave);
+  color: var(--cor-aviso);
+  border-radius: var(--raio-md);
+  padding: var(--esp-2) var(--esp-3);
+  font-size: var(--texto-sm);
+  font-weight: var(--peso-medio);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
