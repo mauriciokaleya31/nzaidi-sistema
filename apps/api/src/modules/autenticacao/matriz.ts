@@ -23,7 +23,9 @@ export type Permissao =
   | "caixa:consultar"
   | "operacoes:registar"
   | "operacoes:consultar"
-  | "operacoes:estornar";
+  | "operacoes:estornar"
+  | "usuarios:consultar"
+  | "usuarios:gerir";
 
 /**
  * Matriz de permissões estritas por função (docs/07, §2).
@@ -89,6 +91,8 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "operacoes:registar",
     "operacoes:consultar",
     "operacoes:estornar",
+    "usuarios:consultar",
+    "usuarios:gerir",
   ],
 };
 

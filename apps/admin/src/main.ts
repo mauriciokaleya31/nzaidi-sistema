@@ -9,6 +9,7 @@ import { renderizarAuditoria } from "./views/auditoria.view.js";
 import { renderizarClientes } from "./views/clientes.view.js";
 import { renderizarCaixa } from "./views/caixa.view.js";
 import { renderizarBalcao } from "./views/balcao.view.js";
+import { renderizarUsuarios } from "./views/usuarios.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -115,6 +116,16 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado para consulta de auditoria.</div>
+          `;
+        }
+        break;
+
+      case "#usuarios":
+        if (authState.temPermissao("gerir_usuarios") || authState.temPermissao("usuarios:consultar")) {
+          await renderizarUsuarios(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado ao módulo de gestão de equipa e utilizadores.</div>
           `;
         }
         break;

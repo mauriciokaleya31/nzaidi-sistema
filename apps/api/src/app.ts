@@ -23,6 +23,7 @@ import { OperacoesService } from "./modules/operacoes-cambio/operacoes.service.j
 
 import { registrarRotasHealth } from "./routes/health.routes.js";
 import { registrarRotasAuth } from "./modules/autenticacao/auth.routes.js";
+import { registrarRotasUsuarios } from "./modules/autenticacao/usuarios.routes.js";
 import { registrarRotasTaxas } from "./modules/taxas-cambio/taxas.routes.js";
 import { registrarRotasAuditoria } from "./modules/auditoria/auditoria.routes.js";
 import { registrarRotasClientes } from "./modules/identidade-kyc/clientes.routes.js";
@@ -102,6 +103,7 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   // 5. Registo de Módulos e Rotas
   registrarRotasHealth(app, db);
   registrarRotasAuth(app, usersRepo, sessionsRepo, auditoriaRepo, env.ADMIN_INIT_TOKEN, env.SESSION_TTL_HOURS);
+  registrarRotasUsuarios(app, usersRepo, auditoriaRepo);
   registrarRotasTaxas(app, taxasService, auditoriaRepo);
   registrarRotasAuditoria(app, auditoriaRepo);
   registrarRotasClientes(app, clientesService, documentosService);

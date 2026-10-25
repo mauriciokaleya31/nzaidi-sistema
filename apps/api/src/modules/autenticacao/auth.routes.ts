@@ -233,4 +233,58 @@ export function registrarRotasAuth(
       },
     });
   });
+
+  // 5. Alterar Palavra-passe da Conta em Sessão
+  app.post("/api/v1/auth/alterar-senha", { preHandler: [exigirAutenticacao] }, async (request, reply) => {
+    const usuarioLogado = request.usuario!;
+    const schema = z.object({
+      senhaAtual: z.string().min(1, "A palavra-passe atual é obrigatória"),
+      novaSenha: z.string().min(10, "A nova palavra-passe deve ter no mínimo 10 caracteres"),
+    });
+
+    const dados = schema.parse(request.body);
+    const usuario = usersRepo.buscarPorId(usuarioLogado.id);
+    if (!usuario) {
+      return reply.status(404).send({ sucesso: false, erro: "Utilizador não encontrado." });
+    }
+
+    const correta = await verificarSenha(dados.senhaAtual, usuario.senhaHash);
+    if (!correta) {
+      auditoriaRepo.registar({
+        autorId: usuario.id,
+        autorNome: usuario.nome,
+        autorFuncao: usuario.funcao,
+        acao: "TENTATIVA_ALTERAR_SENHA_FALHADA",
+        recurso: "auth",
+        recursoId: usuario.id,
+        detalhes: { motivo: "Palavra-passe atual incorreta" },
+        ip: request.ip,
+      });
+
+      return reply.status(401).send({
+        sucesso: false,
+        codigo: "SENHA_ATUAL_INCORRETA",
+        erro: "A palavra-passe atual indicada está incorreta.",
+      });
+    }
+
+    const novaHash = await hashSenha(dados.novaSenha);
+    usersRepo.atualizarSenha(usuario.id, novaHash);
+
+    auditoriaRepo.registar({
+      autorId: usuario.id,
+      autorNome: usuario.nome,
+      autorFuncao: usuario.funcao,
+      acao: "SENHA_ALTERADA",
+      recurso: "auth",
+      recursoId: usuario.id,
+      ip: request.ip,
+      userAgent: request.headers["user-agent"] ?? null,
+    });
+
+    return reply.status(200).send({
+      sucesso: true,
+      mensagem: "Palavra-passe alterada com sucesso.",
+    });
+  });
 }

@@ -10,6 +10,24 @@ export interface UsuarioSessao {
   permissoes: string[];
 }
 
+export interface UsuarioItem {
+  id: string;
+  nome: string;
+  email: string;
+  funcao: FuncaoUsuario;
+  ativo: boolean;
+  criadoEm: string;
+  atualizadoEm: string;
+  ultimoLoginEm?: string | null;
+}
+
+export interface CriarUsuarioPayload {
+  nome: string;
+  email: string;
+  senha: string;
+  funcao: FuncaoUsuario;
+}
+
 export interface TaxaItem {
   moeda: MoedaDivisa;
   referencia: string;
@@ -408,6 +426,29 @@ export class AdminApiClient {
       }
     );
     return res.dados;
+  }
+
+  // --- Gestão de Utilizadores Internos (Exclusivo Gestão) ---
+  public async listarUsuarios(): Promise<UsuarioItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: UsuarioItem[] }>("/api/v1/usuarios", {
+      method: "GET",
+    });
+    return res.dados;
+  }
+
+  public async criarUsuario(payload: CriarUsuarioPayload): Promise<UsuarioItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: UsuarioItem }>("/api/v1/usuarios", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async alternarStatusUsuario(id: string, ativo: boolean): Promise<void> {
+    await this.requisitar<{ sucesso: boolean; mensagem: string }>(`/api/v1/usuarios/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ ativo }),
+    });
   }
 }
 

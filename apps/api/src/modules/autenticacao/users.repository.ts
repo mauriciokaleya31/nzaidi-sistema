@@ -96,4 +96,31 @@ export class UsersRepository {
     const agora = new Date().toISOString();
     this.db.prepare("UPDATE usuarios SET ultimo_login_em = ? WHERE id = ?").run(agora, id);
   }
+
+  public listar(): Omit<Usuario, "senhaHash">[] {
+    const stmt = this.db.prepare(`
+      SELECT 
+        id, nome, email, funcao, ativo,
+        criado_em as criadoEm, atualizado_em as atualizadoEm,
+        ultimo_login_em as ultimoLoginEm
+      FROM usuarios
+      ORDER BY criado_em ASC
+    `);
+
+    const rows = stmt.all() as any[];
+    return rows.map((r) => ({
+      ...r,
+      ativo: Boolean(r.ativo),
+    }));
+  }
+
+  public atualizarStatus(id: string, ativo: boolean): void {
+    const agora = new Date().toISOString();
+    this.db.prepare("UPDATE usuarios SET ativo = ?, atualizado_em = ? WHERE id = ?").run(ativo ? 1 : 0, agora, id);
+  }
+
+  public atualizarSenha(id: string, novaSenhaHash: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare("UPDATE usuarios SET senha_hash = ?, atualizado_em = ? WHERE id = ?").run(novaSenhaHash, agora, id);
+  }
 }
