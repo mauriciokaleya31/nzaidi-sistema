@@ -1,0 +1,33 @@
+# Segredos e credenciais (NUNCA no Git)
+.env
+.env.*
+!config/env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credenciais/
+
+# Dados e cópias
+data/
+backups/
+*.sql.gz
+*.dump
+reports/
+uploads/
+documentos-clientes/
+
+# Dependências e build
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+*.log
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
