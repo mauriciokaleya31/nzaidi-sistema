@@ -3,7 +3,21 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
-## [Não publicado] — Etapa 0: auditoria e estrutura
+## [Não publicado] — Fase 1: fundação técnica (ramo `feat/fase-1-fundacao`)
+### Adicionado
+- Monorepo com workspaces npm, TypeScript estrito (`tsconfig.base.json`) e Vitest.
+- `packages/design-system`: tokens de cor extraídos do logótipo, tipografia, espaçamentos, componentes base (botões, campos, cartões, indicadores, tabelas financeiras, estados, aviso de demonstração), modo claro e escuro, logótipo, símbolo e favicon, `catalogo.html`.
+- `packages/dominio`: dinheiro em decimal exato (`decimal.js`), formatação em Kz, US$ e €, cálculo de taxas de compra e venda (R-07), cotação com validade configurável de 90 s e recotação (R-08). 17 testes.
+- `.github/workflows/verificar.yml`: tipos, testes e verificação de segredos em cada pull request.
+
+### Alterado
+- `scripts/verificar-documentacao.py`: ignora `dist/` e `.webp`; deteta também chaves privadas OpenSSH.
+- `docs/14`, `docs/15` (D-01 fechada; novas D-25 a D-29), `docs/16` (R-18 a R-21), `README.md`.
+
+### Decisões
+- Arredondamento das taxas e montantes implementado como Proposta (D-25).
+
+## [Publicado na `main`] — Etapa 0: auditoria e estrutura
 ### Adicionado
 - Estrutura de pastas (`apps/`, `packages/`, `docs/`, `infra/`, `scripts/`, `tests/`, `config/`).
 - Documentação oficial `docs/00` a `docs/16`, mais `docs/adr/` (decisões de arquitetura propostas).

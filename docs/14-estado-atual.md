@@ -1,17 +1,23 @@
 # 14. Estado atual do projeto
 
-Atualizado em **25/10/2026** (Etapa 0). Este ficheiro deve ser atualizado em cada alteração.
+Atualizado em **25/10/2026** (início da Fase 1, ramo `feat/fase-1-fundacao`). Este ficheiro deve ser atualizado em cada alteração.
 
-## 1. Diagnóstico do repositório oficial
+## 1. Repositório oficial
 | Verificação | Resultado |
 | --- | --- |
-| Endereço | `github.com/mauriciokaleya31/nzaidi-sistema` (o indicado) |
-| Conteúdo | **Vazio**: sem commits, sem ficheiros, sem ramos além de `main` |
-| Visibilidade | **PÚBLICO**. Foi clonado sem credenciais |
-| Alterações existentes a preservar | Nenhuma |
-| Publicação | **Nada foi publicado.** O trabalho desta etapa está num clone local |
+| Endereço | `github.com/mauriciokaleya31/nzaidi-sistema` |
+| Visibilidade | **Privado** desde 25/10/2026 (D-01 fechada) |
+| Ramos | `main` (padrão, Etapa 0), `estrutura-inicial` (igual à `main`), `feat/fase-1-fundacao` (este trabalho) |
+| Publicação | Etapa 0 publicada na `main`. Fase 1 em pull request, à espera de revisão |
 
-**Risco:** um repositório público de um serviço financeiro expõe estratégia, estrutura e regras de risco. **Recomendação: torná-lo privado antes de qualquer publicação.** A titularidade do repositório (conta `mauriciokaleya31`) deve ser confirmada pelo dono do projeto: quem tem acesso de escrita?
+## 1A. Servidor e domínios (verificado a partir do exterior em 25/10/2026)
+| Item | Resultado |
+| --- | --- |
+| `nzaidi.ao` (site) | Responde. Mostra a página padrão do alojamento ("conta configurada com sucesso") |
+| `app.nzaidi.ao` (sistema) | Responde com **listagem de pastas aberta** ("Index of /") e PHP 7.2 (sem suporte de segurança desde 2020). Corrigir antes de publicar algo lá |
+| Alojamento | cPanel partilhado da AngoWeb (`ws102.angoweb.net`), IP `65.21.251.206` numa rede de centro de dados fora de Angola |
+| Acesso SSH a partir deste ambiente | **Não configurado.** Ver D-26 |
+| Base de dados no servidor | **Não criada.** Falta saber se o plano tem PostgreSQL e Node.js (D-27) |
 
 ## 2. O que existe e onde
 | Item | Onde está | Estado |
@@ -28,7 +34,16 @@ Atualizado em **25/10/2026** (Etapa 0). Este ficheiro deve ser atualizado em cad
 
 **Consequência:** o código mais avançado não pode ser verificado nem importado a partir do que existe aqui. A Fase 1 precisa que o dono do projeto forneça esses pacotes (v2 e núcleo contabilístico) para os rever e fundir.
 
-## 3. O que foi criado nesta etapa (no clone local)
+## 3. Fase 1 em curso (ramo `feat/fase-1-fundacao`)
+| Peça | Estado | Verificado |
+| --- | --- | --- |
+| Monorepo npm (workspaces), TypeScript estrito, Vitest | Criado | `tsc -b` sem erros |
+| `packages/design-system`: cores do logótipo, tipografia, componentes base, modo escuro, catálogo | Criado | Visual: abrir `packages/design-system/catalogo.html` |
+| `packages/dominio`: dinheiro em decimal exato, taxas (R-07), cotação de 90 s e recotação (R-08) | Criado | 17 testes unitários passam |
+| Integração contínua (`.github/workflows/verificar.yml`): tipos, testes, segredos | Criado | Só corre no GitHub depois do envio |
+| Base de dados, migrações, autenticação, auditoria, API | **Não iniciado.** Bloqueado por D-27 e pelos pacotes antigos (C-02) | — |
+
+## 3A. O que foi criado na Etapa 0
 - Estrutura de pastas e fichas dos 15 módulos.
 - Documentação `docs/00` a `docs/16` e `docs/adr/`.
 - `README.md`, `AGENTS.md`, `SECURITY.md`, `CHANGELOG.md`, `.gitignore`, `config/env.example`.
@@ -36,8 +51,9 @@ Atualizado em **25/10/2026** (Etapa 0). Este ficheiro deve ser atualizado em cad
 - `CLAUDE.md` e `docs/17-passagem-para-claude-code.md`.
 
 ## 4. O que **não** foi feito
-- Nenhum código funcional criado ou importado.
-- Nada publicado no GitHub.
+- Código antigo (v2 e núcleo contabilístico) não importado: os pacotes ainda não foram entregues.
+- Nada instalado no servidor `app.nzaidi.ao` nem em `nzaidi.ao`.
+- Nenhuma base de dados criada (nem local nem no servidor).
 - Nenhuma integração externa testada.
 
 ## 5. Funcionalidades por estado

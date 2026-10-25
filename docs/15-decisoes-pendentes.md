@@ -16,7 +16,7 @@ Nada aqui foi decidido. Cada item deve ser fechado pelo dono do projeto e passad
 ## B. Decisões de negócio pendentes
 | ID | Decisão | Bloqueia |
 | --- | --- | --- |
-| D-01 | Tornar o repositório privado e definir quem tem acesso (titularidade do repositório) | Qualquer publicação |
+| D-01 | ~~Tornar o repositório privado~~ **Feito em 25/10/2026.** Falta só definir quem mais tem acesso | — |
 | D-02 | Aprovar esta estrutura, a arquitetura e os ADR propostos | Fase 1 |
 | D-03 | Limites de risco definitivos (por operação e por dia) | Fase 2 |
 | D-04 | Alojamento e país do servidor; conformidade com a lei angolana de proteção de dados | Fase 1 |
@@ -40,6 +40,11 @@ Nada aqui foi decidido. Cada item deve ser fechado pelo dono do projeto e passad
 | D-22 | Objetivos de recuperação (tempo parado e informação perdida aceitáveis) | Fase 1 |
 | D-23 | Automatizar a leitura da taxa de referência do BNA | Opcional |
 | D-24 | Quem revê alterações antes de juntar à `main` | Fase 1 |
+| D-25 | Arredondamento: taxas com 4 casas e montantes com 2 casas, ambos "metade para cima" (implementado como **Proposta** em `packages/dominio`). Confirmar com a tesouraria, incluindo se o arredondamento deve favorecer a NZAIDI | Fase 2 |
+| D-26 | Acesso ao servidor por SSH: a chave enviada por chat em 25/10/2026 deve ser considerada **comprometida** e revogada no cPanel. Criar uma chave nova, só no computador do dono do projeto | Publicação no servidor |
+| D-27 | Compatibilidade do alojamento: o cPanel partilhado da AngoWeb tem PostgreSQL e aplicações Node.js (Setup Node.js App)? A arquitetura proposta (ADR 0001 e 0003) precisa dos dois. Alternativas: plano VPS, ou outro alojamento para a API e base de dados mantendo o site no cPanel | Fase 1 (base de dados) |
+| D-28 | Servidor fora de Angola (IP de centro de dados estrangeiro): validar com o advogado à luz da lei de proteção de dados (liga com D-04) | Produção |
+| D-29 | Tipografia: Montserrat (títulos) e Inter (texto) propostas por semelhança com o logótipo. Confirmar ou indicar a fonte oficial da marca | Fase 2 |
 
 ## C. Lacunas
 - Estudo de mercado, concorrência e volumes esperados: não tratados.

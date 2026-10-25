@@ -21,6 +21,10 @@ Só entram aqui decisões do dono do projeto, recuperadas do histórico. Cada li
 | R-15 | Moedas de câmbio: dólar (USD) e euro (EUR) | Conversas de 08/07 e 10/07/2026 |
 | R-16 | A área dos parceiros comerciais foi pedida, mas **todas as regras são proposta**. Ver `docs/02-negocio/referencias/Funcionamento_do_Sistema_NZAIDI.pdf` | Esta conversa |
 | R-17 | Língua de trabalho e documentação: português de Angola | Todas as conversas |
+| R-18 | Endereços: site público em `nzaidi.ao`, sistema (cliente e administração) em `app.nzaidi.ao` | Dono do projeto, 25/10/2026 |
+| R-19 | Identidade visual: logótipo oficial (N com padrão geométrico dourado em círculo, "NZAIDI · Casa de Câmbios · Confiança, Segurança, Agilidade"). Cores: azul corporativo (principal), azul-claro, branco, preto, castanho e dourado (só pormenores) | Dono do projeto, 25/10/2026 (prompt oficial e logótipo) |
+| R-20 | O dono do projeto autoriza avançar sem esperar aprovação tarefa a tarefa em tudo o que não dependa de decisões comerciais, credenciais, contratos ou autorizações | Dono do projeto, 25/10/2026 (prompt oficial, §3) |
+| R-21 | Os limites de 5 milhões Kz (revisão) e 25 milhões Kz (bloqueio) são **parâmetros propostos**, não regras definitivas (C-01 continua aberta) | Dono do projeto, 25/10/2026 (prompt oficial, §4.D.5) |
 
 ## O que **não** é decisão
 - Pilha tecnológica (TypeScript, React, base de dados relacional): foi usada nas versões anteriores, mas está como **Proposta** nos ADR.

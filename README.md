@@ -2,10 +2,22 @@
 
 Sistema digital da NZAIDI: câmbio de divisas, remessas internacionais, conta e cartões Wise para clientes, e administração da operação, sob supervisão do Banco Nacional de Angola (BNA).
 
-> **Aviso importante:** este repositório contém regras de risco, estratégia e estrutura de um serviço financeiro. **Deve ser PRIVADO.** Em 25 de outubro de 2026 foi clonado sem credenciais, o que mostra que está público. Torna-o privado antes de publicar documentação ou código. Ver `docs/14-estado-atual.md`.
+> **Aviso importante:** este repositório contém regras de risco, estratégia e estrutura de um serviço financeiro. É **privado** desde 25/10/2026 e deve continuar assim.
 
 ## Estado
-**Etapa 0 concluída em local: auditoria e estrutura.** Ainda não há código funcional neste repositório. Ver `docs/14-estado-atual.md`.
+**Fase 1 (fundação técnica) em curso.** Já existem o sistema de design e as regras de dinheiro, taxas e cotação, com testes. Ainda não há API, base de dados nem aplicações. Ver `docs/14-estado-atual.md`.
+
+## Arranque
+Requer Node.js 22 ou superior e Python 3.
+
+```
+npm install
+npm run verificar
+```
+
+`npm run verificar` corre a verificação de tipos, os testes e a verificação de documentação e segredos.
+
+Endereços previstos: site em `nzaidi.ao`, sistema em `app.nzaidi.ao` (R-18).
 
 ## Por onde começar
 1. `docs/00-LEIA-ME.md`: índice e legenda (Confirmado, Proposta, Condicionado, Pendente).
