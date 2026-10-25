@@ -8,7 +8,7 @@ Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual
 - Monorepo com workspaces npm, TypeScript estrito (`tsconfig.base.json`) e Vitest.
 - `packages/design-system`: tokens de cor extraídos do logótipo, tipografia, espaçamentos, componentes base (botões, campos, cartões, indicadores, tabelas financeiras, estados, aviso de demonstração), modo claro e escuro, logótipo, símbolo e favicon, `catalogo.html`.
 - `packages/dominio`: dinheiro em decimal exato (`decimal.js`), formatação em Kz, US$ e €, cálculo de taxas de compra e venda (R-07), cotação com validade configurável de 90 s e recotação (R-08). 17 testes.
-- `.github/workflows/verificar.yml`: tipos, testes e verificação de segredos em cada pull request.
+- `infra/ci/verificar.yml`: integração contínua (tipos, testes e verificação de segredos em cada pull request). Guardado fora de `.github/workflows/` até o login do GitHub ter a permissão `workflow`; ver `infra/ci/README.md`.
 
 ### Alterado
 - `scripts/verificar-documentacao.py`: ignora `dist/` e `.webp`; deteta também chaves privadas OpenSSH.

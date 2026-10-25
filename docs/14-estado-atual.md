@@ -40,7 +40,7 @@ Atualizado em **25/10/2026** (início da Fase 1, ramo `feat/fase-1-fundacao`). E
 | Monorepo npm (workspaces), TypeScript estrito, Vitest | Criado | `tsc -b` sem erros |
 | `packages/design-system`: cores do logótipo, tipografia, componentes base, modo escuro, catálogo | Criado | Visual: abrir `packages/design-system/catalogo.html` |
 | `packages/dominio`: dinheiro em decimal exato, taxas (R-07), cotação de 90 s e recotação (R-08) | Criado | 17 testes unitários passam |
-| Integração contínua (`.github/workflows/verificar.yml`): tipos, testes, segredos | Criado | Só corre no GitHub depois do envio |
+| Integração contínua (`infra/ci/verificar.yml`): tipos, testes, segredos | Criado, **inativo** | Ativa-se ao mover para `.github/workflows/` (precisa da permissão `workflow` no GitHub) |
 | Base de dados, migrações, autenticação, auditoria, API | **Não iniciado.** Bloqueado por D-27 e pelos pacotes antigos (C-02) | — |
 
 ## 3A. O que foi criado na Etapa 0
