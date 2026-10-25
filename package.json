@@ -7,12 +7,14 @@
     "node": ">=22"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/site-publico"
   ],
   "scripts": {
     "verificar:tipos": "tsc -b",
     "verificar:docs": "python scripts/verificar-documentacao.py",
     "testes": "vitest run",
+    "build:site": "npm --workspace=@nzaidi/site-publico run build",
     "verificar": "npm run verificar:tipos && npm run testes && npm run verificar:docs"
   },
   "devDependencies": {

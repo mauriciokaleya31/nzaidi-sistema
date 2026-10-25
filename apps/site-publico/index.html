@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NZAIDI — Casa de Câmbios & Transferência, Lda. | Luanda, Angola</title>
+  <meta name="description" content="Instituição financeira de câmbios em Luanda. Operações transparentes de compra e venda de divisas (USD e EUR), remessas e transferências com rigor e segurança.">
+  <link rel="icon" type="image/png" href="/favicon-64.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Cabeçalho Institucional -->
+  <header class="cabecalho">
+    <div class="container cabecalho-inner">
+      <a href="#inicio" class="marca-link">
+        <img src="/logotipo-completo.webp" alt="NZAIDI Casa de Câmbios" class="logo-img" onerror="this.onerror=null; this.src='/logotipo-completo.png';">
+        <div class="marca-texto">
+          <span class="marca-nome">NZAIDI</span>
+          <span class="marca-sub">Casa de Câmbios & Transferência</span>
+        </div>
+      </a>
+
+      <nav class="nav-desktop">
+        <a href="#inicio" class="nav-link ativo">Início</a>
+        <a href="#simulador" class="nav-link">Simulador</a>
+        <a href="#taxas" class="nav-link">Taxas do Dia</a>
+        <a href="#servicos" class="nav-link">Serviços</a>
+        <a href="#como-funciona" class="nav-link">Como Funciona</a>
+        <a href="#conformidade" class="nav-link">Conformidade</a>
+        <a href="#sobre" class="nav-link">Sobre Nós</a>
+        <a href="#contactos" class="nav-link">Contactos</a>
+      </nav>
+
+      <div class="cabecalho-acoes">
+        <a href="https://app.nzaidi.ao" class="btn-entrar" target="_blank" rel="noopener noreferrer">
+          <span>Aceder ao Sistema</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg>
+        </a>
+        <button class="btn-menu-mobile" id="btn-menu-mobile" aria-label="Abrir Menu">☰</button>
+      </div>
+    </div>
+
+    <!-- Menu Mobile Dropdown -->
+    <div class="menu-mobile" id="menu-mobile">
+      <a href="#inicio" class="nav-link">Início</a>
+      <a href="#simulador" class="nav-link">Simulador</a>
+      <a href="#taxas" class="nav-link">Taxas do Dia</a>
+      <a href="#servicos" class="nav-link">Serviços</a>
+      <a href="#como-funciona" class="nav-link">Como Funciona</a>
+      <a href="#conformidade" class="nav-link">Conformidade</a>
+      <a href="#sobre" class="nav-link">Sobre Nós</a>
+      <a href="#contactos" class="nav-link">Contactos</a>
+      <a href="https://app.nzaidi.ao" class="btn-entrar" style="text-align: center; justify-content: center; margin-top: 8px;">Aceder ao Sistema (app.nzaidi.ao)</a>
+    </div>
+  </header>
+
+  <!-- Hero Section & Simulador -->
+  <section class="hero-section" id="inicio">
+    <div class="container hero-grid">
+      <div class="hero-conteudo">
+        <div class="hero-badge">
+          <span>Instituição Financeira · Casa de Câmbios</span>
+        </div>
+        <h1 class="hero-titulo">
+          Confiança, Segurança e <span>Agilidade</span> Cambial.
+        </h1>
+        <p class="hero-subtitulo">
+          A NZAIDI – Casa de Câmbios & Transferência, Lda. assegura operações financeiras rigorosas em Luanda, com taxas transparentes, cálculo decimal exato e total conformidade com os normativos do Banco Nacional de Angola.
+        </p>
+
+        <div class="hero-valores">
+          <div class="hero-valor-item">
+            <strong>USD & EUR</strong>
+            <span>Câmbio de Moedas Oficiais</span>
+          </div>
+          <div class="hero-valor-item">
+            <strong>90 Segundos</strong>
+            <span>Garantia de Cotação Dinâmica</span>
+          </div>
+          <div class="hero-valor-item">
+            <strong>Maianga</strong>
+            <span>Balcão Oficial em Luanda</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card do Simulador -->
+      <div class="simulador-card" id="simulador">
+        <div class="simulador-header">
+          <div class="simulador-titulo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Simulador de Câmbio</span>
+          </div>
+          <div class="temporizador-badge" id="badge-timer" title="A cotação tem validade de 90 segundos">
+            <span class="timer-dot"></span>
+            <span id="tempo-timer">90s</span>
+          </div>
+        </div>
+
+        <!-- Seletor de Operação -->
+        <div class="operacao-tabs">
+          <button class="operacao-tab ativa" id="tab-comprar" type="button">Quero Comprar Divisas</button>
+          <button class="operacao-tab" id="tab-vender" type="button">Quero Vender Divisas</button>
+        </div>
+
+        <!-- Entrada de Montante -->
+        <div class="form-bloco">
+          <div class="form-label">
+            <span>Montante em Moeda Estrangeira</span>
+            <span id="taxa-aplicada" class="taxa-indicador">1 USD = 938.3875 Kz</span>
+          </div>
+          <div class="input-moeda-grupo">
+            <input type="text" id="input-montante" class="input-montante" value="100" placeholder="0.00" autocomplete="off">
+            <select id="seletor-moeda" class="seletor-moeda" aria-label="Moeda">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mensagem de Erro (se houver) -->
+        <div id="simulador-erro" class="msg-erro" style="display: none;"></div>
+
+        <!-- Resultado Calculado -->
+        <div class="resultado-box">
+          <span class="resultado-rotulo" id="rotulo-operacao">Total estimado a pagar em Kwanzas:</span>
+          <div class="resultado-valor-destaque" id="resultado-valor">93 838,75 Kz</div>
+          <div class="resultado-detalhes">
+            <span>Aritmética exata sem arredondamento oculto</span>
+            <span>Margem oficial NZAIDI aplicada</span>
+          </div>
+        </div>
+
+        <!-- Botão Recotar -->
+        <button id="btn-recotar" class="btn-recotar secundario" type="button">
+          ↻ Atualizar / Recotar Agora
+        </button>
+
+        <p class="simulador-aviso">
+          * Valores indicativos calculados com base na taxa de referência do BNA e nas margens operacionais da NZAIDI. A liquidação final ao balcão é confirmada mediante emissão de recibo oficial no momento do atendimento.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secção: Tabela de Taxas do Dia -->
+  <section class="seccao seccao-fundo-suave" id="taxas">
+    <div class="container">
+      <div class="seccao-header">
+        <span class="seccao-pre">Transparência Diária</span>
+        <h2 class="seccao-titulo">Tabela de Câmbio Oficial do Dia</h2>
+        <p class="seccao-descricao">
+          Consulte as taxas de compra e venda em vigor na NZAIDI. Uma tabela única alimenta o nosso balcão presencial, o simulador e o sistema digital.
+        </p>
+      </div>
+
+      <div class="taxas-grid">
+        <div class="card-taxa" id="card-taxa-usd">
+          <!-- Carregado via TypeScript -->
+        </div>
+        <div class="card-taxa" id="card-taxa-eur">
+          <!-- Carregado via TypeScript -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secção: Serviços -->
+  <section class="seccao" id="servicos">
+    <div class="container">
+      <div class="seccao-header">
+        <span class="seccao-pre">Soluções Financeiras</span>
+        <h2 class="seccao-titulo">Nossos Serviços Cambiais</h2>
+        <p class="seccao-descricao">
+          Disponibilizamos operações ao balcão e preparamos a expansão de serviços digitais em estreita conformidade regulamentar.
+        </p>
+      </div>
+
+      <div class="servicos-grid">
+        <!-- Serviço 1: Câmbio Presencial -->
+        <div class="card-servico">
+          <div class="servico-icone-box">💱</div>
+          <h3 class="servico-titulo">Câmbio de Moeda ao Balcão</h3>
+          <p class="servico-desc">
+            Compra e venda de notas físicas de divisas (Dólar Americano e Euro) com liquidação imediata em Kwanzas, contagem autenticada e emissão de recibo com número único de operação.
+          </p>
+          <span class="badge-estado-servico badge-disponivel">✓ Ativo no Balcão</span>
+        </div>
+
+        <!-- Serviço 2: Remessas Internacionais -->
+        <div class="card-servico">
+          <div class="servico-icone-box">🌍</div>
+          <h3 class="servico-titulo">Remessas Internacionais</h3>
+          <p class="servico-desc">
+            Envio e receção de valores entre Angola e o exterior através de operadores autorizados (MaxPay e Realtransfers), cumprindo todos os requisitos documentais do BNA.
+          </p>
+          <span class="badge-estado-servico badge-disponivel">✓ Ativo no Balcão</span>
+        </div>
+
+        <!-- Serviço 3: Plataforma Digital & Cartões -->
+        <div class="card-servico">
+          <div class="servico-icone-box">💳</div>
+          <h3 class="servico-titulo">Soluções Digitais & Cartões</h3>
+          <p class="servico-desc">
+            Plataforma em desenvolvimento em <a href="https://app.nzaidi.ao" target="_blank" style="color: var(--nz-azul-800); font-weight: bold;">app.nzaidi.ao</a> para gestão de cotações, e futura integração de contas multimoedas Wise Embedded para clientes angolanos.
+          </p>
+          <span class="badge-estado-servico badge-condicionado">⏳ Em Integração Institucional</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secção: Como Funciona -->
+  <section class="seccao seccao-fundo-suave" id="como-funciona">
+    <div class="container">
+      <div class="seccao-header">
+        <span class="seccao-pre">Simples e Seguro</span>
+        <h2 class="seccao-titulo">Como Realizar a Sua Operação</h2>
+        <p class="seccao-descricao">
+          Passo a passo claro e transparente para clientes particulares e institucionais.
+        </p>
+      </div>
+
+      <div class="passos-grid">
+        <div class="passo-card">
+          <div class="passo-numero">1</div>
+          <h3 class="passo-titulo">Simule a Cotação</h3>
+          <p class="passo-desc">Utilize o simulador online para conhecer a estimativa exata da taxa em vigor e do montante a liquidar.</p>
+        </div>
+        <div class="passo-card">
+          <div class="passo-numero">2</div>
+          <h3 class="passo-titulo">Reúna a Documentação</h3>
+          <p class="passo-desc">Tenha consigo o Bilhete de Identidade (ou Passaporte com visto válido para estrangeiros) e NIF regularizado.</p>
+        </div>
+        <div class="passo-card">
+          <div class="passo-numero">3</div>
+          <h3 class="passo-titulo">Dirija-se ao Balcão</h3>
+          <p class="passo-desc">Visite o nosso balcão de atendimento na Maianga, Luanda, onde a equipa valida a operação com rapidez e discrição.</p>
+        </div>
+        <div class="passo-card">
+          <div class="passo-numero">4</div>
+          <h3 class="passo-titulo">Receba o Recibo Oficial</h3>
+          <p class="passo-desc">A operação é liquidada com emissão de talão/recibo oficial contendo referência única para arquivo e prova fiscal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secção: Conformidade e Segurança (AML / BNA) -->
+  <section class="seccao" id="conformidade">
+    <div class="container">
+      <div class="compliance-box">
+        <div class="compliance-conteudo">
+          <h3>Conformidade, Rigor e Segurança Financeira</h3>
+          <p>
+            A NZAIDI pauta a sua atividade pelas mais estritas normas de governança financeira, prevenção ao branqueamento de capitais e combate ao financiamento do terrorismo, nos termos da Lei n.º 5/20 da República de Angola.
+          </p>
+          <ul class="compliance-lista">
+            <li><span class="check-icon">✓</span> <strong>Identificação Rigorosa (KYC):</strong> Todos os clientes são devidamente identificados com documento oficial válido e NIF antes da concretização da operação.</li>
+            <li><span class="check-icon">✓</span> <strong>Comunicação e Reporte:</strong> Reporte diário e tempestivo de mapas estatísticos de câmbio e remessas às entidades de supervisão (BNA e UIF).</li>
+            <li><span class="check-icon">✓</span> <strong>Idempotência Contabilística:</strong> Registos financeiros imutáveis de dupla entrada, garantindo rastreabilidade total de cada Kwanza movimentado.</li>
+          </ul>
+        </div>
+
+        <div class="compliance-card-direito">
+          <h4>Instituição Supervisionada</h4>
+          <p>Operações cambiais em estrita obediência aos limites de capitais e regulamentos do Banco Nacional de Angola (BNA).</p>
+          <div style="font-size: 2.5rem; margin-bottom: 8px;">🛡️</div>
+          <span class="badge badge-destaque">Rigor & Transparência</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secção: Sobre Nós & Contactos -->
+  <section class="seccao seccao-fundo-suave" id="sobre">
+    <div class="container sobre-grid">
+      <div class="sobre-texto">
+        <span class="seccao-pre">Quem Somos</span>
+        <h3>NZAIDI — Casa de Câmbios & Transferência, Lda.</h3>
+        <p>
+          Fundada em Luanda, a NZAIDI é uma instituição financeira vocacionada para a prestação de serviços de câmbio de moeda estrangeira e remessas internacionais, orientada pelos princípios da integridade, rapidez no atendimento e excelência operacional.
+        </p>
+        <p>
+          O nosso espaço de atendimento ao público está estrategicamente sediado no Bairro Maianga, partilhado com a conceituada agência de viagens Porto Cervo, garantindo um ambiente profissional, seguro e confortável para os nossos clientes.
+        </p>
+      </div>
+
+      <div class="contactos-card" id="contactos">
+        <h4 style="font-family: var(--fonte-titulos); font-size: 1.25rem; color: var(--nz-azul-800); margin-bottom: 8px;">
+          Localização e Atendimento
+        </h4>
+        <div class="contacto-item">
+          <span class="contacto-icone">📍</span>
+          <div>
+            <strong>Endereço do Balcão</strong>
+            <span>Bairro Maianga (junto à Porto Cervo – Agência de Viagens), Luanda, Angola</span>
+          </div>
+        </div>
+        <div class="contacto-item">
+          <span class="contacto-icone">🕒</span>
+          <div>
+            <strong>Horário de Funcionamento</strong>
+            <span>Segunda a Sexta: 08h30 – 16h30 | Sábados: 09h00 – 13h00</span>
+          </div>
+        </div>
+        <div class="contacto-item">
+          <span class="contacto-icone">🌐</span>
+          <div>
+            <strong>Plataforma Online</strong>
+            <span>Portal digital em <a href="https://app.nzaidi.ao" target="_blank" style="color: var(--nz-azul-800); text-decoration: underline;">app.nzaidi.ao</a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Secção: FAQ -->
+  <section class="seccao" id="faq">
+    <div class="container">
+      <div class="seccao-header">
+        <span class="seccao-pre">Esclarecimentos</span>
+        <h2 class="seccao-titulo">Perguntas Frequentes</h2>
+        <p class="seccao-descricao">
+          Tire as suas dúvidas sobre o funcionamento do simulador, cotações e procedimentos de câmbio.
+        </p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-item">
+          <button class="faq-pergunta" type="button">
+            <span>Por que razão a cotação no simulador tem um temporizador de 90 segundos?</span>
+            <span class="faq-icone">▼</span>
+          </button>
+          <div class="faq-resposta">
+            O mercado cambial apresenta volatilidade contínua. A regra institucional R-08 estabelece que cada cotação garantida é válida por exatamente 90 segundos. Se a operação não for submetida nesse intervalo, é necessária uma recotação à taxa vigente para assegurar a consistência do cálculo.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-pergunta" type="button">
+            <span>Qual a diferença entre a taxa de compra e a taxa de venda da NZAIDI?</span>
+            <span class="faq-icone">▼</span>
+          </button>
+          <div class="faq-resposta">
+            A perspetiva é sempre da Casa de Câmbios: a <strong>taxa de venda</strong> aplica-se quando o cliente deseja adquirir divisas (a NZAIDI vende USD ou EUR ao cliente a câmbio acrescido da margem). A <strong>taxa de compra</strong> aplica-se quando o cliente entrega divisas em troca de Kwanzas (a NZAIDI compra divisas ao cliente).
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-pergunta" type="button">
+            <span>Que documentos são obrigatórios para realizar câmbio ao balcão?</span>
+            <span class="faq-icone">▼</span>
+          </button>
+          <div class="faq-resposta">
+            Para cidadãos angolanos, é exigido o Bilhete de Identidade original e válido. Para cidadãos estrangeiros, Passaporte original com visto ou autorização de residência válida. É igualmente solicitada a comprovação do Número de Identificação Fiscal (NIF).
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-pergunta" type="button">
+            <span>Quais os meios de pagamento aceites para compra de divisas?</span>
+            <span class="faq-icone">▼</span>
+          </button>
+          <div class="faq-resposta">
+            No balcão presencial, aceitamos pagamento em Kwanzas em numerário (dentro dos limites regulamentares), Multicaixa TPA e transferências bancárias autorizadas. Na plataforma digital, estão a ser integradas referências Multicaixa e Multicaixa Express.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rodapé Institucional -->
+  <footer class="rodape">
+    <div class="container rodape-grid">
+      <div class="rodape-col">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <img src="/simbolo.png" alt="Símbolo NZAIDI" style="height: 32px; width: auto;" onerror="this.style.display='none';">
+          <span style="font-family: var(--fonte-titulos); font-size: 1.25rem; color: #fff; font-weight: 700; letter-spacing: 0.15em;">NZAIDI</span>
+        </div>
+        <p style="font-size: 0.85rem; line-height: 1.6; color: var(--nz-cinza-300); max-width: 320px;">
+          NZAIDI – Casa de Câmbios & Transferência, Lda. Sociedade financeira não bancária dedicada à excelência, segurança e cumprimento regulamentar em operações cambiais em Luanda.
+        </p>
+      </div>
+
+      <div class="rodape-col">
+        <h4>Navegação</h4>
+        <ul class="rodape-links">
+          <li><a href="#inicio">Início</a></li>
+          <li><a href="#simulador">Simulador de Câmbio</a></li>
+          <li><a href="#taxas">Taxas de Câmbio</a></li>
+          <li><a href="#servicos">Serviços</a></li>
+          <li><a href="#como-funciona">Como Funciona</a></li>
+          <li><a href="#sobre">Sobre a NZAIDI</a></li>
+        </ul>
+      </div>
+
+      <div class="rodape-col">
+        <h4>Plataforma & Contactos</h4>
+        <ul class="rodape-links">
+          <li><a href="https://app.nzaidi.ao" target="_blank" rel="noopener noreferrer">Aceder a app.nzaidi.ao</a></li>
+          <li><a href="#contactos">Balcão da Maianga</a></li>
+          <li><a href="#conformidade">Políticas de Compliance</a></li>
+          <li><a href="#faq">Perguntas Frequentes</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container rodape-bottom">
+      <span>© 2026 NZAIDI – Casa de Câmbios & Transferência, Lda. Todos os direitos reservados.</span>
+      <span>Regulada pelo Banco Nacional de Angola</span>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

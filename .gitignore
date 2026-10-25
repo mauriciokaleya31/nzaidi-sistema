@@ -21,6 +21,8 @@ documentos-clientes/
 # Dependências e build
 node_modules/
 dist/
+dist-ts/
+*.tsbuildinfo
 build/
 coverage/
 .vite/
