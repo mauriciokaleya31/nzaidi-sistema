@@ -1,0 +1,86 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 400" role="img" aria-labelledby="t">
+  <title id="t">Ilustração da loja NZAIDI na Maianga, Luanda</title>
+  <defs>
+    <linearGradient id="g-ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E6EEF9"/>
+      <stop offset="1" stop-color="#F3F7FC"/>
+    </linearGradient>
+    <linearGradient id="g-fachada" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#e9eef6"/>
+    </linearGradient>
+    <linearGradient id="g-vidro" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#c9dbf2"/>
+      <stop offset="0.5" stop-color="#e6eef9"/>
+      <stop offset="1" stop-color="#9fbfe6"/>
+    </linearGradient>
+    <linearGradient id="g-placa" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#0c3f82"/>
+      <stop offset="1" stop-color="#052d62"/>
+    </linearGradient>
+    <linearGradient id="g-ouro" x1="0" x2="1">
+      <stop offset="0" stop-color="#94671D"/>
+      <stop offset="0.5" stop-color="#EAC172"/>
+      <stop offset="1" stop-color="#CC9638"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="560" height="400" rx="24" fill="url(#g-ceu)"/>
+  <circle cx="470" cy="70" r="34" fill="#EAC172" opacity="0.55"/>
+
+  <!-- Edifício ao fundo -->
+  <rect x="40" y="90" width="120" height="250" fill="#c9dbf2" opacity="0.6"/>
+  <rect x="400" y="120" width="130" height="220" fill="#c9dbf2" opacity="0.6"/>
+  <g fill="#fff" opacity="0.7">
+    <rect x="58" y="110" width="22" height="22"/><rect x="98" y="110" width="22" height="22"/>
+    <rect x="58" y="150" width="22" height="22"/><rect x="98" y="150" width="22" height="22"/>
+    <rect x="420" y="140" width="22" height="22"/><rect x="460" y="140" width="22" height="22"/>
+    <rect x="420" y="180" width="22" height="22"/><rect x="460" y="180" width="22" height="22"/>
+  </g>
+
+  <!-- Fachada principal -->
+  <rect x="110" y="120" width="340" height="230" fill="url(#g-fachada)" stroke="#c4c9d4"/>
+  <rect x="110" y="120" width="340" height="12" fill="#052d62"/>
+
+  <!-- Placa -->
+  <rect x="150" y="146" width="260" height="56" rx="8" fill="url(#g-placa)"/>
+  <rect x="150" y="196" width="260" height="6" fill="url(#g-ouro)"/>
+  <circle cx="186" cy="174" r="17" fill="none" stroke="#CC9638" stroke-width="2.5"/>
+  <path d="M179 184 V164 L193 184 V164" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+  <text x="300" y="182" text-anchor="middle" font-family="Montserrat, Segoe UI, sans-serif" font-weight="700" font-size="24" letter-spacing="5" fill="#fff">NZAIDI</text>
+
+  <!-- Montra e porta -->
+  <rect x="140" y="222" width="140" height="128" fill="url(#g-vidro)" stroke="#052d62" stroke-width="3"/>
+  <line x1="210" y1="222" x2="210" y2="350" stroke="#052d62" stroke-width="2"/>
+  <path d="M150 236 L190 236 M150 246 L176 246" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+  <rect x="300" y="222" width="110" height="128" fill="#0c3f82" stroke="#052d62" stroke-width="3"/>
+  <rect x="312" y="234" width="86" height="80" fill="url(#g-vidro)" opacity="0.85"/>
+  <circle cx="392" cy="300" r="4" fill="#EAC172"/>
+
+  <!-- Painel de taxas na montra -->
+  <rect x="222" y="240" width="50" height="62" rx="4" fill="#031d42"/>
+  <g font-family="Inter, Segoe UI, sans-serif" font-size="9" font-weight="700" fill="#EAC172">
+    <text x="228" y="256">USD</text><text x="228" y="274">EUR</text>
+  </g>
+  <g fill="#6f9fd8"><rect x="252" y="250" width="14" height="6" rx="2"/><rect x="252" y="268" width="14" height="6" rx="2"/></g>
+
+  <!-- Toldo -->
+  <path d="M120 214 H440 L430 222 H130 Z" fill="#CC9638"/>
+
+  <!-- Passeio e palmeira -->
+  <rect x="0" y="350" width="560" height="50" fill="#dfe6f0"/>
+  <rect x="0" y="350" width="560" height="4" fill="#c4c9d4"/>
+  <path d="M486 350 C 482 300, 490 260, 484 230" stroke="#94671D" stroke-width="7" fill="none" stroke-linecap="round"/>
+  <g fill="#13734b" opacity="0.85">
+    <path d="M484 232 C 460 214, 432 218, 418 232 C 444 226, 466 230, 484 236 Z"/>
+    <path d="M484 232 C 508 212, 536 216, 548 232 C 524 226, 502 230, 484 236 Z"/>
+    <path d="M484 232 C 476 206, 456 194, 440 194 C 462 204, 474 218, 482 236 Z"/>
+    <path d="M484 232 C 494 206, 514 194, 530 196 C 508 206, 494 220, 486 236 Z"/>
+  </g>
+
+  <!-- Marcador de localização -->
+  <g transform="translate(80 286)">
+    <path d="M0 -36 C -16 -36 -26 -24 -26 -10 C -26 8 0 30 0 30 C 0 30 26 8 26 -10 C 26 -24 16 -36 0 -36 Z" fill="#052d62"/>
+    <circle cx="0" cy="-10" r="9" fill="#EAC172"/>
+  </g>
+</svg>

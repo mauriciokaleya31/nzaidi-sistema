@@ -1,0 +1,2 @@
+# Página de erro personalizada do website (Apache / cPanel)
+ErrorDocument 404 /404.html

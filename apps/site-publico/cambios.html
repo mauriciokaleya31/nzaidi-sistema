@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-AO">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Câmbios · NZAIDI — Casa de Câmbios</title>
+  <meta name="description" content="Taxas de câmbio do dia para dólar e euro e simulador de câmbio da NZAIDI, em Luanda.">
+  <meta name="theme-color" content="#052D62">
+  <link rel="icon" type="image/png" href="/favicon-64.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="cabecalho"></div>
+
+  <main id="conteudo">
+    <section class="pagina-hero">
+      <div class="container pagina-hero-inner">
+        <div>
+          <nav class="migalhas" aria-label="Localização"><a href="/">Início</a><span>/</span><span>Câmbios</span></nav>
+          <h1 class="pagina-titulo">Câmbio de dólares e euros</h1>
+          <p class="pagina-lead">Consulte as taxas do dia e simule a sua operação. As taxas partem da referência do Banco Nacional de Angola.</p>
+        </div>
+        <div class="cena3d" data-inclinar="18" aria-hidden="true">
+          <div class="cena3d-palco">
+            <div class="anel3d"></div>
+            <div class="moeda3d pos-1">$</div>
+            <div class="moeda3d pos-2">€</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccao" id="simulador">
+      <div class="container simulador-wrap">
+        <div class="simulador-card revelar">
+          <div class="simulador-header">
+            <div class="simulador-titulo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <span>Simulador de Câmbio</span>
+            </div>
+            <div class="temporizador-badge" id="badge-timer" title="A cotação tem validade de 90 segundos">
+              <span class="timer-dot"></span>
+              <span id="tempo-timer">90s</span>
+            </div>
+          </div>
+
+          <div class="operacao-tabs" role="group" aria-label="Operação">
+            <button class="operacao-tab ativa" id="tab-comprar" type="button">Quero comprar divisas</button>
+            <button class="operacao-tab" id="tab-vender" type="button">Quero vender divisas</button>
+          </div>
+
+          <div class="form-bloco">
+            <label class="form-label" for="input-montante">
+              <span>Montante em moeda estrangeira</span>
+              <span id="taxa-aplicada" class="taxa-indicador"></span>
+            </label>
+            <div class="input-moeda-grupo">
+              <input type="text" id="input-montante" class="input-montante" value="100" placeholder="0.00" autocomplete="off" inputmode="decimal">
+              <select id="seletor-moeda" class="seletor-moeda" aria-label="Moeda">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="simulador-erro" class="msg-erro" style="display: none;" role="alert"></div>
+
+          <div class="resultado-box" aria-live="polite">
+            <span class="resultado-rotulo" id="rotulo-operacao">Total estimado a pagar em Kwanzas:</span>
+            <div class="resultado-valor-destaque" id="resultado-valor">--- Kz</div>
+            <div class="resultado-detalhes">
+              <span>Aritmética decimal exata</span>
+              <span>Margem NZAIDI aplicada</span>
+            </div>
+          </div>
+
+          <button id="btn-recotar" class="btn-recotar secundario" type="button">↻ Atualizar / Recotar Agora</button>
+
+          <p class="simulador-aviso">
+            * Valores indicativos. A liquidação final ao balcão é confirmada no momento do atendimento, com emissão de recibo oficial.
+          </p>
+        </div>
+
+        <div>
+          <div class="taxas-grid" id="taxas">
+            <div class="card-taxa revelar atraso-1" id="card-taxa-usd" data-inclinar="6"></div>
+            <div class="card-taxa revelar atraso-2" id="card-taxa-eur" data-inclinar="6"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccao seccao-fundo-suave">
+      <div class="container">
+        <div class="seccao-header revelar">
+          <span class="seccao-pre">Como lemos as taxas</span>
+          <h2 class="seccao-titulo">Compra, venda e referência</h2>
+        </div>
+        <div class="valores-grid">
+          <article class="valor-card revelar">
+            <div class="moeda3d moeda3d--azul" aria-hidden="true">R</div>
+            <h3>Referência BNA</h3>
+            <p>A taxa de referência do Banco Nacional de Angola do dia. É a base de todas as taxas da NZAIDI.</p>
+          </article>
+          <article class="valor-card revelar atraso-1">
+            <div class="moeda3d" aria-hidden="true">C</div>
+            <h3>A NZAIDI compra</h3>
+            <p>Aplica-se quando nos vende divisas e recebe kwanzas. Fica abaixo da referência.</p>
+          </article>
+          <article class="valor-card revelar atraso-2">
+            <div class="moeda3d" aria-hidden="true">V</div>
+            <h3>A NZAIDI vende</h3>
+            <p>Aplica-se quando nos compra divisas e paga em kwanzas. Fica acima da referência.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccao seccao-escura">
+      <div class="container">
+        <div class="seccao-header revelar">
+          <span class="seccao-pre">Atendimento</span>
+          <h2 class="seccao-titulo">Como decorre uma operação ao balcão</h2>
+        </div>
+        <div class="passos-grid">
+          <div class="passo-card revelar"><div class="passo-numero">1</div><h3 class="passo-titulo">Identificação</h3><p class="passo-desc">Apresente o seu documento de identificação válido.</p></div>
+          <div class="passo-card revelar atraso-1"><div class="passo-numero">2</div><h3 class="passo-titulo">Cotação</h3><p class="passo-desc">Recebe a taxa em vigor, garantida durante 90 segundos.</p></div>
+          <div class="passo-card revelar atraso-2"><div class="passo-numero">3</div><h3 class="passo-titulo">Liquidação</h3><p class="passo-desc">Contagem e entrega dos valores com conferência.</p></div>
+          <div class="passo-card revelar atraso-3"><div class="passo-numero">4</div><h3 class="passo-titulo">Recibo</h3><p class="passo-desc">Recibo oficial com referência única da operação.</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="rodape"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
