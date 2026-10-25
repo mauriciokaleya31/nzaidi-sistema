@@ -1,14 +1,14 @@
 # 14. Estado atual do projeto
 
-Atualizado em **25/10/2026** (Fase 2, ramo `feat/fase-2-api-auth-taxas`). Este ficheiro deve ser atualizado em cada alteração.
+Atualizado em **25/10/2026** (Fase 3, ramo `feat/fase-3-painel-administrativo`). Este ficheiro deve ser atualizado em cada alteração.
 
 ## 1. Repositório oficial
 | Verificação | Resultado |
 | --- | --- |
 | Endereço | `github.com/mauriciokaleya31/nzaidi-sistema` |
 | Visibilidade | **Privado** desde 25/10/2026 (D-01 fechada) |
-| Ramos | `main` (padrão, Etapa 0), `feat/fase-1-fundacao` (Fase 1 concluída localmente), `feat/fase-2-api-auth-taxas` (Fase 2 em curso) |
-| Publicação | Etapa 0 na `main`. Fase 1 e Fase 2 desenvolvidas em ramos dedicados com 29 testes aprovados |
+| Ramos | `main` (padrão, Etapa 0), `feat/fase-1-fundacao` (Fase 1 concluída), `feat/fase-2-api-auth-taxas` (Fase 2 concluída), `feat/fase-3-painel-administrativo` (Fase 3 concluída localmente) |
+| Publicação | Etapa 0 na `main`. Fases 1, 2 e 3 desenvolvidas em ramos dedicados com 40 testes aprovados e 0 falhas |
 
 ## 1A. Servidor e domínios (verificado e configurado em 25/10/2026)
 | Item | Resultado |
@@ -37,7 +37,8 @@ Atualizado em **25/10/2026** (Fase 2, ramo `feat/fase-2-api-auth-taxas`). Este f
 | `packages/design-system`: cores do logótipo, tipografia, componentes base, modo escuro, catálogo | Criado | Visual: abrir `packages/design-system/catalogo.html` |
 | `packages/dominio`: dinheiro em decimal exato, taxas (R-07), cotação de 90 s e recotação (R-08) | Criado | 17 testes unitários passam |
 | `apps/site-publico`: Website institucional responsivo e simulador de câmbio integrado com a API | **Criado e Publicado** | `vite build` aprovado; 5 testes unitários; online em `https://nzaidi.ao` |
-| **`apps/api`**: Fundação da API com Fastify, Zod, Autenticação `scrypt`, RBAC, Taxas e Auditoria | **Criado e Testado** | 7 testes de integração; `tsc -b` sem erros; persistência relacional com SQLite |
+| `apps/api`: Fundação da API com Fastify, Zod, Autenticação `scrypt`, RBAC, Taxas e Auditoria | **Criado e Testado** | 7 testes de integração; `tsc -b` sem erros; persistência relacional com SQLite |
+| **`apps/admin`**: Painel Administrativo SPA com RBAC (4 perfis), Edição de Taxas, Pista de Auditoria e Operações | **Criado e Testado** | 11 testes automatizados; `vite build` aprovado; integração completa com a API |
 | Integração contínua (`infra/ci/verificar.yml`): tipos, testes, segredos | Criado, **inativo** | Ativa-se ao mover para `.github/workflows/` (precisa da permissão `workflow` no GitHub) |
 
 ## 4. O que **não** foi feito

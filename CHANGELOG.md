@@ -3,6 +3,31 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
+## [Não publicado] — Fase 3: painel administrativo e integração com a API (ramo `feat/fase-3-painel-administrativo`)
+### Adicionado
+- **Aplicação Administrativa (`apps/admin`)**: Single Page Application profissional com Vite, TypeScript estrito e design institucional da NZAIDI (`@nzaidi/admin`).
+- **Autenticação HttpOnly e Gestão de Sessão**:
+  - Integração com `GET /api/v1/auth/me`, `POST /api/v1/auth/login` e `POST /api/v1/auth/logout`.
+  - Sessão persistida em cookies seguros do servidor com zero credenciais ou tokens em `localStorage`/`sessionStorage`.
+  - Estado de autenticação in-memory reativo (`AuthState`) com suporte a subscrição de eventos.
+- **Controlo de Acesso Baseado em Funções (RBAC)**:
+  - Suporte completo aos 4 perfis operacionais: `gestao`, `compliance`, `tesouraria` e `atendente`.
+  - Menus laterais, cabeçalhos e permissões filtrados dinamicamente na UI, com garantia de validação e autorização mandatórias no servidor Fastify.
+- **Módulo de Gestão de Taxas de Câmbio (`#taxas`)**:
+  - Tabela com cotações de compra e venda em tempo real para USD e EUR, taxas de referência BNA e estado de demonstração/oficial.
+  - Modal de edição de taxas exclusivo para o perfil `gestao`.
+  - Validação rigorosa no cliente e no servidor com obrigatoriedade de justificação formal para a pista de auditoria.
+- **Pista de Auditoria Regulatória (`#auditoria`)**:
+  - Interface de consulta cronológica dos últimos eventos do sistema, exclusiva para `compliance` e `gestao`.
+  - Exibição de carimbo temporal, utilizador operador, função, ação, recurso afetado, detalhes estruturados e IP de origem.
+- **Vistas Operacionais e Tesouraria (`#operacional` / `#tesouraria`)**:
+  - Telas contextuais com fluxos previstos de KYC, borderôs e fecho de caixa, preparando a transição suave para a Fase 4.
+- **Testes Automatizados do Admin**:
+  - 11 novos testes unitários e de integração (`apps/admin/test/admin.test.ts` e `apps/admin/test/auth.state.test.ts`), cobrindo o cliente HTTP, tratamento de erros 401/403, RBAC e mutações de estado, elevando o repositório para **40 testes automatizados** (100% de sucesso).
+- **Scripts de Compilação do Monorepo**:
+  - Adicionado script `npm run build:admin` no `package.json` raiz.
+  - Referência do projeto adicionada a `tsconfig.json`.
+
 ## [Não publicado] — Fase 2: fundação da API, autenticação e taxas (ramo `feat/fase-2-api-auth-taxas`)
 ### Adicionado
 - **Fundação da API (`apps/api`)**: servidor Fastify com TypeScript estrito, validação com Zod, cookies seguros, rate limiting e cabeçalhos de segurança (`@fastify/helmet`, `@fastify/cors`, `@fastify/rate-limit`, `@fastify/cookie`).
