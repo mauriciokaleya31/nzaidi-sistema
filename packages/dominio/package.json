@@ -1,0 +1,15 @@
+{
+  "name": "@nzaidi/dominio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Regras financeiras puras da NZAIDI (dinheiro, taxas, cotações). Sem acesso a base de dados nem rede.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "dependencies": {
+    "decimal.js": "^10.6.0"
+  }
+}
