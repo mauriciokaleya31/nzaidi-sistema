@@ -183,6 +183,20 @@ export class AdminApiClient {
     return dados as T;
   }
 
+  public async get<T>(caminho: string): Promise<T> {
+    const url = caminho.startsWith("/api/v1") ? caminho : `/api/v1${caminho.startsWith("/") ? "" : "/"}${caminho}`;
+    return this.requisitar<T>(url, { method: "GET" });
+  }
+
+  public async post<T>(caminho: string, body?: unknown): Promise<T> {
+    const url = caminho.startsWith("/api/v1") ? caminho : `/api/v1${caminho.startsWith("/") ? "" : "/"}${caminho}`;
+    const opcoes: RequestInit = { method: "POST" };
+    if (body !== undefined) {
+      opcoes.body = JSON.stringify(body);
+    }
+    return this.requisitar<T>(url, opcoes);
+  }
+
   // --- Autenticação ---
   public async login(email: string, senha: string): Promise<{ sucesso: boolean; usuario: UsuarioSessao }> {
     return this.requisitar<{ sucesso: boolean; usuario: UsuarioSessao }>("/api/v1/auth/login", {
