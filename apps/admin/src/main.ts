@@ -6,7 +6,9 @@ import { renderizarLogin } from "./views/login.view.js";
 import { renderizarDashboard } from "./views/dashboard.view.js";
 import { renderizarTaxas } from "./views/taxas.view.js";
 import { renderizarAuditoria } from "./views/auditoria.view.js";
-import { renderizarOperacional } from "./views/operacional.view.js";
+import { renderizarClientes } from "./views/clientes.view.js";
+import { renderizarCaixa } from "./views/caixa.view.js";
+import { renderizarBalcao } from "./views/balcao.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -67,8 +69,38 @@ async function renderizarAplicacao(): Promise<void> {
 
   if (viewContainer) {
     switch (rotaAtual) {
+      case "#balcao":
+        if (authState.temPermissao("operacoes:registar") || authState.temPermissao("registar_operacao_balcao")) {
+          await renderizarBalcao(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado ao Balcão Operacional de Câmbios.</div>
+          `;
+        }
+        break;
+
+      case "#clientes":
+        if (authState.temPermissao("clientes:consultar")) {
+          await renderizarClientes(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado para consulta de clientes.</div>
+          `;
+        }
+        break;
+
+      case "#caixa":
+        if (authState.temPermissao("caixa:consultar") || authState.temPermissao("caixa:abrir")) {
+          await renderizarCaixa(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado ao módulo de Caixa e Tesouraria.</div>
+          `;
+        }
+        break;
+
       case "#taxas":
-        if (authState.temPermissao("taxas:consultar")) {
+        if (authState.temPermissao("taxas:consultar") || authState.temPermissao("ver_taxas")) {
           await renderizarTaxas(viewContainer);
         } else {
           viewContainer.innerHTML = `
@@ -78,21 +110,13 @@ async function renderizarAplicacao(): Promise<void> {
         break;
 
       case "#auditoria":
-        if (authState.temPermissao("auditoria:consultar")) {
+        if (authState.temPermissao("auditoria:consultar") || authState.temPermissao("ver_auditoria")) {
           await renderizarAuditoria(viewContainer);
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado para consulta de auditoria.</div>
           `;
         }
-        break;
-
-      case "#operacional":
-        renderizarOperacional(viewContainer, "balcao");
-        break;
-
-      case "#tesouraria":
-        renderizarOperacional(viewContainer, "tesouraria");
         break;
 
       case "#dashboard":
@@ -105,17 +129,14 @@ async function renderizarAplicacao(): Promise<void> {
 
 // Inicializar aplicação
 async function iniciar(): Promise<void> {
-  // Escutar eventos de rota
   window.addEventListener("hashchange", () => {
     void renderizarAplicacao();
   });
 
-  // Escutar mudanças de estado de autenticação
   authState.inscrever(() => {
     void renderizarAplicacao();
   });
 
-  // Carregar sessão existente ao arrancar
   await authState.carregarSessaoInicial();
 }
 

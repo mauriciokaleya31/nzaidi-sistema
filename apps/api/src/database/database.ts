@@ -73,6 +73,162 @@ export function inicializarSchema(db: DatabaseSync): void {
       motivo TEXT
     );
   `);
+
+  // --- Fase 4: Clientes e KYC ---
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS clientes (
+      id TEXT PRIMARY KEY,
+      tipo TEXT NOT NULL CHECK(tipo IN ('singular', 'colectivo')),
+      nome TEXT NOT NULL,
+      tipo_documento TEXT NOT NULL CHECK(tipo_documento IN ('bi', 'passaporte', 'cartao_residente', 'nif_empresa')),
+      numero_documento TEXT NOT NULL,
+      nif TEXT NOT NULL,
+      nacionalidade TEXT NOT NULL DEFAULT 'AO',
+      telefone TEXT NOT NULL,
+      email TEXT,
+      morada TEXT NOT NULL,
+      estado TEXT NOT NULL CHECK(estado IN ('ativo', 'inativo', 'bloqueado')) DEFAULT 'ativo',
+      estado_kyc TEXT NOT NULL CHECK(estado_kyc IN ('pendente', 'em_analise', 'aprovado', 'rejeitado', 'actualizacao_necessaria')) DEFAULT 'pendente',
+      nivel_risco TEXT NOT NULL CHECK(nivel_risco IN ('baixo', 'medio', 'alto')) DEFAULT 'baixo',
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      UNIQUE(tipo_documento, numero_documento)
+    );
+    CREATE INDEX IF NOT EXISTS idx_clientes_nif ON clientes(nif);
+    CREATE INDEX IF NOT EXISTS idx_clientes_nome ON clientes(nome);
+    CREATE INDEX IF NOT EXISTS idx_clientes_estado_kyc ON clientes(estado_kyc);
+
+    CREATE TABLE IF NOT EXISTS kyc_registos (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      estado_anterior TEXT NOT NULL,
+      estado_novo TEXT NOT NULL,
+      nivel_risco TEXT NOT NULL,
+      decidido_por_id TEXT NOT NULL,
+      decidido_por_nome TEXT NOT NULL,
+      motivo TEXT,
+      momento TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_kyc_registos_cliente ON kyc_registos(cliente_id);
+
+    CREATE TABLE IF NOT EXISTS kyc_documentos (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      tipo_documento TEXT NOT NULL,
+      nome_arquivo TEXT NOT NULL,
+      caminho_seguro TEXT NOT NULL,
+      tamanho_bytes INTEGER NOT NULL,
+      mime_type TEXT NOT NULL,
+      enviado_em TEXT NOT NULL,
+      enviado_por_id TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+  `);
+
+  // --- Fase 4: Gestão de Caixa e Movimentos ---
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS caixas (
+      id TEXT PRIMARY KEY,
+      numero_caixa TEXT NOT NULL UNIQUE,
+      operador_id TEXT NOT NULL,
+      operador_nome TEXT NOT NULL,
+      agencia TEXT NOT NULL DEFAULT 'Balcão Maianga - Sede',
+      aberto_em TEXT NOT NULL,
+      fechado_em TEXT,
+      estado TEXT NOT NULL CHECK(estado IN ('aberto', 'fechado', 'pendente_aprovacao')) DEFAULT 'aberto',
+      saldo_inicial_aoa TEXT NOT NULL,
+      saldo_inicial_usd TEXT NOT NULL,
+      saldo_inicial_eur TEXT NOT NULL,
+      saldo_fecho_aoa_contado TEXT,
+      saldo_fecho_usd_contado TEXT,
+      saldo_fecho_eur_contado TEXT,
+      diferenca_aoa TEXT,
+      diferenca_usd TEXT,
+      diferenca_eur TEXT,
+      justificativa_diferenca TEXT,
+      fechado_por_id TEXT,
+      FOREIGN KEY (operador_id) REFERENCES usuarios(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_caixas_operador ON caixas(operador_id);
+    CREATE INDEX IF NOT EXISTS idx_caixas_estado ON caixas(estado);
+
+    CREATE TABLE IF NOT EXISTS movimentos_caixa (
+      id TEXT PRIMARY KEY,
+      caixa_id TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('abertura', 'cambio_entrada', 'cambio_saida', 'suprimento', 'sangria', 'fecho')),
+      moeda TEXT NOT NULL CHECK(moeda IN ('AOA', 'USD', 'EUR')),
+      montante TEXT NOT NULL,
+      operacao_id TEXT,
+      descricao TEXT NOT NULL,
+      criado_em TEXT NOT NULL,
+      operador_id TEXT NOT NULL,
+      FOREIGN KEY (caixa_id) REFERENCES caixas(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_movimentos_caixa_id ON movimentos_caixa(caixa_id);
+  `);
+
+  // --- Fase 4: Operações Cambiais e Borderôs ---
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS operacoes_cambio (
+      id TEXT PRIMARY KEY,
+      numero_operacao TEXT NOT NULL UNIQUE,
+      chave_idempotencia TEXT UNIQUE,
+      cliente_id TEXT NOT NULL,
+      caixa_id TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('compra', 'venda')),
+      moeda_divisa TEXT NOT NULL CHECK(moeda_divisa IN ('USD', 'EUR')),
+      montante_divisa TEXT NOT NULL,
+      taxa_aplicada TEXT NOT NULL,
+      taxa_referencia_bna TEXT NOT NULL,
+      margem_aplicada TEXT NOT NULL,
+      montante_aoa TEXT NOT NULL,
+      fonte_taxa TEXT NOT NULL CHECK(fonte_taxa IN ('demonstracao', 'oficial')),
+      estado TEXT NOT NULL CHECK(estado IN ('confirmada', 'cancelada', 'estornada')) DEFAULT 'confirmada',
+      operador_id TEXT NOT NULL,
+      operador_nome TEXT NOT NULL,
+      criado_em TEXT NOT NULL,
+      motivo_estorno TEXT,
+      estornado_em TEXT,
+      estornado_por_id TEXT,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+      FOREIGN KEY (caixa_id) REFERENCES caixas(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_operacoes_cliente ON operacoes_cambio(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_operacoes_caixa ON operacoes_cambio(caixa_id);
+    CREATE INDEX IF NOT EXISTS idx_operacoes_criado_em ON operacoes_cambio(criado_em);
+
+    CREATE TABLE IF NOT EXISTS borderos (
+      id TEXT PRIMARY KEY,
+      numero_bordero TEXT NOT NULL UNIQUE,
+      operacao_id TEXT NOT NULL UNIQUE,
+      cliente_nome TEXT NOT NULL,
+      cliente_documento TEXT NOT NULL,
+      cliente_nif TEXT NOT NULL,
+      tipo_operacao TEXT NOT NULL,
+      moeda_divisa TEXT NOT NULL,
+      montante_divisa TEXT NOT NULL,
+      taxa_cambio TEXT NOT NULL,
+      total_aoa TEXT NOT NULL,
+      operador_nome TEXT NOT NULL,
+      emitido_em TEXT NOT NULL,
+      hash_verificacao TEXT NOT NULL,
+      FOREIGN KEY (operacao_id) REFERENCES operacoes_cambio(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_borderos_operacao ON borderos(operacao_id);
+  `);
+}
+
+export function comTransacao<T>(db: DatabaseSync, acao: () => T): T {
+  db.exec("BEGIN IMMEDIATE;");
+  try {
+    const resultado = acao();
+    db.exec("COMMIT;");
+    return resultado;
+  } catch (erro) {
+    db.exec("ROLLBACK;");
+    throw erro;
+  }
 }
 
 export function criarConexaoBanco(caminho = ":memory:"): DatabaseSync {

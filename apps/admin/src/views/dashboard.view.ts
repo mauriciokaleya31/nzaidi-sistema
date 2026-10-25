@@ -52,26 +52,32 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
         </div>
         <div class="card-body">
           <div class="quick-actions-grid">
+            <a href="#balcao" class="quick-action-btn action-highlight">
+              <span class="qa-icon">🏦</span>
+              <span class="qa-title">Balcão Cambial</span>
+              <span class="qa-desc">Compra e venda de divisas e borderôs</span>
+            </a>
+
+            <a href="#clientes" class="quick-action-btn">
+              <span class="qa-icon">👥</span>
+              <span class="qa-title">Clientes & KYC</span>
+              <span class="qa-desc">Cadastro e diligência regulamentar</span>
+            </a>
+
+            <a href="#caixa" class="quick-action-btn">
+              <span class="qa-icon">💼</span>
+              <span class="qa-title">Tesouraria & Caixa</span>
+              <span class="qa-desc">Fundos, movimentos e fecho de caixa</span>
+            </a>
+
             <a href="#taxas" class="quick-action-btn">
               <span class="qa-icon">💱</span>
-              <span class="qa-title">Consultar Taxas</span>
-              <span class="qa-desc">Consultar tabelas de USD e EUR</span>
+              <span class="qa-title">Taxas de Câmbio</span>
+              <span class="qa-desc">Cotações oficiais de USD e EUR</span>
             </a>
 
             ${
-              authState.temPermissao("taxas:editar")
-                ? `
-                <a href="#taxas" class="quick-action-btn action-highlight">
-                  <span class="qa-icon">⚙️</span>
-                  <span class="qa-title">Alterar Spreads</span>
-                  <span class="qa-desc">Gestão de margens de compra/venda</span>
-                </a>
-              `
-                : ""
-            }
-
-            ${
-              authState.temPermissao("auditoria:consultar")
+              authState.temPermissao("auditoria:consultar") || authState.temPermissao("ver_auditoria")
                 ? `
                 <a href="#auditoria" class="quick-action-btn">
                   <span class="qa-icon">🛡️</span>
@@ -81,12 +87,6 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
               `
                 : ""
             }
-
-            <a href="#operacional" class="quick-action-btn">
-              <span class="qa-icon">🏦</span>
-              <span class="qa-title">Balcão Cambial</span>
-              <span class="qa-desc">Módulo em preparação (Fase 4)</span>
-            </a>
           </div>
         </div>
       </div>

@@ -35,6 +35,94 @@ export interface EventoAuditoria {
   ip?: string | null;
 }
 
+export interface ClienteItem {
+  id: string;
+  tipo: "singular" | "colectivo";
+  nome: string;
+  tipoDocumento: "bi" | "passaporte" | "cartao_residente" | "nif_empresa";
+  numeroDocumento: string;
+  nif: string;
+  nacionalidade: string;
+  telefone: string;
+  email?: string | null;
+  morada: string;
+  estado: "ativo" | "inativo" | "bloqueado";
+  estadoKyc: "pendente" | "em_analise" | "aprovado" | "rejeitado" | "actualizacao_necessaria";
+  nivelRisco: "baixo" | "medio" | "alto";
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export interface CaixaItem {
+  id: string;
+  numeroCaixa: string;
+  operadorId: string;
+  operadorNome: string;
+  agencia: string;
+  abertoEm: string;
+  fechadoEm?: string | null;
+  estado: "aberto" | "fechado" | "pendente_aprovacao";
+  saldoInicialAoa: string;
+  saldoInicialUsd: string;
+  saldoInicialEur: string;
+  saldoFechoAoaContado?: string | null;
+  saldoFechoUsdContado?: string | null;
+  saldoFechoEurContado?: string | null;
+  diferencaAoa?: string | null;
+  diferencaUsd?: string | null;
+  diferencaEur?: string | null;
+  justificativaDiferenca?: string | null;
+}
+
+export interface SaldoMoeda {
+  moeda: "AOA" | "USD" | "EUR";
+  saldoInicial: string;
+  entradas: string;
+  saidas: string;
+  saldoEsperado: string;
+}
+
+export interface CaixaAtivoResposta {
+  caixa: CaixaItem;
+  saldos: Record<"AOA" | "USD" | "EUR", SaldoMoeda>;
+}
+
+export interface OperacaoItem {
+  id: string;
+  numeroOperacao: string;
+  clienteId: string;
+  caixaId: string;
+  tipo: "compra" | "venda";
+  moedaDivisa: MoedaDivisa;
+  montanteDivisa: string;
+  taxaAplicada: string;
+  taxaReferenciaBna: string;
+  margemAplicada: string;
+  montanteAoa: string;
+  fonteTaxa: "demonstracao" | "oficial";
+  estado: "confirmada" | "cancelada" | "estornada";
+  operadorNome: string;
+  criadoEm: string;
+  motivoEstorno?: string | null;
+}
+
+export interface BorderoItem {
+  id: string;
+  numeroBordero: string;
+  operacaoId: string;
+  clienteNome: string;
+  clienteDocumento: string;
+  clienteNif: string;
+  tipoOperacao: "compra" | "venda";
+  moedaDivisa: MoedaDivisa;
+  montanteDivisa: string;
+  taxaCambio: string;
+  totalAoa: string;
+  operadorNome: string;
+  emitidoEm: string;
+  hashVerificacao: string;
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -62,7 +150,7 @@ export class AdminApiClient {
     const resposta = await fetch(url, {
       ...opcoes,
       headers,
-      credentials: "include", // Envia cookies HttpOnly
+      credentials: "include",
     });
 
     const ehJson = resposta.headers.get("content-type")?.includes("application/json");
@@ -146,9 +234,149 @@ export class AdminApiClient {
     return res.dados;
   }
 
-  // --- Health ---
-  public async verificarSaude(): Promise<any> {
-    return this.requisitar("/api/health", { method: "GET" });
+  // --- Clientes & KYC ---
+  public async listarClientes(busca?: string, estadoKyc?: string): Promise<ClienteItem[]> {
+    const params = new URLSearchParams();
+    if (busca) params.set("busca", busca);
+    if (estadoKyc) params.set("estadoKyc", estadoKyc);
+    const res = await this.requisitar<{ sucesso: boolean; dados: ClienteItem[] }>(
+      `/api/v1/clientes?${params.toString()}`,
+      { method: "GET" }
+    );
+    return res.dados;
+  }
+
+  public async criarCliente(payload: {
+    tipo: "singular" | "colectivo";
+    nome: string;
+    tipoDocumento: "bi" | "passaporte" | "cartao_residente" | "nif_empresa";
+    numeroDocumento: string;
+    nif: string;
+    nacionalidade: string;
+    telefone: string;
+    email?: string | null;
+    morada: string;
+  }): Promise<ClienteItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ClienteItem }>("/api/v1/clientes", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async decidirKyc(
+    clienteId: string,
+    payload: {
+      estadoNovo: "aprovado" | "rejeitado" | "em_analise" | "actualizacao_necessaria";
+      nivelRisco: "baixo" | "medio" | "alto";
+      motivo: string;
+    }
+  ): Promise<ClienteItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ClienteItem }>(
+      `/api/v1/clientes/${clienteId}/kyc`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  // --- Caixa & Tesouraria ---
+  public async obterCaixaAtivo(): Promise<CaixaAtivoResposta | null> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: CaixaAtivoResposta | null }>("/api/v1/caixa/ativo", {
+      method: "GET",
+    });
+    return res.dados;
+  }
+
+  public async abrirCaixa(payload: {
+    saldoInicialAoa: string;
+    saldoInicialUsd: string;
+    saldoInicialEur: string;
+    agencia?: string;
+  }): Promise<CaixaItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: CaixaItem }>("/api/v1/caixa/abrir", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async movimentarCaixa(
+    caixaId: string,
+    payload: {
+      tipo: "suprimento" | "sangria";
+      moeda: "AOA" | "USD" | "EUR";
+      montante: string;
+      descricao: string;
+    }
+  ): Promise<void> {
+    await this.requisitar(`/api/v1/caixa/${caixaId}/movimento`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async fecharCaixa(
+    caixaId: string,
+    payload: {
+      saldoContadoAoa: string;
+      saldoContadoUsd: string;
+      saldoContadoEur: string;
+      justificativaDiferenca?: string;
+    }
+  ): Promise<CaixaItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: CaixaItem }>(`/api/v1/caixa/${caixaId}/fechar`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  // --- Operações Cambiais & Borderôs ---
+  public async criarOperacao(payload: {
+    chaveIdempotencia: string;
+    clienteId: string;
+    tipo: "compra" | "venda";
+    moedaDivisa: MoedaDivisa;
+    montanteDivisa: string;
+    cotacaoCriadaEm: string;
+  }): Promise<{ operacao: OperacaoItem; bordero: BorderoItem }> {
+    const res = await this.requisitar<{
+      sucesso: boolean;
+      dados: { operacao: OperacaoItem; bordero: BorderoItem };
+    }>("/api/v1/operacoes", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async listarOperacoes(limite = 50): Promise<OperacaoItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: OperacaoItem[] }>(
+      `/api/v1/operacoes?limite=${limite}`,
+      { method: "GET" }
+    );
+    return res.dados;
+  }
+
+  public async obterBordero(operacaoId: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/borderos/${operacaoId}`, {
+      method: "GET",
+    });
+    return res.dados;
+  }
+
+  public async estornarOperacao(operacaoId: string, motivo: string): Promise<OperacaoItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: OperacaoItem }>(
+      `/api/v1/operacoes/${operacaoId}/estornar`,
+      {
+        method: "POST",
+        body: JSON.stringify({ motivo }),
+      }
+    );
+    return res.dados;
   }
 }
 

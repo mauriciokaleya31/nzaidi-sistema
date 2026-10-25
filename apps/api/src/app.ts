@@ -13,11 +13,20 @@ import { UsersRepository } from "./modules/autenticacao/users.repository.js";
 import { SessionsRepository } from "./modules/autenticacao/sessions.repository.js";
 import { AuditoriaRepository } from "./modules/auditoria/auditoria.repository.js";
 import { TaxasRepository, TaxasService } from "./modules/taxas-cambio/taxas.service.js";
+import { ClientesRepository } from "./modules/identidade-kyc/clientes.repository.js";
+import { ClientesService } from "./modules/identidade-kyc/clientes.service.js";
+import { CaixaRepository } from "./modules/contabilidade-tesouraria/caixa.repository.js";
+import { CaixaService } from "./modules/contabilidade-tesouraria/caixa.service.js";
+import { OperacoesRepository } from "./modules/operacoes-cambio/operacoes.repository.js";
+import { OperacoesService } from "./modules/operacoes-cambio/operacoes.service.js";
 
 import { registrarRotasHealth } from "./routes/health.routes.js";
 import { registrarRotasAuth } from "./modules/autenticacao/auth.routes.js";
 import { registrarRotasTaxas } from "./modules/taxas-cambio/taxas.routes.js";
 import { registrarRotasAuditoria } from "./modules/auditoria/auditoria.routes.js";
+import { registrarRotasClientes } from "./modules/identidade-kyc/clientes.routes.js";
+import { registrarRotasCaixa } from "./modules/contabilidade-tesouraria/caixa.routes.js";
+import { registrarRotasOperacoes } from "./modules/operacoes-cambio/operacoes.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -70,6 +79,19 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   const auditoriaRepo = new AuditoriaRepository(db);
   const taxasRepo = new TaxasRepository(db);
   const taxasService = new TaxasService(taxasRepo);
+  const clientesRepo = new ClientesRepository(db);
+  const clientesService = new ClientesService(clientesRepo, auditoriaRepo);
+  const caixaRepo = new CaixaRepository(db);
+  const caixaService = new CaixaService(db, caixaRepo, auditoriaRepo);
+  const operacoesRepo = new OperacoesRepository(db);
+  const operacoesService = new OperacoesService(
+    db,
+    operacoesRepo,
+    clientesRepo,
+    caixaRepo,
+    taxasService,
+    auditoriaRepo
+  );
 
   // 4. Hook de Autenticação Global (identifica sessão se houver cookie/header)
   const middlewareAuth = criarMiddlewareAutenticacao(usersRepo, sessionsRepo);
@@ -80,6 +102,9 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   registrarRotasAuth(app, usersRepo, sessionsRepo, auditoriaRepo, env.ADMIN_INIT_TOKEN, env.SESSION_TTL_HOURS);
   registrarRotasTaxas(app, taxasService, auditoriaRepo);
   registrarRotasAuditoria(app, auditoriaRepo);
+  registrarRotasClientes(app, clientesService);
+  registrarRotasCaixa(app, caixaService);
+  registrarRotasOperacoes(app, operacoesService);
 
   return app;
 }

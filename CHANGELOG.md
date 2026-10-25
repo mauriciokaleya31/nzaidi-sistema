@@ -3,6 +3,37 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
+## [Não publicado] — Fase 4: operações de balcão, clientes, KYC, borderôs e fecho de caixa (ramo `feat/fase-4-operacoes-balcao-kyc-caixa`)
+### Adicionado
+- **Módulo de Clientes e KYC (`apps/api/src/modules/identidade-kyc`)**:
+  - Cadastro de clientes particulares (pessoas singulares) e empresas (pessoas colectivas) com identificação oficial (BI, Passaporte, Cartão de Residente, NIF).
+  - Deteção e impedimento automático de registos duplicados por documento.
+  - Ciclo de vida KYC com estados `pendente`, `em_analise`, `aprovado`, `rejeitado` e `actualizacao_necessaria`.
+  - Classificação de risco AML (`baixo`, `medio`, `alto`).
+  - Segregação estrita de funções: Apenas perfis de `compliance` e `gestao` podem aprovar ou rejeitar diligências KYC com parecer obrigatório registado em auditoria.
+- **Módulo de Contabilidade e Caixa (`apps/api/src/modules/contabilidade-tesouraria`)**:
+  - Abertura de caixas operacionais por operador com fundos iniciais em Kwanza (AOA), Dólar (USD) e Euro (EUR).
+  - Regra de unicidade: O operador só pode manter um caixa aberto ativo em simultâneo.
+  - Saldos apurados por movimentos atómicos imutáveis (abertura, câmbio entrada/saída, suprimento, sangria). O saldo não é livremente editável.
+  - Fecho de caixa com conferência física das notas, apuramento de quebras/sobras e exigência de justificação formal se houver divergência.
+- **Módulo de Operações Cambiais de Balcão e Borderôs (`apps/api/src/modules/operacoes-cambio`)**:
+  - Compra e venda de USD e EUR contra Kwanza AOA calculadas pelo pacote `@nzaidi/dominio` com arredondamento bancário e precisão `decimal.js`.
+  - Validação da cotação de 90 segundos do BNA: Operações com cotações expiradas são estritamente rejeitadas no backend.
+  - Validação prévia de saldo em caixa para liquidação imediata da contrapartida (AOA na compra, Divisa na venda).
+  - Idempotência obrigatória com `chaveIdempotencia` única para prevenir transações duplicadas.
+  - Emissão automática de **Borderô de Câmbio** numerado sequencialmente com hash SHA-256 inviolável e layout pronto para impressão/PDF.
+  - Estorno auditado de operações cambiais pela Tesouraria/Gestão com reversão atómica de saldos em caixa.
+  - Transações atómicas com rollback (`comTransacao`) em `node:sqlite`.
+- **Expansão do RBAC**:
+  - Novas permissões granulares mapeadas na matriz de segurança: `clientes:criar`, `clientes:consultar`, `clientes:editar`, `kyc:analisar`, `kyc:aprovar`, `caixa:abrir`, `caixa:movimentar`, `caixa:fechar`, `caixa:consultar`, `operacoes:registar`, `operacoes:consultar`, `operacoes:estornar`.
+- **Painel Administrativo (`apps/admin`)**:
+  - Nova vista de **Gestão de Clientes & KYC** (`#clientes`): busca em tempo real, cadastro de particulares/empresas e modal de decisão KYC.
+  - Nova vista de **Tesouraria & Caixa** (`#caixa`): ecrã de abertura de caixa, saldos esperados por divisa, suprimentos/sangrias e fecho com contagem física.
+  - Nova vista de **Balcão Operacional de Câmbios** (`#balcao`): seleção de cliente KYC aprovado, simulador em tempo real com contador de 90s, liquidação e emissão/impressão de borderô oficial.
+  - Atualização do menu lateral e atalhos operacionais do dashboard.
+- **Testes Automatizados**:
+  - 20 novos testes automatizados (17 testes de integração na API em `fase4.test.ts` e 3 novos testes no Admin em `admin.test.ts`), elevando o repositório para **60 testes aprovados** (100% de sucesso).
+
 ## [Não publicado] — Fase 3: painel administrativo e integração com a API (ramo `feat/fase-3-painel-administrativo`)
 ### Adicionado
 - **Aplicação Administrativa (`apps/admin`)**: Single Page Application profissional com Vite, TypeScript estrito e design institucional da NZAIDI (`@nzaidi/admin`).

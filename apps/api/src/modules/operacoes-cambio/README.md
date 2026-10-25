@@ -1,19 +1,42 @@
-# Módulo: Operações de câmbio
+# Módulo de Operações de Câmbio e Borderôs (`operacoes-cambio`)
 
-**Pasta:** `apps/api/src/modules/operacoes-cambio`
-**Estado:** Confirmado.
+Módulo central responsável pela execução de operações cambiais físicas de balcão (compra e venda de divisas USD e EUR contra Kwanzas AOA), garantia da validade de cotação (regra dos 90 segundos do BNA), liquidação atómica em caixa, controlo de idempotência e emissão formal de borderôs de câmbio invioláveis.
 
-## Responsabilidade
-Registo e execução das operações de câmbio (balcão e digital), classificação regulamentar (câmbio ou remessa, compra ou venda) e correções por lançamento contrário.
+---
 
-## Regras de negócio
-Nenhuma operação avança sem passar pelo controlo de risco. Nada se apaga; corrige-se por contrapartida.
+## 1. Princípios e Regras de Negócio
 
-## Depende de
-taxas-cambio, conformidade-aml, contabilidade-tesouraria, pagamentos-aoa, wise
+1. **Cálculo Rigoroso com o Pacote `@nzaidi/dominio`**:
+   - Venda de Divisa: `kwanzasParaComprarDivisa(taxas, montanteDivisa)` com taxa de venda.
+   - Compra de Divisa: `kwanzasAoVenderDivisa(taxas, montanteDivisa)` com taxa de compra.
+   - Arredondamento bancário formal e precisão com `decimal.js`.
 
-## Notas para quem implementar
-- Ler primeiro `docs/05-modulos-e-responsabilidades.md` e `docs/10-regras-financeiras.md`.
-- Este módulo só se comunica com os outros através da sua interface pública. Nunca ler tabelas de outro módulo diretamente.
-- Qualquer decisão nova vai para `docs/15-decisoes-pendentes.md` antes de ser implementada.
-- Estado desta pasta: **sem código** (etapa de estrutura).
+2. **Validação da Cotação (90 Segundos)**:
+   - Toda a operação exige o envio de `cotacaoCriadaEm`.
+   - Se o tempo decorrido até à submissão exceder 90 segundos (`estaValida`), a operação é recusada, exigindo nova cotação pelo operador.
+
+3. **Verificação de Limites e KYC**:
+   - Apenas clientes com `estadoKyc === "aprovado"` e cadastro ativo podem efetuar transações.
+
+4. **Liquidação e Contrapartidas em Caixa**:
+   - Toda a operação é vinculada ao caixa ativo do operador.
+   - O sistema valida a disponibilidade prévia do saldo a entregar (Kwanza na compra; Divisa na venda).
+   - A operação gera simultaneamente dois movimentos de caixa (um a crédito e um a débito).
+
+5. **Idempotência**:
+   - Submissões com a mesma `chaveIdempotencia` retornam o borderô e a operação já registados sem reprocessamento ou duplicação financeira.
+
+6. **Inviolabilidade do Borderô**:
+   - Cada borderô é emitido com um hash criptográfico SHA-256 combinando número, cliente, taxas, montantes e carimbo de tempo.
+
+---
+
+## 2. Endpoints Disponíveis
+
+| Método | Endpoint | Permissão Mínima | Descrição |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/operacoes` | `operacoes:registar` | Submeter e liquidar operação de balcão com emissão de borderô |
+| `GET` | `/api/v1/operacoes` | `operacoes:consultar` | Listar histórico de operações cambiais |
+| `GET` | `/api/v1/operacoes/:id` | `operacoes:consultar` | Consultar detalhes da operação e borderô |
+| `POST` | `/api/v1/operacoes/:id/estornar` | `operacoes:estornar` | Estorno auditado de operação com reversão em caixa |
+| `GET` | `/api/v1/borderos/:operacaoId` | `operacoes:consultar` | Obter dados completos do borderô para impressão |

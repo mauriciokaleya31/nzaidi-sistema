@@ -1,19 +1,30 @@
-# Módulo: Identidade e KYC
+# Módulo de Identidade e KYC (`identidade-kyc`)
 
-**Pasta:** `apps/api/src/modules/identidade-kyc`
-**Estado:** Confirmado (funcionalidade base). Cliente de balcão ocasional: proposta.
+Módulo responsável pela gestão cadastral de clientes (particulares e empresas), registo documental, classificação de risco e diligência prévia (KYC) em conformidade com as normas do BNA e a Lei n.º 5/20 (AML/CFT).
 
-## Responsabilidade
-Registo de clientes, estado de verificação (verificado, em revisão, recusado), nível de risco e ficha do cliente. Inclui o cliente de balcão ocasional (proposta).
+---
 
-## Regras de negócio
-Sem identidade verificada não há operações. Todo o cliente tem identificação, mesmo no balcão.
+## 1. Responsabilidades
 
-## Depende de
-conformidade-aml, autenticacao, auditoria
+- **Cadastro de Clientes**:
+  - Pessoas singulares e colectivas.
+  - Identificação oficial por Bilhete de Identidade (BI), Passaporte, Cartão de Residente ou NIF empresarial.
+  - Deteção e impedimento automático de registos duplicados (`(tipo_documento, numero_documento)`).
+- **Ciclo de Vida KYC**:
+  - Estados: `pendente`, `em_analise`, `aprovado`, `rejeitado`, `actualizacao_necessaria`.
+  - Níveis de risco configuráveis: `baixo`, `medio`, `alto`.
+  - Segregação estrita de funções: Apenas perfis de `compliance` e `gestao` podem emitir decisão formal de aprovação ou rejeição de KYC.
+- **Histórico e Auditoria**:
+  - Todas as decisões KYC são gravadas na tabela `kyc_registos` e na pista imutável de auditoria com autor, data/hora, motivo e IP de origem.
 
-## Notas para quem implementar
-- Ler primeiro `docs/05-modulos-e-responsabilidades.md` e `docs/10-regras-financeiras.md`.
-- Este módulo só se comunica com os outros através da sua interface pública. Nunca ler tabelas de outro módulo diretamente.
-- Qualquer decisão nova vai para `docs/15-decisoes-pendentes.md` antes de ser implementada.
-- Estado desta pasta: **sem código** (etapa de estrutura).
+---
+
+## 2. Endpoints Disponíveis
+
+| Método | Endpoint | Permissão Mínima | Descrição |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/v1/clientes` | `clientes:criar` | Registar novo cliente com verificação de duplicados |
+| `GET` | `/api/v1/clientes` | `clientes:consultar` | Listar clientes com filtros, busca textual e paginação |
+| `GET` | `/api/v1/clientes/:id` | `clientes:consultar` | Obter ficha detalhada do cliente |
+| `POST` | `/api/v1/clientes/:id/kyc` | `kyc:analisar` | Submeter decisão de aprovação, recusa ou revisão KYC |
+| `GET` | `/api/v1/clientes/:id/kyc/historico`| `clientes:consultar` | Consultar histórico de decisões KYC do cliente |

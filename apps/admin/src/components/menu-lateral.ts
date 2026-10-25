@@ -6,7 +6,6 @@ interface ItemMenu {
   titulo: string;
   icone: string;
   permissaoRequerida?: string;
-  faseTag?: string;
 }
 
 const ITENS_MENU: ItemMenu[] = [
@@ -24,6 +23,45 @@ const ITENS_MENU: ItemMenu[] = [
     `,
   },
   {
+    id: "nav-balcao",
+    rota: "#balcao",
+    titulo: "Balcão de Câmbios",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+      </svg>
+    `,
+    permissaoRequerida: "operacoes:registar",
+  },
+  {
+    id: "nav-clientes",
+    rota: "#clientes",
+    titulo: "Clientes & KYC",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    `,
+    permissaoRequerida: "clientes:consultar",
+  },
+  {
+    id: "nav-caixa",
+    rota: "#caixa",
+    titulo: "Tesouraria & Caixa",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+      </svg>
+    `,
+    permissaoRequerida: "caixa:consultar",
+  },
+  {
     id: "nav-taxas",
     rota: "#taxas",
     titulo: "Taxas de Câmbio",
@@ -34,31 +72,6 @@ const ITENS_MENU: ItemMenu[] = [
       </svg>
     `,
     permissaoRequerida: "taxas:consultar",
-  },
-  {
-    id: "nav-operacional",
-    rota: "#operacional",
-    titulo: "Balcão de Câmbios",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-      </svg>
-    `,
-    faseTag: "Fase 4",
-  },
-  {
-    id: "nav-tesouraria",
-    rota: "#tesouraria",
-    titulo: "Tesouraria & Caixa",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-        <line x1="12" y1="22.08" x2="12" y2="12"></line>
-      </svg>
-    `,
-    faseTag: "Fase 4",
   },
   {
     id: "nav-auditoria",
@@ -92,16 +105,12 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
   const linksHtml = itensVisiveis
     .map((item) => {
       const estaAtivo = rotaAtual === item.rota;
-      const tagFase = item.faseTag
-        ? `<span class="nav-tag-fase">${item.faseTag}</span>`
-        : "";
 
       return `
         <li>
           <a href="${item.rota}" class="nav-item ${estaAtivo ? "active" : ""}" id="${item.id}">
             <span class="nav-icon">${item.icone}</span>
             <span class="nav-label">${item.titulo}</span>
-            ${tagFase}
           </a>
         </li>
       `;
