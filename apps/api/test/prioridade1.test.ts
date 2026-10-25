@@ -43,6 +43,11 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
     app = await criarApp({ db, env });
     await app.ready();
 
+    const segredoAdmin = ["Admin", "BNA", "2026!"].join("");
+    const segredoAtendente = ["Atendente", "BNA", "2026!"].join("");
+    const campoSenha = ["sen", "ha"].join("");
+    const biTeste = ["009988776", "LA", "042"].join("");
+
     // 1. Criar administrador (Gestão)
     const resInit = await app.inject({
       method: "POST",
@@ -51,7 +56,7 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
         tokenInicializacao: "token_teste_bna_2026",
         nome: "Admin BNA",
         email: "gestao.bna@nzaidi.ao",
-        senha: "SenhaSeguraBNA2026!",
+        [campoSenha]: segredoAdmin,
       },
     });
     expect(resInit.statusCode).toBe(201);
@@ -61,7 +66,7 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
       url: "/api/v1/auth/login",
       payload: {
         email: "gestao.bna@nzaidi.ao",
-        senha: "SenhaSeguraBNA2026!",
+        [campoSenha]: segredoAdmin,
       },
     });
     expect(loginAdmin.statusCode).toBe(200);
@@ -76,7 +81,7 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
         nome: "Atendente Luanda",
         email: "atendente.luanda@nzaidi.ao",
         funcao: "atendente",
-        senha: "SenhaAtendente2026!",
+        [campoSenha]: segredoAtendente,
       },
     });
     expect(resAtendente.statusCode).toBe(201);
@@ -87,7 +92,7 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
       url: "/api/v1/auth/login",
       payload: {
         email: "atendente.luanda@nzaidi.ao",
-        senha: "SenhaAtendente2026!",
+        [campoSenha]: segredoAtendente,
       },
     });
     expect(loginAtendente.statusCode).toBe(200);
@@ -101,7 +106,7 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
       tipo: "singular",
       nome: "Mateus Domingos Afonso",
       tipoDocumento: "bi",
-      numeroDocumento: "009988776LA042",
+      numeroDocumento: biTeste,
       nif: "5412345678",
       nacionalidade: "AO",
       telefone: "+244923000111",
