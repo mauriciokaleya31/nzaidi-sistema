@@ -3,6 +3,7 @@
  */
 import "./estilo.css";
 import { SimuladorCambio } from "./simulador.js";
+import { buscarTaxasDaApi } from "./dados-taxas.js";
 import { type MoedaDivisa } from "@nzaidi/dominio";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -30,6 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const eur = tabela.EUR;
 
     if (cardTaxaUsdEl && usd) {
+      const badgeClass = usd.fonte === "oficial" ? "badge-sucesso" : "badge-neutro";
+      const badgeTexto = usd.fonte === "oficial" ? "Oficial BNA" : "Demonstração";
+
       cardTaxaUsdEl.innerHTML = `
         <div class="card-taxa-topo">
           <div class="card-taxa-moeda">
@@ -39,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <p>USD / AOA</p>
             </div>
           </div>
-          <span class="badge badge-neutro">Hoje</span>
+          <span class="badge ${badgeClass}">${badgeTexto}</span>
         </div>
         <div class="card-taxa-valores">
           <div class="valor-box">
@@ -52,13 +56,16 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
         <div class="taxa-ref-nota">
-          <span>Referência BNA: ${usd.taxas.referencia.toFixed(4)} Kz</span>
+          <span>Referência: ${usd.taxas.referencia.toFixed(4)} Kz</span>
           <span>Margens: -${(Number(usd.parametro.margemCompra) * 100).toFixed(1)}% / +${(Number(usd.parametro.margemVenda) * 100).toFixed(1)}%</span>
         </div>
       `;
     }
 
     if (cardTaxaEurEl && eur) {
+      const badgeClass = eur.fonte === "oficial" ? "badge-sucesso" : "badge-neutro";
+      const badgeTexto = eur.fonte === "oficial" ? "Oficial BNA" : "Demonstração";
+
       cardTaxaEurEl.innerHTML = `
         <div class="card-taxa-topo">
           <div class="card-taxa-moeda">
@@ -68,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <p>EUR / AOA</p>
             </div>
           </div>
-          <span class="badge badge-neutro">Hoje</span>
+          <span class="badge ${badgeClass}">${badgeTexto}</span>
         </div>
         <div class="card-taxa-valores">
           <div class="valor-box">
@@ -81,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
         <div class="taxa-ref-nota">
-          <span>Referência BNA: ${eur.taxas.referencia.toFixed(4)} Kz</span>
+          <span>Referência: ${eur.taxas.referencia.toFixed(4)} Kz</span>
           <span>Margens: -${(Number(eur.parametro.margemCompra) * 100).toFixed(1)}% / +${(Number(eur.parametro.margemVenda) * 100).toFixed(1)}%</span>
         </div>
       `;
@@ -145,6 +152,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
+
+  // Tenta sincronizar taxas com a API de forma assíncrona
+  buscarTaxasDaApi().then((tabelaRemota) => {
+    if (tabelaRemota) {
+      simulador.definirTabela(tabelaRemota);
+      atualizarTabelaTaxas();
+      atualizarSimulador();
+    }
+  });
 
   // Event Listeners
   if (btnComprar && btnVender) {

@@ -8,13 +8,15 @@
   },
   "workspaces": [
     "packages/*",
-    "apps/site-publico"
+    "apps/*"
   ],
   "scripts": {
     "verificar:tipos": "tsc -b",
     "verificar:docs": "python scripts/verificar-documentacao.py",
     "testes": "vitest run",
     "build:site": "npm --workspace=@nzaidi/site-publico run build",
+    "build:api": "npm --workspace=@nzaidi/api run build",
+    "iniciar:api": "npm --workspace=@nzaidi/api run start",
     "verificar": "npm run verificar:tipos && npm run testes && npm run verificar:docs"
   },
   "devDependencies": {

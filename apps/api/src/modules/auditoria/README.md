@@ -1,19 +1,15 @@
 # Módulo: Auditoria
 
-**Pasta:** `apps/api/src/modules/auditoria`
-**Estado:** Confirmado.
+**Pasta:** `apps/api/src/modules/auditoria`  
+**Estado:** **Funcional e Testado (Fase 2)**.
 
 ## Responsabilidade
-Registo imutável de quem fez o quê e quando, para prova em inspeções.
+- Registo imutável (append-only) de todas as operações sensíveis do sistema: autenticações bem-sucedidas e falhadas, criação de utilizadores, alterações de taxas e acessos restritos.
+- Fornece histórico cronológico com timestamp ISO, identificador e nome do autor, função, ação, recurso, IP e metadados.
 
 ## Regras de negócio
-Escrever-só: nunca alterar nem apagar eventos.
+- Escrever-só (append-only): registos nunca são apagados nem alterados.
+- Consulta de auditoria estritamente restrita aos perfis `compliance` e `gestao` (docs/07).
 
 ## Depende de
 (nenhum)
-
-## Notas para quem implementar
-- Ler primeiro `docs/05-modulos-e-responsabilidades.md` e `docs/10-regras-financeiras.md`.
-- Este módulo só se comunica com os outros através da sua interface pública. Nunca ler tabelas de outro módulo diretamente.
-- Qualquer decisão nova vai para `docs/15-decisoes-pendentes.md` antes de ser implementada.
-- Estado desta pasta: **sem código** (etapa de estrutura).

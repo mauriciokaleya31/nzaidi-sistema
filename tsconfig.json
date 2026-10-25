@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/dominio" },
     { "path": "packages/design-system" },
-    { "path": "apps/site-publico" }
+    { "path": "apps/site-publico" },
+    { "path": "apps/api" }
   ]
 }

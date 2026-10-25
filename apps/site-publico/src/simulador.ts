@@ -33,6 +33,7 @@ export interface EstadoSimulador {
   cotacao: Cotacao;
   tempoRestanteSegundos: number;
   expirada: boolean;
+  fonteTaxas: "demonstracao" | "oficial";
   erro?: string;
   resultado?: {
     montanteDivisaFormatado: string;
@@ -45,13 +46,14 @@ export interface EstadoSimulador {
 }
 
 export class SimuladorCambio {
-  private tabela = obterTabelaTaxas();
+  private tabela: Record<MoedaDivisa, InfoTaxaMoeda>;
   private cotacao: Cotacao;
   private moeda: MoedaDivisa = "USD";
   private operacao: TipoOperacao = "comprar";
   private montanteTexto = "100";
 
-  constructor() {
+  constructor(tabelaInicial?: Record<MoedaDivisa, InfoTaxaMoeda>) {
+    this.tabela = tabelaInicial ?? obterTabelaTaxas();
     this.cotacao = this.gerarNovaCotacao();
   }
 
@@ -85,6 +87,11 @@ export class SimuladorCambio {
     return this.montanteTexto;
   }
 
+  public definirTabela(novaTabela: Record<MoedaDivisa, InfoTaxaMoeda>): void {
+    this.tabela = novaTabela;
+    this.recotar();
+  }
+
   public getInfoMoeda(m: MoedaDivisa = this.moeda): InfoTaxaMoeda {
     const info = this.tabela[m];
     if (!info) {
@@ -99,8 +106,6 @@ export class SimuladorCambio {
 
   public getTaxaVigente(): Decimal {
     const info = this.getInfoMoeda(this.moeda);
-    // Se o cliente quer comprar divisas, a NZAIDI vende (taxa de venda).
-    // Se o cliente quer vender divisas, a NZAIDI compra (taxa de compra).
     return this.operacao === "comprar" ? info.taxas.venda : info.taxas.compra;
   }
 
@@ -118,6 +123,7 @@ export class SimuladorCambio {
     const expirada = !estaValida(this.cotacao, agora);
     const msRestantes = Math.max(0, this.cotacao.expiraEm.getTime() - agora.getTime());
     const tempoRestanteSegundos = Math.ceil(msRestantes / 1000);
+    const info = this.getInfoMoeda(this.moeda);
 
     const estadoBase: EstadoSimulador = {
       moeda: this.moeda,
@@ -126,6 +132,7 @@ export class SimuladorCambio {
       cotacao: this.cotacao,
       tempoRestanteSegundos,
       expirada,
+      fonteTaxas: info.fonte,
     };
 
     if (expirada) {
@@ -159,7 +166,6 @@ export class SimuladorCambio {
         };
       }
 
-      const info = this.getInfoMoeda(this.moeda);
       let kzTotal: Decimal;
       if (this.operacao === "comprar") {
         kzTotal = kwanzasParaComprarDivisa(info.taxas, textoLimpo);
