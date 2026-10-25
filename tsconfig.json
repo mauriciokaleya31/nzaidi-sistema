@@ -1,0 +1,7 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/dominio" },
+    { "path": "packages/design-system" }
+  ]
+}

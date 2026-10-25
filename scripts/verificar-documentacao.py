@@ -53,13 +53,14 @@ padroes = {
     "IBAN angolano": re.compile(r"\bAO\s?\d{2}[\s\d]{15,}"),
     "N.º de BI": re.compile(r"\b\d{9}[A-Z]{2}\d{3}\b"),
     "Chave privada": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    "Chave privada OpenSSH (corpo)": re.compile("b3BlbnNz" + "aC1rZXktdjE"),  # "openssh-key-v1" em base64, partido para não se detetar a si próprio
     "Token comum": re.compile(r"\b(?:sk_live|sk_test|ghp_|gho_|AKIA)[A-Za-z0-9_]{8,}"),
     "Palavra-passe atribuída": re.compile(r"(?i)\b(?:password|senha|secret|segredo)\s*[:=]\s*[\"']?[A-Za-z0-9!@#$%^&*]{8,}"),
 }
 for pasta, dirs, ficheiros in os.walk(RAIZ):
-    dirs[:] = [d for d in dirs if d not in (".git", "node_modules")]
+    dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "dist")]
     for nome in ficheiros:
-        if nome.lower().endswith((".pdf", ".png", ".jpg", ".zip")):
+        if nome.lower().endswith((".pdf", ".png", ".jpg", ".webp", ".zip")):
             continue
         caminho = os.path.join(pasta, nome)
         try:

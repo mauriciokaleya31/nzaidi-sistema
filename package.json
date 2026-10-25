@@ -1,0 +1,22 @@
+{
+  "name": "nzaidi-sistema",
+  "private": true,
+  "description": "Sistema digital da NZAIDI – Casa de Câmbios & Transferência",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "verificar:tipos": "tsc -b",
+    "verificar:docs": "python scripts/verificar-documentacao.py",
+    "testes": "vitest run",
+    "verificar": "npm run verificar:tipos && npm run testes && npm run verificar:docs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
