@@ -282,6 +282,37 @@ export class AdminApiClient {
     return res.dados;
   }
 
+  // --- Documentos KYC ---
+  public async carregarDocumentoKyc(
+    clienteId: string,
+    payload: {
+      tipoDocumento: string;
+      nomeArquivo: string;
+      conteudoBase64: string;
+    }
+  ): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/clientes/${clienteId}/documentos`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarDocumentosKyc(clienteId: string): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(
+      `/api/v1/clientes/${clienteId}/documentos`,
+      { method: "GET" }
+    );
+    return res.dados;
+  }
+
+  public obterUrlDownloadDocumento(clienteId: string, docId: string): string {
+    return `${this.baseUrl}/api/v1/clientes/${clienteId}/documentos/${docId}/download`;
+  }
+
   // --- Caixa & Tesouraria ---
   public async obterCaixaAtivo(): Promise<CaixaAtivoResposta | null> {
     const res = await this.requisitar<{ sucesso: boolean; dados: CaixaAtivoResposta | null }>("/api/v1/caixa/ativo", {

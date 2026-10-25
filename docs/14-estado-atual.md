@@ -1,14 +1,14 @@
 # 14. Estado atual do projeto
 
-Atualizado em **25/10/2026** (Fase 4, ramo `feat/fase-4-operacoes-balcao-kyc-caixa`). Este ficheiro deve ser atualizado em cada alteração.
+Atualizado em **25/10/2026** (Fase 5, ramo `feat/fase-5-documentos-seguranca-homologacao`). Este ficheiro deve ser atualizado em cada alteração.
 
 ## 1. Repositório oficial
 | Verificação | Resultado |
 | --- | --- |
 | Endereço | `github.com/mauriciokaleya31/nzaidi-sistema` |
 | Visibilidade | **Privado** desde 25/10/2026 (D-01 fechada) |
-| Ramos | `main` (padrão, Etapa 0), `feat/fase-1-fundacao` (Fase 1 concluída), `feat/fase-2-api-auth-taxas` (Fase 2 concluída), `feat/fase-3-painel-administrativo` (Fase 3 concluída), `feat/fase-4-operacoes-balcao-kyc-caixa` (Fase 4 concluída localmente) |
-| Publicação | Etapa 0 na `main`. Fases 1, 2, 3 e 4 desenvolvidas em ramos dedicados com 60 testes aprovados e 0 falhas |
+| Ramos | `main` (padrão, Etapa 0), `feat/fase-1-fundacao` (Fase 1), `feat/fase-2-api-auth-taxas` (Fase 2), `feat/fase-3-painel-administrativo` (Fase 3), `feat/fase-4-operacoes-balcao-kyc-caixa` (Fase 4), `feat/fase-5-documentos-seguranca-homologacao` (Fase 5 concluída localmente) |
+| Publicação | Etapa 0 na `main`. Fases 1 a 5 desenvolvidas em ramos dedicados com 76 testes aprovados e 0 falhas |
 
 ## 1A. Servidor e domínios (verificado e configurado em 25/10/2026)
 | Item | Resultado |
@@ -37,8 +37,10 @@ Atualizado em **25/10/2026** (Fase 4, ramo `feat/fase-4-operacoes-balcao-kyc-cai
 | `packages/design-system`: cores do logótipo, tipografia, componentes base, modo escuro, catálogo | Criado | Visual: abrir `packages/design-system/catalogo.html` |
 | `packages/dominio`: dinheiro em decimal exato, taxas (R-07), cotação de 90 s e recotação (R-08) | Criado | 17 testes unitários passam |
 | `apps/site-publico`: Website institucional responsivo e simulador de câmbio integrado com a API | **Criado e Publicado** | `vite build` aprovado; 5 testes unitários; online em `https://nzaidi.ao` |
-| **`apps/api`**: API Fastify com Autenticação `scrypt`, RBAC, Taxas, Auditoria, Clientes, KYC, Caixa e Operações Cambiais | **Criado e Testado** | 24 testes de integração; `tsc -b` sem erros; persistência relacional com SQLite e transações atómicas |
-| **`apps/admin`**: Painel Administrativo SPA com Balcão de Câmbios, Clientes/KYC, Caixa/Tesouraria, Taxas e Auditoria | **Criado e Testado** | 14 testes automatizados; `vite build` aprovado; integração completa com a API |
+| **`apps/api`**: API Fastify com Autenticação `scrypt`, RBAC, Taxas, Auditoria, Clientes, KYC, Documentos com Magic Bytes, Caixa e Operações Cambiais | **Criado e Homologado** | 40 testes de integração e homologação; `tsc -b` sem erros; persistência relacional com SQLite e transações atómicas |
+| **`apps/admin`**: Painel Administrativo SPA com Balcão de Câmbios, Clientes/KYC com Dossiê Documental, Caixa/Tesouraria, Taxas e Auditoria | **Criado e Testado** | 14 testes automatizados; `vite build` aprovado; integração completa com a API |
+| **`scripts/backup.py`**: Rotina de Cópia de Segurança e Recuperação de Desastre com Verificação SHA-256 | **Criado e Validado** | Autoteste de recuperação atómica aprovado a 100% |
+| **`docs/18-plano-implantacao-producao.md`**: Plano de Produção, Checklist de Infraestrutura e Aviso Regulatório BNA | **Documentado** | Requisitos técnicos, segredos, rollback e limitações regulatórias |
 | Integração contínua (`infra/ci/verificar.yml`): tipos, testes, segredos | Criado, **inativo** | Ativa-se ao mover para `.github/workflows/` (precisa da permissão `workflow` no GitHub) |
 
 ## 4. O que **não** foi feito

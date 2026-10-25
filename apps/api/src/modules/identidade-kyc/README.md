@@ -28,3 +28,6 @@ Módulo responsável pela gestão cadastral de clientes (particulares e empresas
 | `GET` | `/api/v1/clientes/:id` | `clientes:consultar` | Obter ficha detalhada do cliente |
 | `POST` | `/api/v1/clientes/:id/kyc` | `kyc:analisar` | Submeter decisão de aprovação, recusa ou revisão KYC |
 | `GET` | `/api/v1/clientes/:id/kyc/historico`| `clientes:consultar` | Consultar histórico de decisões KYC do cliente |
+| `POST` | `/api/v1/clientes/:id/documentos` | `clientes:criar` | Carregar ficheiro de documento KYC com verificação de magic bytes (PDF, PNG, JPEG, máx. 5MB) |
+| `GET` | `/api/v1/clientes/:id/documentos` | `clientes:consultar` | Listar ficheiros documentais associados ao cliente com hashes SHA-256 |
+| `GET` | `/api/v1/clientes/:id/documentos/:docId/download` | `clientes:consultar` | Transferência segura de documento com verificação de integridade criptográfica |

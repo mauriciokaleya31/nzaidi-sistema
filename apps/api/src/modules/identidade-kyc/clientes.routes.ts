@@ -1,9 +1,14 @@
 import type { FastifyInstance } from "fastify";
 import type { ClientesService } from "./clientes.service.js";
-import { CriarClienteInputSchema, DecisaoKycInputSchema } from "./clientes.types.js";
+import type { DocumentosKycService } from "./documentos.service.js";
+import { CriarClienteInputSchema, DecisaoKycInputSchema, UploadDocumentoInputSchema } from "./clientes.types.js";
 import { exigirAutenticacao, exigirPermissao } from "../../plugins/auth.plugin.js";
 
-export function registrarRotasClientes(app: FastifyInstance, service: ClientesService): void {
+export function registrarRotasClientes(
+  app: FastifyInstance,
+  service: ClientesService,
+  documentosService: DocumentosKycService
+): void {
   // 1. Criar novo cliente
   app.post(
     "/api/v1/clientes",
@@ -109,6 +114,84 @@ export function registrarRotasClientes(app: FastifyInstance, service: ClientesSe
         sucesso: true,
         dados: historico,
       });
+    }
+  );
+
+  // 6. Carregamento de Documento KYC
+  app.post(
+    "/api/v1/clientes/:id/documentos",
+    {
+      preHandler: [exigirAutenticacao, exigirPermissao("clientes:criar")],
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      // Verifica se o cliente existe
+      service.buscarClientePorId(id);
+
+      const validado = UploadDocumentoInputSchema.parse(req.body);
+      const usuario = req.usuario!;
+      const ip = (req.headers["x-forwarded-for"] as string) || req.ip;
+
+      const doc = documentosService.salvarDocumento(id, validado, {
+        id: usuario.id,
+        nome: usuario.nome,
+        funcao: usuario.funcao,
+        ip,
+      });
+
+      return reply.code(201).send({
+        sucesso: true,
+        mensagem: "Documento KYC carregado e validado com sucesso.",
+        dados: doc,
+      });
+    }
+  );
+
+  // 7. Listar Documentos do Cliente
+  app.get(
+    "/api/v1/clientes/:id/documentos",
+    {
+      preHandler: [exigirAutenticacao, exigirPermissao("clientes:consultar")],
+    },
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      service.buscarClientePorId(id);
+
+      const docs = documentosService.listarDocumentos(id);
+
+      return reply.send({
+        sucesso: true,
+        dados: docs,
+      });
+    }
+  );
+
+  // 8. Download Seguro de Documento KYC
+  app.get(
+    "/api/v1/clientes/:id/documentos/:docId/download",
+    {
+      preHandler: [exigirAutenticacao, exigirPermissao("clientes:consultar")],
+    },
+    async (req, reply) => {
+      const { id, docId } = req.params as { id: string; docId: string };
+      service.buscarClientePorId(id);
+
+      const usuario = req.usuario!;
+      const ip = (req.headers["x-forwarded-for"] as string) || req.ip;
+
+      const { doc, buffer } = documentosService.lerConteudoDocumento(docId, {
+        id: usuario.id,
+        nome: usuario.nome,
+        funcao: usuario.funcao,
+        ip,
+      });
+
+      return reply
+        .header("Content-Type", doc.mimeType)
+        .header("Content-Disposition", `attachment; filename="${encodeURIComponent(doc.nomeArquivo)}"`)
+        .header("X-Content-Type-Options", "nosniff")
+        .header("Cache-Control", "private, no-cache, no-store, must-revalidate")
+        .send(buffer);
     }
   );
 }

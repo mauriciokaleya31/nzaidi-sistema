@@ -197,6 +197,53 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
         </form>
       </div>
     </div>
+
+    <!-- Modal Documentos KYC -->
+    <div id="modal-docs" class="modal-overlay d-none">
+      <div class="modal-container" style="max-width: 700px;">
+        <div class="modal-header">
+          <h3 class="modal-title">Dossiê Documental KYC do Cliente</h3>
+          <button id="btn-fechar-modal-docs" class="btn-fechar-modal">&times;</button>
+        </div>
+        <div class="modal-body p-4">
+          <input type="hidden" id="docs-cliente-id" />
+          <h4 id="docs-cliente-nome" class="font-bold mb-3">Documentos Anexados</h4>
+
+          <div id="lista-documentos-container" class="mb-4">
+            <div class="loading-state">A carregar documentos...</div>
+          </div>
+
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+
+          <h4 class="font-bold mb-2">Carregar Novo Documento (PDF, PNG, JPEG máx. 5MB)</h4>
+          <div id="modal-erro-upload" class="alert-box alert-error d-none"></div>
+
+          <form id="form-upload-doc">
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label class="form-label">Tipo Documental</label>
+                <select id="upload-tipo-doc" class="form-select">
+                  <option value="bi_frente">BI — Frente</option>
+                  <option value="bi_verso">BI — Verso</option>
+                  <option value="passaporte">Passaporte (Página Principal)</option>
+                  <option value="nif_empresa">Certidão Comercial / NIF</option>
+                  <option value="comprovativo_morada">Comprovativo de Morada / Residência</option>
+                  <option value="declaracao_rendimentos">Declaração de Rendimentos / Origem Fundos</option>
+                </select>
+              </div>
+              <div class="form-group col-6">
+                <label class="form-label">Ficheiro (PDF, PNG, JPEG)</label>
+                <input type="file" id="upload-input-file" class="form-input" accept=".pdf,image/png,image/jpeg" required />
+              </div>
+            </div>
+
+            <button type="submit" id="btn-enviar-doc" class="btn btn-primary btn-block">
+              Anexar ao Dossiê KYC
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   `;
 
   const containerTabela = container.querySelector<HTMLDivElement>("#tabela-clientes-container");
@@ -275,6 +322,9 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
                   <td><span class="badge badge-info">${c.nivelRisco.toUpperCase()}</span></td>
                   <td><small class="text-muted">${new Date(c.criadoEm).toLocaleDateString("pt-AO")}</small></td>
                   <td>
+                    <button class="btn btn-sm btn-outline-primary btn-ver-docs mr-1" data-id="${c.id}" data-nome="${c.nome}">
+                      Dossiê Docs
+                    </button>
                     ${
                       podeAprovarKyc
                         ? `
@@ -282,7 +332,7 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
                         Avaliar KYC
                       </button>
                     `
-                        : `<span class="text-muted text-sm">-</span>`
+                        : ""
                     }
                   </td>
                 </tr>
@@ -292,6 +342,14 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
           </tbody>
         </table>
       `;
+
+      containerTabela.querySelectorAll(".btn-ver-docs").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-id")!;
+          const nome = btn.getAttribute("data-nome")!;
+          abrirModalDocs(id, nome);
+        });
+      });
 
       if (podeAprovarKyc) {
         containerTabela.querySelectorAll(".btn-analisar-kyc").forEach((btn) => {
@@ -306,6 +364,102 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
       containerTabela.innerHTML = `<p class="p-4 text-danger">Erro ao carregar lista de clientes.</p>`;
     }
   }
+
+  const modalDocs = container.querySelector<HTMLDivElement>("#modal-docs");
+  const btnFecharDocs = container.querySelector<HTMLButtonElement>("#btn-fechar-modal-docs");
+  const docsClienteId = container.querySelector<HTMLInputElement>("#docs-cliente-id");
+  const docsClienteNome = container.querySelector<HTMLElement>("#docs-cliente-nome");
+  const listaDocsContainer = container.querySelector<HTMLDivElement>("#lista-documentos-container");
+  const formUploadDoc = container.querySelector<HTMLFormElement>("#form-upload-doc");
+  const modalErroUpload = container.querySelector<HTMLDivElement>("#modal-erro-upload");
+
+  btnFecharDocs?.addEventListener("click", () => modalDocs?.classList.add("d-none"));
+
+  async function abrirModalDocs(id: string, nome: string): Promise<void> {
+    if (!modalDocs || !docsClienteId || !docsClienteNome || !listaDocsContainer) return;
+    docsClienteId.value = id;
+    docsClienteNome.textContent = `Dossiê KYC: ${nome}`;
+    modalErroUpload?.classList.add("d-none");
+    modalDocs.classList.remove("d-none");
+
+    await carregarDocumentosDoCliente(id);
+  }
+
+  async function carregarDocumentosDoCliente(clienteId: string): Promise<void> {
+    if (!listaDocsContainer) return;
+    listaDocsContainer.innerHTML = `<div class="loading-state">A consultar ficheiros anexados...</div>`;
+
+    try {
+      const docs = await api.listarDocumentosKyc(clienteId);
+      if (!docs || docs.length === 0) {
+        listaDocsContainer.innerHTML = `<p class="text-sm text-muted">Nenhum documento físico ou comprovativo anexado a este cadastro.</p>`;
+        return;
+      }
+
+      listaDocsContainer.innerHTML = `
+        <div class="docs-list" style="display: flex; flex-direction: column; gap: 8px;">
+          ${docs
+            .map((d: any) => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+              <div>
+                <strong>${d.tipoDocumento.toUpperCase()}</strong>: ${d.nomeArquivo}
+                <div style="font-size: 0.75rem; color: #64748b;">
+                  Tamanho: ${(d.tamanhoBytes / 1024).toFixed(1)} KB | Data: ${new Date(d.enviadoEm).toLocaleString("pt-AO")}
+                </div>
+              </div>
+              <a href="${api.obterUrlDownloadDocumento(clienteId, d.id)}" target="_blank" class="btn btn-sm btn-secondary">
+                Descarregar
+              </a>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    } catch {
+      listaDocsContainer.innerHTML = `<p class="text-sm text-danger">Erro ao listar documentos do cliente.</p>`;
+    }
+  }
+
+  formUploadDoc?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!docsClienteId || !modalErroUpload) return;
+    const inputFile = container.querySelector<HTMLInputElement>("#upload-input-file");
+    const selectTipoDoc = container.querySelector<HTMLSelectElement>("#upload-tipo-doc");
+
+    if (!inputFile?.files || inputFile.files.length === 0 || !inputFile.files[0]) {
+      modalErroUpload.textContent = "Selecione um ficheiro PDF, PNG ou JPEG.";
+      modalErroUpload.classList.remove("d-none");
+      return;
+    }
+
+    const file = inputFile.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      modalErroUpload.textContent = "O ficheiro excede o tamanho máximo de 5MB.";
+      modalErroUpload.classList.remove("d-none");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64String = (reader.result as string).split(",")[1];
+        if (!base64String) throw new Error("Falha ao ler dados do ficheiro.");
+
+        await api.carregarDocumentoKyc(docsClienteId.value, {
+          tipoDocumento: selectTipoDoc?.value || "bi_frente",
+          nomeArquivo: file.name,
+          conteudoBase64: base64String,
+        });
+
+        modalErroUpload.classList.add("d-none");
+        inputFile.value = "";
+        await carregarDocumentosDoCliente(docsClienteId.value);
+      } catch (err) {
+        modalErroUpload.textContent = err instanceof ApiError ? err.message : "Erro ao carregar documento.";
+        modalErroUpload.classList.remove("d-none");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 
   function abrirModalKyc(id: string, nome: string): void {
     if (!modalKyc || !kycClienteId || !kycClienteNome || !kycMotivo) return;

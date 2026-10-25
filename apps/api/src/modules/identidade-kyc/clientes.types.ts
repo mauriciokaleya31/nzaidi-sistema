@@ -51,6 +51,35 @@ export interface RegistoKyc {
   momento: string;
 }
 
+export interface DocumentoKyc {
+  id: string;
+  clienteId: string;
+  tipoDocumento: string;
+  nomeArquivo: string;
+  caminhoSeguro: string;
+  tamanhoBytes: number;
+  mimeType: string;
+  hashSha256: string;
+  estadoValidacao: "pendente" | "valido" | "invalido";
+  enviadoEm: string;
+  enviadoPorId: string;
+}
+
+export const UploadDocumentoInputSchema = z.object({
+  tipoDocumento: z.enum([
+    "bi_frente",
+    "bi_verso",
+    "passaporte",
+    "nif_empresa",
+    "comprovativo_morada",
+    "declaracao_rendimentos",
+  ]),
+  nomeArquivo: z.string().min(1, "Nome do ficheiro é obrigatório").max(255),
+  conteudoBase64: z.string().min(1, "Conteúdo do ficheiro é obrigatório"),
+});
+
+export type UploadDocumentoInput = z.infer<typeof UploadDocumentoInputSchema>;
+
 export const CriarClienteInputSchema = z.object({
   tipo: TipoClienteSchema,
   nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),

@@ -12,6 +12,9 @@ credenciais/
 # Dados e cópias
 data/
 backups/
+storage/
+*.sqlite
+*.sqlite-*
 *.sql.gz
 *.dump
 reports/

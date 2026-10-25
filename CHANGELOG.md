@@ -3,6 +3,36 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
+## [Não publicado] — Fase 5: documentos KYC, segurança, persistência e homologação (ramo `feat/fase-5-documentos-seguranca-homologacao`)
+### Adicionado
+- **Gestão Documental KYC Segura (`apps/api/src/modules/identidade-kyc/documentos.service.ts`)**:
+  - Upload e armazenamento seguro de ficheiros de identidade (BI, Passaporte, NIF, Alvará comercial).
+  - Validação rigorosa de magic bytes binários contra ficheiros maliciosos disfarçados (PDF `%PDF-`, PNG `0x89PNG`, JPEG `0xFF, 0xD8, 0xFF`).
+  - Limite estrito de tamanho de 5 MB por ficheiro.
+  - Armazenamento com nomes em UUID criptográfico fora da raiz pública web (`storage/documentos_kyc/doc_{uuid}.bin`).
+  - Geração e verificação de integridade através de checksum criptográfico SHA-256 no carregamento e no descarregamento.
+  - Endpoints dedicados: `POST /api/v1/clientes/:id/documentos`, `GET /api/v1/clientes/:id/documentos` e `GET /api/v1/clientes/:id/documentos/:docId/download` com cabeçalhos de segurança (`X-Content-Type-Options: nosniff`, `Cache-Control: private, no-store`).
+- **Interface de Dossiê Documental no Painel Administrativo (`apps/admin`)**:
+  - Modal "Dossiê Docs" na vista de clientes (`#clientes`), permitindo submissão direta de ficheiros codificados em Base64 através do browser.
+  - Listagem dos documentos anexados com indicação de tipo, tamanho, data de envio e botão de transferência segura.
+- **Suite de Homologação Ponta a Ponta (`apps/api/test/homologacao.test.ts`)**:
+  - 16 testes exaustivos cobrindo o fluxo operacional completo:
+    1. Autenticação, proteção contra enumeração e revogação de sessão no logout.
+    2. Upload de documento genuíno, rejeição de magic bytes falsos, rejeição de payloads >5MB, integridade SHA-256 e aprovação de KYC por Compliance.
+    3. Contabilidade de caixa, rejeição de caixas simultâneos e bloqueio de sangrias a descoberto.
+    4. Cotação expirada (>90s) rejeitada, compra de divisas com débitos/créditos atómicos e borderô SHA-256, idempotência de transação e rollback atómico em caso de erro no SQLite.
+    5. Estorno de operação cambial pela Tesouraria com compensação em caixa.
+    6. Segregação de funções e bloqueio de acesso de atendentes à auditoria regulatória.
+- **Script de Cópia de Segurança e Recuperação (`scripts/backup.py`)**:
+  - Cópia consistente da base SQLite e dos ficheiros KYC com carimbo ISO 8601.
+  - Geração de manifesto com hashes SHA-256 de cada elemento e do arquivo compactado (`tar.gz`).
+  - Rotina de verificação e restauração atómica com opção de autoteste (`--testar`).
+- **Guia de Implantação e Produção (`docs/18-plano-implantacao-producao.md`)**:
+  - Requisitos de infraestrutura (Node.js 22 LTS, CloudLinux/cPanel, Ubuntu/Debian, Nginx, HTTPS/SSL).
+  - Variáveis de ambiente de produção, procedimentos de publicação, gestão de processos PM2, rotinas de contingência/DR e aviso regulatório formal do BNA/UIF.
+- **Total de Testes Automatizados**:
+  - 76 testes aprovados em 9 suites de teste (100% de sucesso).
+
 ## [Não publicado] — Fase 4: operações de balcão, clientes, KYC, borderôs e fecho de caixa (ramo `feat/fase-4-operacoes-balcao-kyc-caixa`)
 ### Adicionado
 - **Módulo de Clientes e KYC (`apps/api/src/modules/identidade-kyc`)**:

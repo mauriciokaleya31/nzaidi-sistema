@@ -15,6 +15,7 @@ import { AuditoriaRepository } from "./modules/auditoria/auditoria.repository.js
 import { TaxasRepository, TaxasService } from "./modules/taxas-cambio/taxas.service.js";
 import { ClientesRepository } from "./modules/identidade-kyc/clientes.repository.js";
 import { ClientesService } from "./modules/identidade-kyc/clientes.service.js";
+import { DocumentosKycService } from "./modules/identidade-kyc/documentos.service.js";
 import { CaixaRepository } from "./modules/contabilidade-tesouraria/caixa.repository.js";
 import { CaixaService } from "./modules/contabilidade-tesouraria/caixa.service.js";
 import { OperacoesRepository } from "./modules/operacoes-cambio/operacoes.repository.js";
@@ -81,6 +82,7 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   const taxasService = new TaxasService(taxasRepo);
   const clientesRepo = new ClientesRepository(db);
   const clientesService = new ClientesService(clientesRepo, auditoriaRepo);
+  const documentosService = new DocumentosKycService(db, auditoriaRepo);
   const caixaRepo = new CaixaRepository(db);
   const caixaService = new CaixaService(db, caixaRepo, auditoriaRepo);
   const operacoesRepo = new OperacoesRepository(db);
@@ -102,7 +104,7 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   registrarRotasAuth(app, usersRepo, sessionsRepo, auditoriaRepo, env.ADMIN_INIT_TOKEN, env.SESSION_TTL_HOURS);
   registrarRotasTaxas(app, taxasService, auditoriaRepo);
   registrarRotasAuditoria(app, auditoriaRepo);
-  registrarRotasClientes(app, clientesService);
+  registrarRotasClientes(app, clientesService, documentosService);
   registrarRotasCaixa(app, caixaService);
   registrarRotasOperacoes(app, operacoesService);
 

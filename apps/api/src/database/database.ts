@@ -120,10 +120,13 @@ export function inicializarSchema(db: DatabaseSync): void {
       caminho_seguro TEXT NOT NULL,
       tamanho_bytes INTEGER NOT NULL,
       mime_type TEXT NOT NULL,
+      hash_sha256 TEXT NOT NULL,
+      estado_validacao TEXT NOT NULL DEFAULT 'pendente' CHECK(estado_validacao IN ('pendente', 'valido', 'invalido')),
       enviado_em TEXT NOT NULL,
       enviado_por_id TEXT NOT NULL,
       FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
     );
+    CREATE INDEX IF NOT EXISTS idx_kyc_documentos_cliente ON kyc_documentos(cliente_id);
   `);
 
   // --- Fase 4: Gestão de Caixa e Movimentos ---
