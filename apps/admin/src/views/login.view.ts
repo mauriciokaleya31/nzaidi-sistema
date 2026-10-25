@@ -6,56 +6,88 @@ export function renderizarLogin(container: HTMLElement): void {
     <div class="login-wrapper">
       <div class="login-card">
         <div class="login-header">
-          <div class="brand-badge-circle brand-badge-large">NZ</div>
+          <div class="login-logo-container">
+            <div class="brand-badge-circle brand-badge-large">NZ</div>
+          </div>
           <h1 class="login-title">NZAIDI CÂMBIOS</h1>
           <p class="login-subtitle">Sistema Integrado de Gestão & Operações Cambiais</p>
-          <div class="login-bna-badge">Instituição Não Bancária Sujeita à Supervisão do BNA</div>
+          <div class="login-bna-badge">
+            <svg class="bna-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Instituição Não Bancária Sujeita à Supervisão do BNA
+          </div>
         </div>
 
         <div id="login-alerta" class="alert-box alert-error d-none"></div>
 
-        <form id="form-login" class="login-form">
+        <form id="form-login" class="login-form" novalidate>
           <div class="form-group">
             <label for="input-email" class="form-label">Correio Electrónico Institucional</label>
-            <input 
-              type="email" 
-              id="input-email" 
-              class="form-input" 
-              placeholder="utilizador@nzaidi.ao" 
-              required 
-              autocomplete="username"
-            />
+            <div class="input-with-icon">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <input 
+                type="email" 
+                id="input-email" 
+                class="form-input" 
+                placeholder="operador@nzaidi.ao" 
+                required 
+                autocomplete="username"
+              />
+            </div>
           </div>
 
           <div class="form-group">
             <label for="input-senha" class="form-label">Palavra-passe de Acesso</label>
-            <input 
-              type="password" 
-              id="input-senha" 
-              class="form-input" 
-              placeholder="••••••••••••" 
-              required 
-              autocomplete="current-password"
-            />
+            <div class="input-with-icon input-password-group">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <input 
+                type="password" 
+                id="input-senha" 
+                class="form-input" 
+                placeholder="Introduza a sua credencial" 
+                required 
+                autocomplete="current-password"
+              />
+              <button type="button" id="btn-toggle-senha" class="btn-toggle-senha" title="Mostrar ou ocultar palavra-passe" aria-label="Mostrar ou ocultar palavra-passe">
+                <svg id="eye-icon" class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg id="eye-off-icon" class="eye-icon d-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
           </div>
 
-          <button type="submit" id="btn-submit-login" class="btn btn-primary btn-block">
+          <button type="submit" id="btn-submit-login" class="btn btn-primary btn-block btn-lg">
             <span class="btn-text">Autenticar no Sistema</span>
-            <span class="btn-spinner d-none">A autenticar...</span>
+            <span class="btn-spinner d-none">
+              <svg class="spinner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2a10 10 0 0 1 10 10"></path>
+              </svg>
+              A autenticar...
+            </span>
           </button>
         </form>
 
-        <div class="login-profiles-hint">
-          <h4 class="hint-title">Perfis Operacionais Disponíveis:</h4>
-          <div class="hint-grid">
-            <div class="hint-pill"><strong>Gestão:</strong> gestao@nzaidi.ao</div>
-            <div class="hint-pill"><strong>Compliance:</strong> compliance@nzaidi.ao</div>
-            <div class="hint-pill"><strong>Tesouraria:</strong> tesouraria@nzaidi.ao</div>
-            <div class="hint-pill"><strong>Atendente:</strong> atendente@nzaidi.ao</div>
-          </div>
-        </div>
-
         <div class="login-footer">
+          <div class="security-indicator">
+            <svg class="sec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            Sessão encriptada com proteção RBAC e auditoria contínua
+          </div>
           <small>© 2026 NZAIDI — Casa de Câmbios & Transferência, Lda. Todos os direitos reservados.</small>
         </div>
       </div>
@@ -67,6 +99,23 @@ export function renderizarLogin(container: HTMLElement): void {
   const btnSubmit = container.querySelector<HTMLButtonElement>("#btn-submit-login");
   const inputEmail = container.querySelector<HTMLInputElement>("#input-email");
   const inputSenha = container.querySelector<HTMLInputElement>("#input-senha");
+  const btnToggle = container.querySelector<HTMLButtonElement>("#btn-toggle-senha");
+  const eyeIcon = container.querySelector<SVGElement>("#eye-icon");
+  const eyeOffIcon = container.querySelector<SVGElement>("#eye-off-icon");
+
+  // Alternar visibilidade da senha
+  btnToggle?.addEventListener("click", () => {
+    if (!inputSenha || !eyeIcon || !eyeOffIcon) return;
+    const estaVisivel = inputSenha.type === "text";
+    inputSenha.type = estaVisivel ? "password" : "text";
+    if (estaVisivel) {
+      eyeIcon.classList.remove("d-none");
+      eyeOffIcon.classList.add("d-none");
+    } else {
+      eyeIcon.classList.add("d-none");
+      eyeOffIcon.classList.remove("d-none");
+    }
+  });
 
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
