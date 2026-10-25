@@ -31,6 +31,7 @@ Estes documentos são a referência permanente do projeto. Qualquer agente ou pr
 | 14 | [Estado atual](14-estado-atual.md) | Diagnóstico e o que existe onde |
 | 15 | [Decisões pendentes](15-decisoes-pendentes.md) | O que falta decidir e as contradições |
 | 16 | [Registo de decisões](16-registo-de-decisoes.md) | O que já está decidido |
+| 17 | [Passagem para o Claude Code](17-passagem-para-claude-code.md) | Resumo para continuar o trabalho noutra ferramenta |
 | — | [Decisões de arquitetura](adr/README.md) | ADR (propostos) |
 
 ## Regra de manutenção

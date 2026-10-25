@@ -33,6 +33,7 @@ Atualizado em **25/10/2026** (Etapa 0). Este ficheiro deve ser atualizado em cad
 - Documentação `docs/00` a `docs/16` e `docs/adr/`.
 - `README.md`, `AGENTS.md`, `SECURITY.md`, `CHANGELOG.md`, `.gitignore`, `config/env.example`.
 - `scripts/verificar-documentacao.py`.
+- `CLAUDE.md` e `docs/17-passagem-para-claude-code.md`.
 
 ## 4. O que **não** foi feito
 - Nenhum código funcional criado ou importado.

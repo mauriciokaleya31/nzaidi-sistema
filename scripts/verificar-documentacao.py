@@ -23,7 +23,7 @@ OBRIGATORIOS = [
     "docs/07-contas-e-permissoes.md", "docs/08-autenticacao-e-seguranca.md",
     "docs/09-modelo-de-dados.md", "docs/10-regras-financeiras.md", "docs/11-integracoes.md",
     "docs/12-plano-de-testes.md", "docs/13-plano-de-execucao.md", "docs/14-estado-atual.md",
-    "docs/15-decisoes-pendentes.md", "docs/16-registo-de-decisoes.md", "docs/adr/README.md",
+    "docs/15-decisoes-pendentes.md", "docs/16-registo-de-decisoes.md", "docs/17-passagem-para-claude-code.md", "CLAUDE.md", "docs/adr/README.md",
 ]
 for f in OBRIGATORIOS:
     if not os.path.isfile(os.path.join(RAIZ, f)):

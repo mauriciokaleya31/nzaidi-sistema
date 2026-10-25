@@ -11,7 +11,8 @@ Sistema digital da NZAIDI: câmbio de divisas, remessas internacionais, conta e 
 1. `docs/00-LEIA-ME.md`: índice e legenda (Confirmado, Proposta, Condicionado, Pendente).
 2. `docs/01-visao-geral-e-objetivos.md`: o que é o projeto.
 3. `docs/13-plano-de-execucao.md`: fases e próximo passo.
-4. `AGENTS.md`: regras para qualquer agente ou programador que trabalhe aqui.
+4. `AGENTS.md` e `CLAUDE.md`: regras para qualquer agente ou programador que trabalhe aqui.
+5. `docs/17-passagem-para-claude-code.md`: resumo para continuar o trabalho no Claude Code.
 
 ## Áreas do sistema
 | Área | Pasta | Estado |

@@ -11,6 +11,7 @@ Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual
 - Documento de funcionamento do sistema em `docs/02-negocio/referencias/` (PDF). O plano de negócio ficou de fora de propósito (dados societários).
 - `README.md`, `AGENTS.md`, `SECURITY.md`, `.gitignore`, `config/env.example`.
 - `scripts/verificar-documentacao.py` (verifica ligações e segredos).
+- `CLAUDE.md` e `docs/17-passagem-para-claude-code.md` (passagem para o Claude Code).
 
 ### Não alterado
 - Nenhum código funcional foi criado ou importado nesta etapa.
