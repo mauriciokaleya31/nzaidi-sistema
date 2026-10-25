@@ -132,9 +132,10 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
     .join("");
 
   container.innerHTML = `
-    <aside class="sidebar">
+    <div class="sidebar-fundo" id="sidebar-fundo"></div>
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-badge-circle">NZ</div>
+        <img class="sidebar-logo" src="/simbolo.png" alt="" width="44" height="44" />
         <div class="brand-meta">
           <div class="brand-title">NZAIDI CÂMBIOS</div>
           <div class="brand-sub">Casa de Câmbios, Lda.</div>
@@ -158,4 +159,10 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
       </div>
     </aside>
   `;
+
+  // Telemóvel: fechar o menu ao tocar no fundo escurecido
+  container.querySelector("#sidebar-fundo")?.addEventListener("click", () => {
+    container.querySelector("#sidebar")?.classList.remove("open");
+    container.querySelector("#sidebar-fundo")?.classList.remove("visivel");
+  });
 }

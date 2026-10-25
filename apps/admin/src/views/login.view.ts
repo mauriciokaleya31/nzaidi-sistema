@@ -4,12 +4,34 @@ import { authState } from "../state/auth.state.js";
 export function renderizarLogin(container: HTMLElement): void {
   container.innerHTML = `
     <div class="login-wrapper">
+      <aside class="login-visual" aria-hidden="true">
+        <div class="login-visual-marca">
+          <img src="/simbolo.png" alt="" width="52" height="52" />
+          <div>
+            <strong>NZAIDI</strong>
+            <span>Casa de Câmbios</span>
+          </div>
+        </div>
+        <div class="login-visual-texto">
+          <h2>Backoffice de <em>operações cambiais</em></h2>
+          <p>Balcão, clientes, tesouraria, taxas e auditoria num único ambiente seguro.</p>
+        </div>
+        <div class="login-lema"><span>Confiança</span><span>Segurança</span><span>Agilidade</span></div>
+        <div class="login-cena">
+          <div class="login-anel"></div>
+          <div class="login-anel login-anel--2"></div>
+          <div class="login-moeda login-moeda--a">$</div>
+          <div class="login-moeda login-moeda--b">€</div>
+          <div class="login-moeda login-moeda--c">Kz</div>
+        </div>
+      </aside>
+      <div class="login-painel">
       <div class="login-card">
         <div class="login-header">
           <div class="login-logo-container">
             <div class="brand-badge-circle brand-badge-large">NZ</div>
           </div>
-          <h1 class="login-title">NZAIDI CÂMBIOS</h1>
+          <h1 class="login-title">Iniciar sessão</h1>
           <p class="login-subtitle">Sistema Integrado de Gestão & Operações Cambiais</p>
           <div class="login-bna-badge">
             <svg class="bna-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -90,6 +112,7 @@ export function renderizarLogin(container: HTMLElement): void {
           </div>
           <small>© 2026 NZAIDI — Casa de Câmbios & Transferência, Lda. Todos os direitos reservados.</small>
         </div>
+      </div>
       </div>
     </div>
   `;

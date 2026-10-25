@@ -22,9 +22,18 @@ export function renderizarCabecalho(container: HTMLElement): void {
   }
 
   const badge = obterEtiquetaFuncao(usuario.funcao);
+  const iniciais = usuario.nome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p.charAt(0).toUpperCase())
+    .join("");
 
   container.innerHTML = `
     <header class="app-header">
+      <button id="btn-menu-lateral" class="btn-menu-lateral" type="button" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
       <div class="header-branding">
         <span class="header-logo-text">NZAIDI</span>
         <span class="header-divider">/</span>
@@ -36,6 +45,7 @@ export function renderizarCabecalho(container: HTMLElement): void {
           <span class="user-name">${usuario.nome}</span>
           <span class="badge ${badge.classe}">${badge.label}</span>
         </div>
+        <span class="user-avatar" aria-hidden="true">${iniciais}</span>
 
         <button id="btn-logout" class="btn-logout" title="Terminar Sessão">
           <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -48,6 +58,14 @@ export function renderizarCabecalho(container: HTMLElement): void {
       </div>
     </header>
   `;
+
+  // Telemóvel: abrir e fechar o menu lateral
+  const btnMenu = container.querySelector<HTMLButtonElement>("#btn-menu-lateral");
+  btnMenu?.addEventListener("click", () => {
+    const aberto = document.getElementById("sidebar")?.classList.toggle("open") ?? false;
+    document.getElementById("sidebar-fundo")?.classList.toggle("visivel", aberto);
+    btnMenu.setAttribute("aria-expanded", String(aberto));
+  });
 
   const btnLogout = container.querySelector("#btn-logout");
   btnLogout?.addEventListener("click", async () => {
