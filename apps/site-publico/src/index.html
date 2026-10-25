@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="pt-AO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NZAIDI · Casa de Câmbios em Luanda</title>
+    <meta
+      name="description"
+      content="NZAIDI – Casa de Câmbios & Transferência, Lda. Compra e venda de dólares e euros, remessas internacionais e atendimento na Maianga, Luanda."
+    />
+    <meta name="theme-color" content="#052D62" />
+    <link rel="icon" href="marca/assets/favicon-64.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap"
+    />
+    <link rel="stylesheet" href="marca/tokens.css" />
+    <link rel="stylesheet" href="marca/componentes.css" />
+    <link rel="stylesheet" href="estilo.css" />
+  </head>
+  <body>
+    <a class="saltar" href="#conteudo">Saltar para o conteúdo</a>
+
+    <!-- ============ Cabeçalho ============ -->
+    <header class="cabecalho" id="cabecalho">
+      <div class="nz-contentor cabecalho__linha">
+        <a class="marca" href="#inicio" aria-label="NZAIDI, página inicial">
+          <img src="marca/assets/simbolo.png" alt="" width="44" height="44" />
+          <span class="marca__texto">
+            <strong>NZAIDI</strong>
+            <small>Casa de Câmbios</small>
+          </span>
+        </a>
+        <nav class="menu" id="menu" aria-label="Principal">
+          <a href="#taxas">Taxas</a>
+          <a href="#servicos">Serviços</a>
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#loja">A loja</a>
+          <a href="#perguntas">Perguntas</a>
+          <a class="nz-botao nz-botao--primario menu__acao" href="https://app.nzaidi.ao" data-app>Entrar</a>
+        </nav>
+        <button class="menu-botao" id="menu-botao" type="button" aria-controls="menu" aria-expanded="false">
+          <span class="sr">Abrir menu</span>
+          <span class="menu-botao__barras" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <!-- ============ Destaque ============ -->
+      <section class="destaque" id="inicio">
+        <div class="destaque__fundo" aria-hidden="true"></div>
+        <div class="nz-contentor destaque__grelha">
+          <div class="destaque__texto">
+            <p class="selo"><span class="selo__ponto"></span> Casa de câmbios licenciada · Maianga, Luanda</p>
+            <h1>
+              O seu câmbio em <span class="realce">mãos de confiança</span>.
+            </h1>
+            <p class="destaque__lead">
+              Compre e venda dólares e euros com taxas claras, envie remessas para o estrangeiro e seja atendido com
+              rapidez na nossa loja em Luanda.
+            </p>
+            <div class="destaque__acoes">
+              <a class="nz-botao nz-botao--primario nz-botao--grande" href="#taxas">Ver taxas do dia</a>
+              <a class="nz-botao nz-botao--secundario nz-botao--grande" href="#loja">Visitar a loja</a>
+            </div>
+            <ul class="destaque__provas">
+              <li><strong>Confiança</strong><span>Taxas transparentes, sem surpresas</span></li>
+              <li><strong>Segurança</strong><span>Operações registadas e verificadas</span></li>
+              <li><strong>Agilidade</strong><span>Atendimento rápido ao balcão</span></li>
+            </ul>
+          </div>
+
+          <!-- Cena 3D -->
+          <div class="cena" id="cena" aria-hidden="true">
+            <div class="cena__palco" id="palco">
+              <div class="cena__aura"></div>
+              <div class="cartao3d">
+                <div class="cartao3d__face">
+                  <div class="cartao3d__topo">
+                    <img src="marca/assets/simbolo.png" alt="" width="40" height="40" />
+                    <span>NZAIDI</span>
+                  </div>
+                  <div class="cartao3d__chip"></div>
+                  <div class="cartao3d__numero">•••• •••• •••• 2026</div>
+                  <div class="cartao3d__rodape">
+                    <span>Casa de Câmbios</span>
+                    <span class="cartao3d__padrao"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="painel3d">
+                <div class="painel3d__titulo">Taxas do dia</div>
+                <div class="painel3d__linha"><span>USD</span><span class="painel3d__barra"></span></div>
+                <div class="painel3d__linha"><span>EUR</span><span class="painel3d__barra painel3d__barra--curta"></span></div>
+                <div class="painel3d__estado">Cotação válida 90 s</div>
+              </div>
+              <div class="moeda moeda--usd"><span>$</span></div>
+              <div class="moeda moeda--eur"><span>€</span></div>
+              <div class="moeda moeda--kz"><span>Kz</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Taxas ============ -->
+      <section class="seccao" id="taxas">
+        <div class="nz-contentor">
+          <header class="seccao__cabeca">
+            <p class="nz-filete">Taxas de câmbio</p>
+            <h2>Tabela do dia</h2>
+            <p>Uma única tabela alimenta o balcão, a aplicação e este site. A taxa de referência é a do Banco Nacional de Angola.</p>
+          </header>
+
+          <div class="taxas">
+            <div class="nz-cartao taxas__tabela">
+              <div class="taxas__estado" id="taxas-estado" role="status"></div>
+              <div class="nz-tabela-envoltorio">
+                <table class="nz-tabela">
+                  <caption class="sr">Taxas de câmbio do dia em kwanzas</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Moeda</th>
+                      <th scope="col" class="nz-valor">Compramos</th>
+                      <th scope="col" class="nz-valor">Vendemos</th>
+                      <th scope="col" class="nz-valor oculta-telemovel">Referência BNA</th>
+                    </tr>
+                  </thead>
+                  <tbody id="taxas-corpo"></tbody>
+                </table>
+              </div>
+              <p class="taxas__nota" id="taxas-nota"></p>
+            </div>
+
+            <form class="nz-cartao conversor" id="conversor" novalidate>
+              <h3>Conversor indicativo</h3>
+              <div class="conversor__sentido" role="radiogroup" aria-label="Operação">
+                <label><input type="radio" name="sentido" value="comprar" checked /> <span>Quero comprar divisa</span></label>
+                <label><input type="radio" name="sentido" value="vender" /> <span>Quero vender divisa</span></label>
+              </div>
+              <div class="conversor__linha">
+                <div class="nz-campo">
+                  <label for="conv-montante">Montante em divisa</label>
+                  <input class="nz-entrada" id="conv-montante" inputmode="decimal" autocomplete="off" placeholder="100,00" />
+                </div>
+                <div class="nz-campo">
+                  <label for="conv-moeda">Moeda</label>
+                  <select class="nz-seletor" id="conv-moeda">
+                    <option value="USD">USD · Dólar</option>
+                    <option value="EUR">EUR · Euro</option>
+                  </select>
+                </div>
+              </div>
+              <div class="conversor__resultado" id="conv-resultado" aria-live="polite">
+                <span class="conversor__rotulo">Valor indicativo</span>
+                <strong id="conv-valor">—</strong>
+              </div>
+              <p class="nz-campo__ajuda">
+                Valor apenas indicativo. A taxa final é a da cotação no momento da operação, válida durante 90 segundos.
+              </p>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Serviços ============ -->
+      <section class="seccao seccao--suave" id="servicos">
+        <div class="nz-contentor">
+          <header class="seccao__cabeca">
+            <p class="nz-filete">Serviços</p>
+            <h2>Tudo o que precisa para o seu dinheiro atravessar fronteiras</h2>
+          </header>
+          <div class="servicos">
+            <article class="servico" data-inclinar>
+              <div class="servico__icone" aria-hidden="true">
+                <svg viewBox="0 0 48 48"><path d="M10 18h24l-6-6M38 30H14l6 6" /></svg>
+              </div>
+              <h3>Compra e venda de divisas</h3>
+              <p>Dólares e euros ao balcão, com taxa de compra e de venda sempre visíveis e recibo de cada operação.</p>
+            </article>
+            <article class="servico" data-inclinar>
+              <div class="servico__icone" aria-hidden="true">
+                <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="14" /><path d="M10 24h28M24 10c5 4 5 24 0 28M24 10c-5 4-5 24 0 28" /></svg>
+              </div>
+              <h3>Remessas internacionais</h3>
+              <p>Envie dinheiro para o estrangeiro a partir da loja, com acompanhamento até à chegada ao beneficiário.</p>
+            </article>
+            <article class="servico" data-inclinar>
+              <div class="servico__icone" aria-hidden="true">
+                <svg viewBox="0 0 48 48"><rect x="8" y="13" width="32" height="22" rx="4" /><path d="M8 20h32M14 29h8" /></svg>
+              </div>
+              <h3>Conta internacional e cartões</h3>
+              <p>Conta em várias moedas e cartão para pagar no estrangeiro.</p>
+              <span class="nz-estado nz-estado--pendente">Brevemente · sujeito a acordo com o parceiro</span>
+            </article>
+            <article class="servico" data-inclinar>
+              <div class="servico__icone" aria-hidden="true">
+                <svg viewBox="0 0 48 48"><rect x="10" y="8" width="28" height="32" rx="4" /><path d="M16 16h16M16 23h16M16 30h9" /></svg>
+              </div>
+              <h3>Pagamento em kwanzas</h3>
+              <p>Numerário no balcão. Multicaixa Express, referência Multicaixa e transferência bancária a seguir.</p>
+              <span class="nz-estado nz-estado--info">Numerário disponível · restantes em preparação</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Remessas (destaque visual) ============ -->
+      <section class="seccao" id="remessas">
+        <div class="nz-contentor duas-colunas">
+          <figure class="ilustracao ilustracao--globo">
+            <img src="img/globo-remessas.svg" alt="Globo com remessas a partir de Luanda" width="480" height="400" loading="lazy" />
+          </figure>
+          <div>
+            <p class="nz-filete">Remessas</p>
+            <h2>De Luanda para o mundo, com cada passo registado</h2>
+            <ul class="lista-visto">
+              <li>Pedido feito ao balcão, com identificação do remetente.</li>
+              <li>Verificação de segurança antes de qualquer envio.</li>
+              <li>Execução através de parceiros de transferência internacionais.</li>
+              <li>Estado da remessa acompanhado até à conclusão.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Como funciona ============ -->
+      <section class="seccao seccao--escura" id="como-funciona">
+        <div class="nz-contentor">
+          <header class="seccao__cabeca seccao__cabeca--claro">
+            <p class="nz-filete">Como funciona</p>
+            <h2>Quatro passos, sem complicações</h2>
+          </header>
+          <ol class="passos">
+            <li class="passo">
+              <span class="passo__numero">1</span>
+              <h3>Consulte a taxa</h3>
+              <p>Veja a tabela do dia aqui ou na montra da loja.</p>
+            </li>
+            <li class="passo">
+              <span class="passo__numero">2</span>
+              <h3>Identifique-se</h3>
+              <p>Traga o seu Bilhete de Identidade. É obrigatório por lei.</p>
+            </li>
+            <li class="passo">
+              <span class="passo__numero">3</span>
+              <h3>Confirme a cotação</h3>
+              <p>A taxa que lhe damos fica garantida durante 90 segundos.</p>
+            </li>
+            <li class="passo">
+              <span class="passo__numero">4</span>
+              <h3>Receba o recibo</h3>
+              <p>Cada operação tem recibo e fica registada para sua segurança.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ============ Loja ============ -->
+      <section class="seccao" id="loja">
+        <div class="nz-contentor duas-colunas duas-colunas--invertida">
+          <div>
+            <p class="nz-filete">A loja</p>
+            <h2>Visite-nos na Maianga</h2>
+            <p>
+              Atendemos numa janela própria dentro do espaço partilhado com a Porto Cervo – Agência de Viagens, com
+              entrada direta para a casa de câmbios.
+            </p>
+            <dl class="contactos" id="contactos">
+              <div><dt>Morada</dt><dd>Maianga, Luanda, Angola</dd></div>
+              <div data-contacto="horario" hidden><dt>Horário</dt><dd></dd></div>
+              <div data-contacto="telefone" hidden><dt>Telefone</dt><dd></dd></div>
+              <div data-contacto="email" hidden><dt>E-mail</dt><dd></dd></div>
+            </dl>
+          </div>
+          <figure class="ilustracao ilustracao--loja" data-inclinar>
+            <img src="img/loja-maianga.svg" alt="Ilustração da fachada da loja NZAIDI" width="560" height="400" loading="lazy" />
+          </figure>
+        </div>
+      </section>
+
+      <!-- ============ Perguntas ============ -->
+      <section class="seccao seccao--suave" id="perguntas">
+        <div class="nz-contentor perguntas">
+          <header class="seccao__cabeca">
+            <p class="nz-filete">Perguntas frequentes</p>
+            <h2>Dúvidas comuns</h2>
+          </header>
+          <div class="perguntas__lista">
+            <details>
+              <summary>Que documentos preciso para trocar divisas?</summary>
+              <p>O Bilhete de Identidade válido. A identificação de cada cliente é obrigatória por lei em todas as operações de câmbio e remessa.</p>
+            </details>
+            <details>
+              <summary>Porque é que a cotação só vale 90 segundos?</summary>
+              <p>As taxas mudam ao longo do dia. A cotação garante-lhe a taxa durante 90 segundos para confirmar a operação com tranquilidade.</p>
+            </details>
+            <details>
+              <summary>Qual é a diferença entre taxa de compra e de venda?</summary>
+              <p>A taxa de compra é a que pagamos quando nos vende divisas. A taxa de venda é a que paga quando nos compra divisas. Ambas partem da taxa de referência do BNA.</p>
+            </details>
+            <details>
+              <summary>Posso enviar dinheiro para o estrangeiro?</summary>
+              <p>Sim, através do serviço de remessas na loja. Cada remessa passa por verificação de segurança antes de ser enviada.</p>
+            </details>
+            <details>
+              <summary>Quando estará disponível a conta internacional e o cartão?</summary>
+              <p>Estes serviços dependem de acordo com o parceiro internacional. Anunciaremos aqui assim que estiverem disponíveis.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ Chamada final ============ -->
+      <section class="chamada">
+        <div class="nz-contentor chamada__caixa">
+          <div>
+            <h2>Pronto para trocar com confiança?</h2>
+            <p>Consulte a taxa do dia e passe pela nossa loja na Maianga.</p>
+          </div>
+          <a class="nz-botao nz-botao--dourado nz-botao--grande" href="#taxas">Ver taxas do dia</a>
+        </div>
+      </section>
+    </main>
+
+    <!-- ============ Rodapé ============ -->
+    <footer class="rodape">
+      <div class="nz-contentor rodape__grelha">
+        <div>
+          <img class="rodape__logotipo" src="marca/assets/simbolo.png" alt="" width="56" height="56" />
+          <p class="rodape__nome">NZAIDI – Casa de Câmbios &amp; Transferência, Lda.</p>
+          <p>Casa de câmbios sob supervisão do Banco Nacional de Angola.</p>
+        </div>
+        <nav aria-label="Serviços">
+          <h4>Serviços</h4>
+          <a href="#taxas">Taxas do dia</a>
+          <a href="#servicos">Câmbio de divisas</a>
+          <a href="#remessas">Remessas</a>
+        </nav>
+        <nav aria-label="Informação legal">
+          <h4>Legal</h4>
+          <a href="#" aria-disabled="true" title="Em preparação">Termos e condições</a>
+          <a href="#" aria-disabled="true" title="Em preparação">Política de privacidade</a>
+          <a href="#" aria-disabled="true" title="Em preparação">Reclamações</a>
+        </nav>
+      </div>
+      <div class="nz-contentor rodape__base">
+        <span>© <span id="ano"></span> NZAIDI. Todos os direitos reservados.</span>
+        <span class="rodape__lema">Confiança · Segurança · Agilidade</span>
+      </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

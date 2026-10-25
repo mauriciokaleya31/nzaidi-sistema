@@ -3,6 +3,18 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
+## [Não publicado] — Site público (ramo `feat/site-publico`)
+### Adicionado
+- `apps/site-publico`: site institucional estático para `nzaidi.ao` com cena 3D (cartão, painel de taxas e moedas), tabela de taxas, conversor indicativo com cálculo decimal exato, serviços, remessas, como funciona, loja na Maianga, perguntas frequentes, chamada final e rodapé.
+- Ilustrações próprias em SVG: globo das remessas, fachada da loja, padrão geométrico inspirado no logótipo.
+- Responsivo (computador, tablet, telemóvel), modo claro e escuro, menu móvel, animações que respeitam "reduzir movimento".
+- `scripts/construir-site.mjs` e `npm run site:construir`: gera `dist/site` pronto para o cPanel.
+- `.claude/launch.json`: pré-visualização local.
+
+### Regras respeitadas
+- Nenhuma taxa inventada: sem API, a tabela mostra "A aguardar atualização". Valores de demonstração só com `?demo=1` e identificados.
+- Contactos por confirmar ficam ocultos. Serviços condicionados aparecem como "brevemente".
+
 ## [Não publicado] — Fase 1: fundação técnica (ramo `feat/fase-1-fundacao`)
 ### Adicionado
 - Monorepo com workspaces npm, TypeScript estrito (`tsconfig.base.json`) e Vitest.

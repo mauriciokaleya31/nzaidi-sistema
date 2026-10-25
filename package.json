@@ -13,6 +13,7 @@
     "verificar:tipos": "tsc -b",
     "verificar:docs": "python scripts/verificar-documentacao.py",
     "testes": "vitest run",
+    "site:construir": "node scripts/construir-site.mjs",
     "verificar": "npm run verificar:tipos && npm run testes && npm run verificar:docs"
   },
   "devDependencies": {

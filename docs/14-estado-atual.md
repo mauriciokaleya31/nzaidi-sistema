@@ -41,6 +41,7 @@ Atualizado em **25/10/2026** (início da Fase 1, ramo `feat/fase-1-fundacao`). E
 | `packages/design-system`: cores do logótipo, tipografia, componentes base, modo escuro, catálogo | Criado | Visual: abrir `packages/design-system/catalogo.html` |
 | `packages/dominio`: dinheiro em decimal exato, taxas (R-07), cotação de 90 s e recotação (R-08) | Criado | 17 testes unitários passam |
 | Integração contínua (`infra/ci/verificar.yml`): tipos, testes, segredos | Criado, **inativo** | Ativa-se ao mover para `.github/workflows/` (precisa da permissão `workflow` no GitHub) |
+| `apps/site-publico`: site institucional estático com cena 3D, responsivo, modo escuro (ramo `feat/site-publico`) | Criado | Visto em 1366 px e 375 px, claro e escuro, sem erros na consola. Conversor: 100 USD × 930,75 = 93 075,00 Kz (demonstração). **Não publicado** em `nzaidi.ao` |
 | Base de dados, migrações, autenticação, auditoria, API | **Não iniciado.** Bloqueado por D-27 e pelos pacotes antigos (C-02) | — |
 
 ## 3A. O que foi criado na Etapa 0
