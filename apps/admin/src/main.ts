@@ -101,7 +101,7 @@ async function renderizarAplicacao(): Promise<void> {
         break;
 
       case "#taxas":
-        if (authState.temPermissao("taxas:consultar") || authState.temPermissao("ver_taxas")) {
+        if (authState.temPermissao("ver_taxas")) {
           await renderizarTaxas(viewContainer);
         } else {
           viewContainer.innerHTML = `
@@ -111,7 +111,7 @@ async function renderizarAplicacao(): Promise<void> {
         break;
 
       case "#auditoria":
-        if (authState.temPermissao("auditoria:consultar") || authState.temPermissao("ver_auditoria")) {
+        if (authState.temPermissao("ver_auditoria")) {
           await renderizarAuditoria(viewContainer);
         } else {
           viewContainer.innerHTML = `

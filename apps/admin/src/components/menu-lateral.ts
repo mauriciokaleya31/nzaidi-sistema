@@ -71,7 +71,7 @@ const ITENS_MENU: ItemMenu[] = [
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
       </svg>
     `,
-    permissaoRequerida: "taxas:consultar",
+    permissaoRequerida: "ver_taxas",
   },
   {
     id: "nav-auditoria",
@@ -86,7 +86,7 @@ const ITENS_MENU: ItemMenu[] = [
         <polyline points="10 9 9 9 8 9"></polyline>
       </svg>
     `,
-    permissaoRequerida: "auditoria:consultar",
+    permissaoRequerida: "ver_auditoria",
   },
   {
     id: "nav-usuarios",

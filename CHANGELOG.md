@@ -21,8 +21,11 @@ Só apresentação. Não altera a API, o modelo de dados, as regras financeiras,
 - Logótipo real no menu e no ecrã de carregamento; iniciais do utilizador no cabeçalho; favicon corrigido (apontava para um ficheiro inexistente).
 - Impressão do borderô: com o modal aberto, imprime só o borderô.
 
+### Corrigido: nomes de permissões no painel
+- O painel verificava `taxas:consultar`, `taxas:editar` e `auditoria:consultar`, que não existem na matriz da API. Passa a usar os nomes que a API envia e exige nas rotas: `ver_taxas`, `alterar_taxas` e `ver_auditoria`. Nenhuma permissão nova foi dada: a matriz da API (`matriz.ts`) não foi alterada. Os testes do painel passam a usar os mesmos nomes.
+- Resultado verificado com a API local: a Gestão vê "Taxas de Câmbio" e "Pista de Auditoria" no menu, tem o botão de editar taxas e abre a auditoria.
+
 ### Problemas encontrados e não alterados (precisam de decisão)
-- **Nomes de permissões desalinhados:** a API dá à Gestão `ver_taxas`, `alterar_taxas` e `ver_auditoria`, mas o menu e as vistas verificam `taxas:consultar`, `taxas:editar` e `auditoria:consultar`. A Gestão não vê "Taxas" nem "Auditoria" no menu, não tem o botão de editar taxas e recebe "Acesso Negado" na auditoria.
 - `ADMIN_INIT_TOKEN` e `COOKIE_SECRET` têm valores por omissão escritos em `apps/api/src/config/env.ts`. Em produção têm de ser definidos no ambiente.
 
 ## [Não publicado] — Fase 5: documentos KYC, segurança, persistência e homologação (ramo `feat/fase-5-documentos-seguranca-homologacao`)

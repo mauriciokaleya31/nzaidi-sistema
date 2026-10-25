@@ -77,7 +77,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
             </a>
 
             ${
-              authState.temPermissao("auditoria:consultar") || authState.temPermissao("ver_auditoria")
+              authState.temPermissao("ver_auditoria")
                 ? `
                 <a href="#auditoria" class="quick-action-btn">
                   <span class="qa-icon">🛡️</span>

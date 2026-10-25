@@ -15,7 +15,7 @@ describe("AdminApiClient (Cliente HTTP)", () => {
       nome: "Administrador de Teste",
       email: "gestao@nzaidi.ao",
       funcao: "gestao",
-      permissoes: ["taxas:consultar", "taxas:editar", "auditoria:consultar"],
+      permissoes: ["ver_taxas", "alterar_taxas", "ver_auditoria"],
     };
 
     const fetchMock = vi.fn().mockResolvedValue({
@@ -31,7 +31,7 @@ describe("AdminApiClient (Cliente HTTP)", () => {
 
     expect(resultado.sucesso).toBe(true);
     expect(resultado.usuario.funcao).toBe("gestao");
-    expect(resultado.usuario.permissoes).toContain("taxas:editar");
+    expect(resultado.usuario.permissoes).toContain("alterar_taxas");
 
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost:3000/api/v1/auth/login",

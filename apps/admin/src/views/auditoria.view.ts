@@ -2,7 +2,8 @@ import { api, type EventoAuditoria } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
 
 export async function renderizarAuditoria(container: HTMLElement): Promise<void> {
-  if (!authState.temPermissao("auditoria:consultar")) {
+  // Mesmo nome que a API exige em GET /api/v1/auditoria (apps/api/.../auditoria.routes.ts)
+  if (!authState.temPermissao("ver_auditoria")) {
     container.innerHTML = `
       <div class="alert-box alert-error">
         <strong>Acesso Negado:</strong> O seu perfil de utilizador não tem autorização para aceder à Pista de Auditoria Regulatória.
