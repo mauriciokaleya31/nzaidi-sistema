@@ -14,6 +14,7 @@ import { BnaRepository } from "../src/modules/reportes-bna/bna.repository.js";
 import { BnaService } from "../src/modules/reportes-bna/bna.service.js";
 import { RemessasRepository } from "../src/modules/remessas/remessas.repository.js";
 import { RemessasService } from "../src/modules/remessas/remessas.service.js";
+import { executarRotinaDiariaBna } from "../src/cron/gerar-reportes-bna.js";
 
 describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderôs Atómicos", () => {
   let db: ReturnType<typeof criarConexaoBanco>;
@@ -443,5 +444,71 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
     expect(movSaida.tipo).toBe("remessa_saida");
     expect(parseFloat(movSaida.montante)).toBeLessThan(0);
     expect(Math.abs(parseFloat(movSaida.montante))).toBe(parseFloat(totalCobrado));
+  });
+  it("deve gerar números sequenciais com consultas parametrizadas protegidas contra SQL injection", () => {
+    // 1. Sequencial normal
+    const seq1 = proximoNumeroSequencial(db, "teste_param", "SEQ", 2026);
+    const seq2 = proximoNumeroSequencial(db, "teste_param", "SEQ", 2026);
+    expect(seq1).toBe("SEQ-2026-000001");
+    expect(seq2).toBe("SEQ-2026-000002");
+
+    // 2. Teste de caracteres especiais e SQL injection potencial
+    const nomeComAspas = "teste' OR '1'='1; DROP TABLE contadores_sequenciais; --";
+    const seqInjecao = proximoNumeroSequencial(db, nomeComAspas, "INJ", 2026);
+    expect(seqInjecao).toBe("INJ-2026-000001");
+
+    // 3. Confirmar que a tabela continua intacta e o valor foi armazenado de forma parametrizada
+    const chaveEsperada = `${nomeComAspas}_2026`;
+    const stmt = db.prepare("SELECT ultimo_valor FROM contadores_sequenciais WHERE nome = ?;");
+    const res = stmt.get(chaveEsperada) as { ultimo_valor: number };
+    expect(res).toBeDefined();
+    expect(res.ultimo_valor).toBe(1);
+  });
+  it("deve executar rotina automática das 18:30 com relógio simulado, recuperação de atrasos e auditoria", async () => {
+    // 1. Inserir uma operação passada sem reporte (ex: ontem) para testar recuperação de dias em atraso
+    const dataOntem = "2026-10-24";
+    const dataHoje = "2026-10-25";
+
+    db.prepare(`
+      INSERT INTO operacoes_cambio (
+        id, numero_operacao, cliente_id, caixa_id, tipo, tipo_operacao_bna, sentido_bna,
+        moeda_divisa, montante_divisa, taxa_aplicada, taxa_referencia_bna, margem_aplicada,
+        montante_aoa, fonte_taxa, estado, operador_id, operador_nome, criado_em
+      ) VALUES (
+        'op_atrasada_01', 'OP-2026-999999', ?, ?, 'compra', 'cambio', 'compra',
+        'USD', '100.00', '950.00', '930.00', '2.0',
+        '95000.00', 'demonstracao', 'confirmada', 'op_teste', 'Operador Teste', ?
+      )
+    `).run(clienteAprovadoId, caixaAtendenteId, `${dataOntem} 10:00:00`);
+
+    // 2. Simular execução às 18:30 de Luanda (17:30 UTC) no dia de hoje
+    const relogio1830 = new Date(`${dataHoje}T17:30:00.000Z`);
+    const resultado = await executarRotinaDiariaBna(db, relogio1830);
+
+    // 3. Validações do resultado
+    expect(resultado.sucesso).toBe(true);
+    expect(resultado.dataHoje).toBe(dataHoje);
+    expect(resultado.recuperados).toContain(`${dataOntem}:cambio`);
+    expect(resultado.geradosHoje.cambioReporteZero).toBe(true);
+    expect(resultado.geradosHoje.remessaReporteZero).toBe(true);
+
+    // 4. Validação na base de dados dos mapas gerados
+    const repOntem = db.prepare("SELECT * FROM bna_reportes_diarios WHERE data_referencia = ? AND tipo_mapa = 'cambio'").get(dataOntem) as any;
+    expect(repOntem).toBeDefined();
+    expect(repOntem.total_operacoes).toBe(1);
+    expect(repOntem.reporte_zero).toBe(0);
+
+    const repHojeCambio = db.prepare("SELECT * FROM bna_reportes_diarios WHERE data_referencia = ? AND tipo_mapa = 'cambio'").get(dataHoje) as any;
+    expect(repHojeCambio).toBeDefined();
+    expect(repHojeCambio.reporte_zero).toBe(1);
+
+    // 5. Validação na pista de auditoria
+    const stmtAudit = db.prepare("SELECT * FROM auditoria WHERE acao = 'BNA_CRON_ROTINA_EXECUTADA' ORDER BY momento DESC LIMIT 1");
+    const auditRow = stmtAudit.get() as any;
+    expect(auditRow).toBeDefined();
+    expect(auditRow.autor_id).toBe("sistema_cron_bna");
+    const detalhes = JSON.parse(auditRow.detalhes_json);
+    expect(detalhes.dataReferencia).toBe(dataHoje);
+    expect(detalhes.diasRecuperados).toContain(`${dataOntem}:cambio`);
   });
 });

@@ -3,6 +3,12 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e docs/14-estado-atual.md.
 
+## [NZAIDI-BASE-01] — Segurança de Infraestrutura, Consultas Parametrizadas e Rotina Automática BNA 18:30
+- **Higienização de Documentação**: Remoção rigorosa de IPs, nomes de servidores privados, caminhos absolutos do servidor e detalhes de SSH de todos os documentos (`docs/14`, `docs/18`, `CHANGELOG`, `README`). Os detalhes privados foram preservados fora do controlo de versões.
+- **Validação Automática de Documentos**: Atualizado `scripts/verificar-documentacao.py` para bloquear automaticamente ficheiros com IPs públicos, nomes de servidores ou caminhos de alojamento.
+- **Consultas Parametrizadas em `proximoNumeroSequencial`**: Refatoração do SQL para utilizar `db.prepare(...).run/get` com parâmetros vinculados (`?`), eliminando qualquer risco de interpolação e injeção SQL. Adicionado teste automatizado com injeção simulada.
+- **Rotina Automática BNA das 18:30 (Africa/Luanda)**: Criação de `apps/api/src/cron/gerar-reportes-bna.ts` para execução via tarefa agendada do cPanel (`npm run cron:bna`). Recupera dias anteriores com movimento pendente, emite ambos os mapas (câmbio e remessas), gera reporte a zero obrigatório quando sem operações e grava evento consolidado na pista de auditoria. Coberto por teste automatizado com relógio simulado.
+
 ## [NZAIDI-BASE-01] — Junção da Base Unificada e Publicação em Produção (ramo eat/base-unificada)
 Unificação integral do trabalho de desenvolvimento regulatório e da renovação visual num ramo consolidado.
 
@@ -178,7 +184,7 @@ Só apresentação. Não altera a API, o modelo de dados, as regras financeiras,
 - `docs/14`, `docs/15` (D-01 fechada; novas D-25 a D-29), `docs/16` (R-18 a R-21), `README.md`.
 
 ### Decisões
-- D-26 e D-27 validadas: acesso SSH configurado com nova chave autorizada; Node.js 22.23.4 e npm 10.9.9 confirmados no servidor cPanel/CloudLinux.
+- D-26 e D-27 validadas: acesso SSH por chave configurado; Node.js 22 e npm confirmados no alojamento cPanel partilhado.
 
 ## [Publicado na `main`] — Etapa 0: auditoria e estrutura
 ### Adicionado

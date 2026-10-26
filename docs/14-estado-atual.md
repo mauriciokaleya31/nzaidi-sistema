@@ -15,10 +15,10 @@ Atualizado em **26/10/2026** (Ticket NZAIDI-BASE-01, ramo `feat/base-unificada`)
 | --- | --- |
 | `nzaidi.ao` (site institucional) | **Publicado e online** (Status 200). Contém o website multipágina renovado com 10 páginas HTML, simulador de câmbio interativo e página 404 personalizada via `.htaccess` |
 | `app.nzaidi.ao` (sistema) | **Publicado e operacional**. Painel administrativo com novo design bancário profissional, ecrã de login seguro, menu mobile e 10+ módulos funcionais |
-| Alojamento | cPanel partilhado da AngoWeb (`ws102.angoweb.net`), IP `65.21.251.206` |
-| Acesso SSH | **Configurado e testado com sucesso** via chave autorizada no cPanel |
-| Node.js no servidor | **Node.js 22.23.4 e npm 10.9.9 ativos** via CloudLinux NodeJS Selector em `/opt/alt/alt-nodejs22/` |
-| Bases de dados | SQLite3 com persistência em disco (`/mnt/home102/nzaidiao/data/nzaidi.sqlite`) |
+| Alojamento | cPanel partilhado |
+| Acesso SSH | SSH por chave |
+| Node.js no servidor | **Node.js 22+ ativo** |
+| Bases de dados | SQLite3 com persistência em disco |
 
 ## 2. O que existe e onde
 | Item | Onde está | Estado |
@@ -26,9 +26,10 @@ Atualizado em **26/10/2026** (Ticket NZAIDI-BASE-01, ramo `feat/base-unificada`)
 | Plano de negócio (PDF) | Guardado pela gestão. **Fora do repositório** (contém NIF e estrutura societária) | Existe |
 | Funcionamento do sistema: administração, cliente, parceiros (PDF) | `docs/02-negocio/referencias/` | Cópia de trabalho |
 | Plataforma digital completa NZAIDI (API Fastify, Admin SPA, Site Público) | Repositório oficial | **Implementado e Homologado** |
-| Módulo de Reportes BNA (Suptech e SSIF) com corte 18:30 e reporte a zero | `apps/api/src/modules/reportes-bna/` e `apps/admin/src/views/bna.view.ts` | **Implementado e Testado** |
+| Módulo de Reportes BNA (Suptech e SSIF) com corte 18:30, reporte a zero e rotina de cron | `apps/api/src/modules/reportes-bna/`, `apps/api/src/cron/` e `apps/admin/src/views/bna.view.ts` | **Implementado e Testado** |
 | Módulo de Remessas Internacionais com parceiros MaxPay e Realtransfers | `apps/api/src/modules/remessas/` e `apps/admin/src/views/remessas.view.ts` | **Implementado e Testado** |
-| Numeração Atómica de Borderôs sem saltos | `apps/api/src/modules/operacoes-cambio/` | **Implementado e Testado** |
+| Numeração Atómica de Borderôs sem saltos (consultas parametrizadas) | `apps/api/src/modules/operacoes-cambio/` e `apps/api/src/database/` | **Implementado e Testado** |
+| Rotina Automática cPanel Cron 18:30 (Africa/Luanda) com recuperação de atrasos | `apps/api/src/cron/gerar-reportes-bna.ts` | **Implementado e Testado** |
 
 ## 3. Estado das Peças Técnicas
 | Peça | Estado | Verificado |

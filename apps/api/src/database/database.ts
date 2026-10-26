@@ -96,7 +96,7 @@ export function inicializarSchema(db: DatabaseSync): void {
   `);
 
   // Inserção idempotente de parâmetros padrão regulamentares (valores de teste marcados)
-  const parametrosPadrao = [
+  const parametrosPadrao: [string, string, string, string, string][] = [
     ["comissao_remessa_aoa", "2500.00", "numero", "remessas", "Comissão fixa por remessa internacional em kwanzas (Parâmetro)"],
     ["comissao_remessa_percentual", "1.50", "numero", "remessas", "Comissão percentual sobre o valor da remessa (Parâmetro)"],
     ["limite_aml_revisao_aoa", "5000000.00", "numero", "compliance", "Limite para caso em revisão AML por operação em kwanzas (Valor de Teste)"],
@@ -105,12 +105,13 @@ export function inicializarSchema(db: DatabaseSync): void {
     ["moeda_balcao_zar_ativo", "false", "boolean", "moedas", "Interruptor para permitir operações em ZAR no balcão"],
     ["hora_corte_bna_luanda", "18:30", "string", "bna", "Hora de corte oficial para geração do reporte diário ao BNA (Fuso Africa/Luanda)"],
   ];
+  const stmtParametro = db.prepare(`
+    INSERT INTO parametros_sistema (chave, valor, tipo, categoria, descricao, atualizado_em)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(chave) DO NOTHING;
+  `);
   for (const [chave, valor, tipo, categoria, desc] of parametrosPadrao) {
-    db.exec(`
-      INSERT INTO parametros_sistema (chave, valor, tipo, categoria, descricao, atualizado_em)
-      VALUES ('${chave}', '${valor}', '${tipo}', '${categoria}', '${desc}', datetime('now'))
-      ON CONFLICT(chave) DO NOTHING;
-    `);
+    stmtParametro.run(chave, valor, tipo, categoria, desc);
   }
 
   // Clientes e KYC
@@ -396,10 +397,16 @@ export function proximoNumeroSequencial(
   ano: number = new Date().getFullYear()
 ): string {
   const chave = `${nome}_${ano}`;
-  db.exec(`INSERT INTO contadores_sequenciais (nome, ultimo_valor) VALUES ('${chave}', 0) ON CONFLICT(nome) DO NOTHING;`);
-  db.exec(`UPDATE contadores_sequenciais SET ultimo_valor = ultimo_valor + 1 WHERE nome = '${chave}';`);
-  const stmt = db.prepare("SELECT ultimo_valor FROM contadores_sequenciais WHERE nome = ?");
-  const res = stmt.get(chave) as { ultimo_valor: number };
+  const insertStmt = db.prepare(
+    "INSERT INTO contadores_sequenciais (nome, ultimo_valor) VALUES (?, 0) ON CONFLICT(nome) DO NOTHING;"
+  );
+  insertStmt.run(chave);
+  const updateStmt = db.prepare(
+    "UPDATE contadores_sequenciais SET ultimo_valor = ultimo_valor + 1 WHERE nome = ?;"
+  );
+  updateStmt.run(chave);
+  const selectStmt = db.prepare("SELECT ultimo_valor FROM contadores_sequenciais WHERE nome = ?;");
+  const res = selectStmt.get(chave) as { ultimo_valor: number };
   const seq = String(res.ultimo_valor).padStart(6, "0");
   return `${prefixo}-${ano}-${seq}`;
 }

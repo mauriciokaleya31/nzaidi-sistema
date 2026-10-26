@@ -3,7 +3,8 @@
 
 1. Todas as ligações relativas em ficheiros .md apontam para ficheiros que existem.
 2. Os documentos obrigatórios existem.
-3. Não há padrões de segredos nem de dados pessoais (IBAN angolano, BI, chaves, tokens).
+3. Não há padrões de segredos, dados pessoais, nem dados de infraestrutura privada
+   (IBAN angolano, BI, chaves, tokens, IPs públicos, nomes de servidores ou caminhos de servidor).
 4. .gitignore bloqueia ficheiros de segredos.
 5. Cada módulo da API tem ficha README.
 
@@ -13,6 +14,7 @@ Sai com código 1 se encontrar problemas.
 import os, re, sys
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEU_CAMINHO = os.path.abspath(__file__)
 problemas = []
 
 OBRIGATORIOS = [
@@ -48,14 +50,17 @@ for pasta, dirs, ficheiros in os.walk(RAIZ):
             if not os.path.exists(destino):
                 problemas.append(f"Ligação quebrada em {os.path.relpath(caminho, RAIZ)}: {alvo}")
 
-# 3. Segredos e dados pessoais (só em ficheiros de texto)
+# 3. Segredos, dados pessoais e infraestrutura privada
 padroes = {
     "IBAN angolano": re.compile(r"\bAO\s?\d{2}[\s\d]{15,}"),
     "N.º de BI": re.compile(r"\b\d{9}[A-Z]{2}\d{3}\b"),
     "Chave privada": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
-    "Chave privada OpenSSH (corpo)": re.compile("b3BlbnNz" + "aC1rZXktdjE"),  # "openssh-key-v1" em base64, partido para não se detetar a si próprio
+    "Chave privada OpenSSH (corpo)": re.compile("b3BlbnNz" + "aC1rZXktdjE"),
     "Token comum": re.compile(r"\b(?:sk_live|sk_test|ghp_|gho_|AKIA)[A-Za-z0-9_]{8,}"),
     "Palavra-passe atribuída": re.compile(r"(?i)\b(?:password|senha|secret|segredo)\s*[:=]\s*[\"']?[A-Za-z0-9!@#$%^&*]{8,}"),
+    "Endereço IP público": re.compile(r"\b(?!127\.0\.0\.1\b|0\.0\.0\.0\b)(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\b"),
+    "Nome de servidor ou host de infraestrutura": re.compile(r"\b(?:ws\d+|angoweb|\.angoweb\.net)\b", re.IGNORECASE),
+    "Caminho absoluto de servidor": re.compile(r"(?:/mnt/home|/var/www|/home\d*/nzaidi)", re.IGNORECASE),
 }
 for pasta, dirs, ficheiros in os.walk(RAIZ):
     dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "dist")]
@@ -63,6 +68,8 @@ for pasta, dirs, ficheiros in os.walk(RAIZ):
         if nome.lower().endswith((".pdf", ".png", ".jpg", ".webp", ".zip")):
             continue
         caminho = os.path.join(pasta, nome)
+        if os.path.abspath(caminho) == MEU_CAMINHO:
+            continue
         try:
             texto = open(caminho, encoding="utf-8").read()
         except Exception:
@@ -88,4 +95,4 @@ if problemas:
     for p in problemas:
         print(" -", p)
     sys.exit(1)
-print("OK: documentação consistente, sem segredos nem dados pessoais detetados.")
+print("OK: documentação consistente, sem segredos, dados pessoais nem detalhes de infraestrutura privada detetados.")
