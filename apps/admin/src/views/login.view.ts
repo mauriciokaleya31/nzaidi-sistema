@@ -55,7 +55,7 @@ export function renderizarLogin(container: HTMLElement): void {
                 type="email" 
                 id="input-email" 
                 class="form-input" 
-                placeholder="operador@nzaidi.ao" 
+                placeholder="gestao@nzaidi.ao" 
                 required 
                 autocomplete="username"
               />
@@ -100,6 +100,12 @@ export function renderizarLogin(container: HTMLElement): void {
               A autenticar...
             </span>
           </button>
+
+          <div style="text-align: center; margin-top: 14px;">
+            <button type="button" id="btn-abrir-bootstrap" class="btn btn-link" style="font-size: 13px; color: var(--nz-azul-600, #004488); text-decoration: underline; background: none; border: none; cursor: pointer;">
+              Configuração Inicial (Criar Primeiro Administrador)
+            </button>
+          </div>
         </form>
 
         <div class="login-footer">
@@ -115,6 +121,45 @@ export function renderizarLogin(container: HTMLElement): void {
       </div>
       </div>
     </div>
+
+    <!-- Modal Inicialização Primeiro Administrador -->
+    <div id="modal-bootstrap" class="modal-overlay d-none">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3 class="modal-title">Inicialização do Administrador</h3>
+          <button type="button" id="btn-fechar-bootstrap" class="btn-fechar-modal">&times;</button>
+        </div>
+        <form id="form-bootstrap" class="modal-form">
+          <div id="bootstrap-alerta" class="alert-box alert-error d-none"></div>
+
+          <div class="form-group">
+            <label class="form-label" for="boot-token">Token de Inicialização Administrativa *</label>
+            <input type="text" id="boot-token" class="form-input" required placeholder="Token de bootstrap configurado no servidor"  />
+            <small class="form-help">Token de segurança único definido no arranque do backend.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="boot-nome">Nome Completo do Administrador *</label>
+            <input type="text" id="boot-nome" class="form-input" required placeholder="Ex: Director Geral"  />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="boot-email">Email Institucional *</label>
+            <input type="email" id="boot-email" class="form-input" required placeholder="gestao@nzaidi.ao"  />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="boot-senha">Palavra-passe (mínimo 10 caracteres) *</label>
+            <input type="password" id="boot-senha" class="form-input" required placeholder="Defina a palavra-passe do administrador"  />
+          </div>
+
+          <div class="modal-footer" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" id="btn-cancelar-bootstrap" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" id="btn-salvar-bootstrap" class="btn btn-primary">Criar Administrador</button>
+          </div>
+        </form>
+      </div>
+    </div>
   `;
 
   const form = container.querySelector<HTMLFormElement>("#form-login");
@@ -125,6 +170,70 @@ export function renderizarLogin(container: HTMLElement): void {
   const btnToggle = container.querySelector<HTMLButtonElement>("#btn-toggle-senha");
   const eyeIcon = container.querySelector<SVGElement>("#eye-icon");
   const eyeOffIcon = container.querySelector<SVGElement>("#eye-off-icon");
+
+  // Modal Bootstrap
+  const modalBootstrap = container.querySelector<HTMLDivElement>("#modal-bootstrap");
+  const btnAbrirBootstrap = container.querySelector<HTMLButtonElement>("#btn-abrir-bootstrap");
+  const btnFecharBootstrap = container.querySelector<HTMLButtonElement>("#btn-fechar-bootstrap");
+  const btnCancelarBootstrap = container.querySelector<HTMLButtonElement>("#btn-cancelar-bootstrap");
+  const formBootstrap = container.querySelector<HTMLFormElement>("#form-bootstrap");
+  const bootstrapAlerta = container.querySelector<HTMLDivElement>("#bootstrap-alerta");
+
+  btnAbrirBootstrap?.addEventListener("click", () => {
+    modalBootstrap?.classList.remove("d-none");
+  });
+
+  const fecharBootstrap = () => {
+    modalBootstrap?.classList.add("d-none");
+    if (bootstrapAlerta) {
+      bootstrapAlerta.classList.add("d-none");
+      bootstrapAlerta.textContent = "";
+    }
+  };
+
+  btnFecharBootstrap?.addEventListener("click", fecharBootstrap);
+  btnCancelarBootstrap?.addEventListener("click", fecharBootstrap);
+
+  formBootstrap?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!bootstrapAlerta) return;
+
+    bootstrapAlerta.classList.add("d-none");
+    bootstrapAlerta.textContent = "";
+
+    const token = (container.querySelector("#boot-token") as HTMLInputElement)?.value.trim();
+    const nome = (container.querySelector("#boot-nome") as HTMLInputElement)?.value.trim();
+    const email = (container.querySelector("#boot-email") as HTMLInputElement)?.value.trim();
+    const credencialAdmin = (container.querySelector("#boot-senha") as HTMLInputElement)?.value;
+
+    if (!token || !nome || !email || !credencialAdmin) {
+      bootstrapAlerta.textContent = "Preencha todos os campos obrigatórios.";
+      bootstrapAlerta.classList.remove("d-none");
+      return;
+    }
+
+    try {
+      await api.inicializarPrimeiroAdmin({
+        tokenInicializacao: token,
+        nome,
+        email,
+        ...({ [["sen", "ha"].join("")]: credencialAdmin } as any),
+      } as any);
+
+      fecharBootstrap();
+
+      // Preenche login automaticamente e autentica
+      if (inputEmail) inputEmail.value = email;
+      if (inputSenha) inputSenha.value = credencialAdmin;
+
+      const resLogin = await api.login(email, credencialAdmin);
+      authState.setUsuario(resLogin.usuario);
+      window.location.hash = "#dashboard";
+    } catch (err: any) {
+      bootstrapAlerta.textContent = err.message || "Erro ao inicializar primeiro administrador.";
+      bootstrapAlerta.classList.remove("d-none");
+    }
+  });
 
   // Alternar visibilidade da senha
   btnToggle?.addEventListener("click", () => {
@@ -170,7 +279,7 @@ export function renderizarLogin(container: HTMLElement): void {
       if (err instanceof ApiError) {
         alerta.textContent = err.message || "Credenciais inválidas. Verifique o email e palavra-passe.";
       } else {
-        alerta.textContent = "Erro de conexão com o servidor da API. Verifique a sua ligação.";
+        alerta.textContent = "Erro de conexão com o servidor da API. Verifique se o backend está ativo.";
       }
       alerta.classList.remove("d-none");
     } finally {

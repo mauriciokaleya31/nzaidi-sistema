@@ -62,7 +62,7 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
           <div>
             <label for="filtro-estado-manual" style="font-size: 13px; font-weight: 500; margin-right: 8px;">Estado:</label>
-            <select id="filtro-estado-manual" class="form-control" style="width: auto; display: inline-block;">
+            <select id="filtro-estado-manual" class="form-input" style="width: auto; display: inline-block;">
               <option value="">Todos os estados</option>
               <option value="pendente">Pendente (Requer 4 Olhos)</option>
               <option value="concluida">Concluída</option>
@@ -71,7 +71,6 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
             </select>
           </div>
           <div id="resumo-contador-execucoes" class="text-muted" style="font-size: 13px;"></div>
-        </div>
       </div>
     </div>
 
@@ -83,17 +82,15 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
       <div class="card-body p-0">
         <div class="table-responsive" id="tabela-execucoes-container">
           <div class="loading-state">A carregar execuções manuais...</div>
-        </div>
       </div>
     </div>
 
     <!-- Modal de Nova Liquidação Manual -->
-    <div id="modal-execucao-manual" class="modal-backdrop" style="display: none;">
-      <div class="modal-dialog">
-        <div class="modal-content">
+    <div id="modal-execucao-manual" class="modal-overlay d-none">
+      <div class="modal-container">
           <div class="modal-header">
             <h3 class="modal-title">Registar Liquidação Manual de Integração</h3>
-            <button type="button" class="btn-close" id="btn-fechar-modal-execucao">&times;</button>
+            <button type="button" class="btn-fechar-modal" id="btn-fechar-modal-execucao">&times;</button>
           </div>
           <form id="form-execucao-manual">
             <div class="modal-body">
@@ -101,14 +98,14 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
 
               <div class="form-group mb-3">
                 <label class="form-label" for="manual-transacao-id">ID da Transacção / Remessa *</label>
-                <input type="text" id="manual-transacao-id" class="form-control" placeholder="Ex: REM-2026-0045" required />
+                <input type="text" id="manual-transacao-id" class="form-input" placeholder="Ex: REM-2026-0045" required />
                 <small class="text-muted">Identificador interno da operação ou remessa a liquidar.</small>
               </div>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                 <div class="form-group mb-3">
                   <label class="form-label" for="manual-tipo">Tipo de Integração *</label>
-                  <select id="manual-tipo" class="form-control" required>
+                  <select id="manual-tipo" class="form-select" required>
                     <option value="remessa_parceiro">Remessa com Parceiro</option>
                     <option value="recebimento_kwanza">Recebimento Kwanza (Multicaixa / Banco)</option>
                     <option value="liquidacao_wise">Liquidação Externa Wise</option>
@@ -118,7 +115,7 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
 
                 <div class="form-group mb-3">
                   <label class="form-label" for="manual-canal">Canal de Origem *</label>
-                  <select id="manual-canal" class="form-control" required>
+                  <select id="manual-canal" class="form-select" required>
                     <option value="wise">Wise</option>
                     <option value="maxpay">MaxPay</option>
                     <option value="realtransfers">RealTransfers</option>
@@ -134,18 +131,18 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
 
               <div class="form-group mb-3">
                 <label class="form-label" for="manual-ref-externa">Referência Externa Bancária / Parceiro *</label>
-                <input type="text" id="manual-ref-externa" class="form-control" placeholder="Ex: MCX-9948271 ou MP-TX-88371" required />
+                <input type="text" id="manual-ref-externa" class="form-input" placeholder="Ex: MCX-9948271 ou MP-TX-88371" required />
                 <small class="text-muted">Número de comprovativo único emitido pelo canal pagador.</small>
               </div>
 
               <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
                 <div class="form-group mb-3">
                   <label class="form-label" for="manual-valor">Montante *</label>
-                  <input type="text" id="manual-valor" class="form-control" placeholder="0.00" required />
+                  <input type="text" id="manual-valor" class="form-input" placeholder="0.00" required />
                 </div>
                 <div class="form-group mb-3">
                   <label class="form-label" for="manual-moeda">Moeda *</label>
-                  <select id="manual-moeda" class="form-control" required>
+                  <select id="manual-moeda" class="form-select" required>
                     <option value="AOA" selected>AOA (Kwanza)</option>
                     <option value="USD">USD (Dólar)</option>
                     <option value="EUR">EUR (Euro)</option>
@@ -158,7 +155,7 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
               <div class="form-group mb-3">
                 <label class="form-label" for="manual-chave-idemp">Chave de Idempotência *</label>
                 <div style="display: flex; gap: 8px;">
-                  <input type="text" id="manual-chave-idemp" class="form-control" required readonly />
+                  <input type="text" id="manual-chave-idemp" class="form-input" required readonly />
                   <button type="button" id="btn-gerar-chave" class="btn btn-secondary" style="white-space: nowrap;">Gerar Nova</button>
                 </div>
                 <small class="text-muted">Garante que a liquidação nunca seja submetida duas vezes.</small>
@@ -166,12 +163,12 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
 
               <div class="form-group mb-3">
                 <label class="form-label" for="manual-comprovativo">Nome / Ref. do Comprovativo Anexado</label>
-                <input type="text" id="manual-comprovativo" class="form-control" placeholder="Ex: comprovativo_multicaixa_recibo.pdf" />
+                <input type="text" id="manual-comprovativo" class="form-input" placeholder="Ex: comprovativo_multicaixa_recibo.pdf" />
               </div>
 
               <div class="form-group mb-3">
                 <label class="form-label" for="manual-notas">Notas e Justificativa de Conciliação</label>
-                <textarea id="manual-notas" class="form-control" rows="2" placeholder="Observações do operador de tesouraria..."></textarea>
+                <textarea id="manual-notas" class="form-textarea" rows="2" placeholder="Observações do operador de tesouraria..."></textarea>
               </div>
             </div>
             <div class="modal-footer">
@@ -179,7 +176,6 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
               <button type="submit" class="btn btn-primary" id="btn-salvar-execucao">Confirmar Liquidação</button>
             </div>
           </form>
-        </div>
       </div>
     </div>
   `;
@@ -212,12 +208,12 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
     if (inputChaveIdemp) {
       inputChaveIdemp.value = gerarChaveIdempotencia();
     }
-    modal.style.display = "flex";
+    modal.classList.remove("d-none");
   }
 
   function fecharModal(): void {
     if (!modal) return;
-    modal.style.display = "none";
+    modal.classList.add("d-none");
   }
 
   btnNova?.addEventListener("click", abrirModal);

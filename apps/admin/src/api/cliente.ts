@@ -219,6 +219,21 @@ export class AdminApiClient {
     return dados as T;
   }
 
+  public async inicializarPrimeiroAdmin(payload: {
+    tokenInicializacao: string;
+    nome: string;
+    email: string;
+    senha: string;
+  }): Promise<{ sucesso: boolean; mensagem: string; usuario: UsuarioSessao }> {
+    return this.requisitar<{ sucesso: boolean; mensagem: string; usuario: UsuarioSessao }>(
+      "/api/v1/auth/primeiro-admin",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
   // --- Autenticação ---
   public async login(email: string, senha: string): Promise<{ sucesso: boolean; usuario: UsuarioSessao }> {
     return this.requisitar<{ sucesso: boolean; usuario: UsuarioSessao }>("/api/v1/auth/login", {
