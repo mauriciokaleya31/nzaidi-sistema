@@ -5,8 +5,14 @@ import "./estilo.css";
 import { SimuladorCambio } from "./simulador.js";
 import { buscarTaxasDaApi } from "./dados-taxas.js";
 import { type MoedaDivisa } from "@nzaidi/dominio";
+import { montarLayout } from "./layout.js";
 
 document.addEventListener("DOMContentLoaded", () => {
+  montarLayout();
+
+  // Páginas sem simulador nem tabela de taxas não precisam do resto.
+  if (!document.getElementById("input-montante") && !document.getElementById("card-taxa-usd")) return;
+
   const simulador = new SimuladorCambio();
 
   // Elementos do DOM do Simulador
@@ -210,28 +216,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // Inicializações
   atualizarTabelaTaxas();
   atualizarSimulador();
-
-  // Menu Mobile
-  const btnMenuMobile = document.getElementById("btn-menu-mobile");
-  const menuMobile = document.getElementById("menu-mobile");
-  if (btnMenuMobile && menuMobile) {
-    btnMenuMobile.addEventListener("click", () => {
-      menuMobile.classList.toggle("aberto");
-    });
-  }
-
-  // FAQ Accordion
-  const faqItems = document.querySelectorAll(".faq-item");
-  faqItems.forEach((item) => {
-    const btn = item.querySelector(".faq-pergunta");
-    if (btn) {
-      btn.addEventListener("click", () => {
-        const estaAberto = item.classList.contains("aberto");
-        faqItems.forEach((i) => i.classList.remove("aberto"));
-        if (!estaAberto) {
-          item.classList.add("aberto");
-        }
-      });
-    }
-  });
 });

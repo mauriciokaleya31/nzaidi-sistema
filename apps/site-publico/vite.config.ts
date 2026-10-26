@@ -16,5 +16,13 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    // Website multipágina: cada página HTML é uma entrada da compilação
+    rollupOptions: {
+      input: Object.fromEntries(
+        ["index", "sobre", "servicos", "cambios", "seguranca", "contactos", "faq", "termos", "privacidade", "404"].map(
+          (p) => [p, path.resolve(__dirname, `${p}.html`)],
+        ),
+      ),
+    },
   },
 });

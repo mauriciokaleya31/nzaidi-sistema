@@ -83,7 +83,7 @@ const ITENS_MENU: ItemMenu[] = [
         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
       </svg>
     `,
-    permissaoRequerida: "taxas:consultar",
+    permissaoRequerida: "ver_taxas",
   },
   {
     id: "nav-bna",
@@ -110,7 +110,7 @@ const ITENS_MENU: ItemMenu[] = [
         <polyline points="10 9 9 9 8 9"></polyline>
       </svg>
     `,
-    permissaoRequerida: "auditoria:consultar",
+    permissaoRequerida: "ver_auditoria",
   },
   {
     id: "nav-usuarios",
@@ -156,9 +156,10 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
     .join("");
 
   container.innerHTML = `
-    <aside class="sidebar">
+    <div class="sidebar-fundo" id="sidebar-fundo"></div>
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-badge-circle">NZ</div>
+        <img class="sidebar-logo" src="/simbolo.png" alt="" width="44" height="44" />
         <div class="brand-meta">
           <div class="brand-title">NZAIDI CÂMBIOS</div>
           <div class="brand-sub">Casa de Câmbios, Lda.</div>
@@ -182,4 +183,10 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
       </div>
     </aside>
   `;
+
+  // Telemóvel: fechar o menu ao tocar no fundo escurecido
+  container.querySelector("#sidebar-fundo")?.addEventListener("click", () => {
+    container.querySelector("#sidebar")?.classList.remove("open");
+    container.querySelector("#sidebar-fundo")?.classList.remove("visivel");
+  });
 }

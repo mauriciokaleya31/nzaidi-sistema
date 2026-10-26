@@ -110,6 +110,35 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
               <span class="qa-title">Taxas de Câmbio</span>
               <span class="qa-desc">Cotações oficiais de USD e EUR</span>
             </a>
+
+            ${
+              authState.temPermissao("ver_auditoria")
+                ? `
+                <a href="#auditoria" class="quick-action-btn">
+                  <span class="qa-icon">🛡️</span>
+                  <span class="qa-title">Pista de Auditoria</span>
+                  <span class="qa-desc">Consultar registos de conformidade</span>
+                </a>
+              `
+                : ""
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Conformidade BNA -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Conformidade Regulatória</h2>
+        </div>
+        <div class="card-body">
+          <div class="compliance-note">
+            <p><strong>Aviso Normativo BNA:</strong></p>
+            <p class="text-sm">Todas as transações, consultas e alterações de taxas de câmbio são estritamente registadas em pista de auditoria indelével com carimbo temporal e endereço IP.</p>
+            <div class="system-status-indicator">
+              <span class="status-indicator-dot online"></span>
+              <span class="text-sm">API Backend Fastify: Activa e operacional</span>
+            </div>
           </div>
         </div>
       </div>

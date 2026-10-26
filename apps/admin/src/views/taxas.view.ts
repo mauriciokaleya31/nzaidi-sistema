@@ -3,7 +3,8 @@ import { authState } from "../state/auth.state.js";
 import type { MoedaDivisa } from "@nzaidi/dominio";
 
 export async function renderizarTaxas(container: HTMLElement): Promise<void> {
-  const podeEditar = authState.temPermissao("taxas:editar");
+  // Mesmo nome que a API exige em PUT /api/v1/taxas (apps/api/.../taxas.routes.ts)
+  const podeEditar = authState.temPermissao("alterar_taxas");
 
   container.innerHTML = `
     <div class="view-header">

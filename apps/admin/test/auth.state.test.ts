@@ -20,15 +20,15 @@ describe("AuthState (Gestão de Sessão do Admin)", () => {
       nome: "Operador Balcão",
       email: "atendente@nzaidi.ao",
       funcao: "atendente",
-      permissoes: ["taxas:consultar"],
+      permissoes: ["ver_taxas"],
     };
 
     authState.setUsuario(usuarioAtendente);
 
     expect(authState.estaAutenticado()).toBe(true);
-    expect(authState.temPermissao("taxas:consultar")).toBe(true);
-    expect(authState.temPermissao("taxas:editar")).toBe(false);
-    expect(authState.temPermissao("auditoria:consultar")).toBe(false);
+    expect(authState.temPermissao("ver_taxas")).toBe(true);
+    expect(authState.temPermissao("alterar_taxas")).toBe(false);
+    expect(authState.temPermissao("ver_auditoria")).toBe(false);
   });
 
   it("deve conceder permissões avançadas ao perfil de gestão", () => {
@@ -37,14 +37,14 @@ describe("AuthState (Gestão de Sessão do Admin)", () => {
       nome: "Director Geral",
       email: "gestao@nzaidi.ao",
       funcao: "gestao",
-      permissoes: ["taxas:consultar", "taxas:editar", "auditoria:consultar", "usuarios:gerir"],
+      permissoes: ["ver_taxas", "alterar_taxas", "ver_auditoria", "usuarios:gerir"],
     };
 
     authState.setUsuario(usuarioGestao);
 
-    expect(authState.temPermissao("taxas:consultar")).toBe(true);
-    expect(authState.temPermissao("taxas:editar")).toBe(true);
-    expect(authState.temPermissao("auditoria:consultar")).toBe(true);
+    expect(authState.temPermissao("ver_taxas")).toBe(true);
+    expect(authState.temPermissao("alterar_taxas")).toBe(true);
+    expect(authState.temPermissao("ver_auditoria")).toBe(true);
     expect(authState.temPermissao("usuarios:gerir")).toBe(true);
   });
 
@@ -57,7 +57,7 @@ describe("AuthState (Gestão de Sessão do Admin)", () => {
       nome: "Auditor Compliance",
       email: "compliance@nzaidi.ao",
       funcao: "compliance",
-      permissoes: ["auditoria:consultar"],
+      permissoes: ["ver_auditoria"],
     };
 
     authState.setUsuario(usuario);

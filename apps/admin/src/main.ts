@@ -21,7 +21,7 @@ async function renderizarAplicacao(): Promise<void> {
   if (authState.estaCarregando()) {
     appRoot.innerHTML = `
       <div class="app-loading-screen">
-        <div class="brand-badge-circle brand-badge-large">NZ</div>
+        <img class="loading-logo" src="/simbolo.png" alt="" width="84" height="84" />
         <h2>NZAIDI CÂMBIOS</h2>
         <p class="text-muted">A verificar credenciais de acesso seguro...</p>
       </div>
@@ -123,7 +123,7 @@ async function renderizarAplicacao(): Promise<void> {
         break;
 
       case "#taxas":
-        if (authState.temPermissao("taxas:consultar") || authState.temPermissao("ver_taxas")) {
+        if (authState.temPermissao("ver_taxas")) {
           await renderizarTaxas(viewContainer);
         } else {
           viewContainer.innerHTML = `
@@ -133,7 +133,7 @@ async function renderizarAplicacao(): Promise<void> {
         break;
 
       case "#auditoria":
-        if (authState.temPermissao("auditoria:consultar") || authState.temPermissao("ver_auditoria")) {
+        if (authState.temPermissao("ver_auditoria")) {
           await renderizarAuditoria(viewContainer);
         } else {
           viewContainer.innerHTML = `

@@ -41,6 +41,8 @@ Atualizado em **25/10/2026** (Fase 5, ramo `feat/fase-5-documentos-seguranca-hom
 | **`apps/admin`**: Painel Administrativo SPA com Balcão de Câmbios, Clientes/KYC com Dossiê Documental, Caixa/Tesouraria, Taxas e Auditoria | **Criado e Testado** | 14 testes automatizados; `vite build` aprovado; integração completa com a API |
 | **`scripts/backup.py`**: Rotina de Cópia de Segurança e Recuperação de Desastre com Verificação SHA-256 | **Criado e Validado** | Autoteste de recuperação atómica aprovado a 100% |
 | **`docs/18-plano-implantacao-producao.md`**: Plano de Produção, Checklist de Infraestrutura e Aviso Regulatório BNA | **Documentado** | Requisitos técnicos, segredos, rollback e limitações regulatórias |
+| **Renovação visual do website** (25/10/2026): multipágina (Início, Sobre Nós, Serviços, Câmbios, Segurança, Contactos, FAQ, Termos, Privacidade, 404), layout partilhado, elementos 3D em CSS | **Criado, não publicado** | `vite build` gera as 10 páginas; sem ligações partidas; sem deslocamento horizontal a 375 px; simulador com os mesmos resultados |
+| **Renovação visual do backoffice** (25/10/2026): CSS completo (antes 72 classes sem estilo, incluindo os modais), login em ecrã dividido, menu lateral no telemóvel | **Criado, não publicado** | 7 vistas abertas com a API local em memória; modais sobrepostos; 85 testes passam |
 | Integração contínua (`infra/ci/verificar.yml`): tipos, testes, segredos | Criado, **inativo** | Ativa-se ao mover para `.github/workflows/` (precisa da permissão `workflow` no GitHub) |
 
 ## 4. O que **não** foi feito

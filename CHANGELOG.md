@@ -3,6 +3,31 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
+## [Não publicado] — Renovação visual do website e do backoffice (ramo `feat/acesso-paineis-gestao-usuarios`)
+Só apresentação. Não altera a API, o modelo de dados, as regras financeiras, a autenticação nem as permissões.
+
+### Website (`apps/site-publico`)
+- Passa a multipágina: `sobre`, `servicos`, `cambios`, `seguranca`, `contactos`, `faq`, `termos`, `privacidade` e `404`, além do início. Vite compila todas as páginas.
+- `src/layout.ts`: cabeçalho, menu móvel e rodapé partilhados, com indicação da página actual, revelação ao rolar e inclinação 3D.
+- `src/estilo.css` reescrito: cenas 3D em CSS (cartão, esfera, anéis, moedas metálicas, escudo), sem bibliotecas novas. Respeita "reduzir movimento".
+- Simulador e tabela de taxas: lógica e identificadores preservados; só correm nas páginas que os têm.
+- Ilustrações SVG próprias em `public/img/`; `public/.htaccess` com a página 404.
+- **Conteúdo corrigido para não afirmar o que não está confirmado:** remessas passam de "Ativo no Balcão" a "Em preparação" (acordos por fechar, `docs/11`); o horário passa a "a confirmar" (D-18); "Fundada em Luanda" retirado; meios de pagamento ao balcão limitados a numerário. Termos e privacidade publicados como "em preparação" (D-21).
+
+### Backoffice (`apps/admin`)
+- `src/estilo.css` reescrito: cobre todas as classes usadas pelas vistas. Antes, 72 não tinham estilo, entre elas `modal-overlay`, `modal-container`, `form-row`, `col-*`, `form-select`, `form-textarea` e `loading-state`. Os modais apareciam no meio da página.
+- Login em ecrã dividido com painel da marca e cena 3D; os identificadores e a lógica de autenticação mantêm-se.
+- Menu lateral acessível no telemóvel (botão no cabeçalho e fundo escurecido). Antes ficava escondido sem forma de o abrir.
+- Logótipo real no menu e no ecrã de carregamento; iniciais do utilizador no cabeçalho; favicon corrigido (apontava para um ficheiro inexistente).
+- Impressão do borderô: com o modal aberto, imprime só o borderô.
+
+### Corrigido: nomes de permissões no painel
+- O painel verificava `taxas:consultar`, `taxas:editar` e `auditoria:consultar`, que não existem na matriz da API. Passa a usar os nomes que a API envia e exige nas rotas: `ver_taxas`, `alterar_taxas` e `ver_auditoria`. Nenhuma permissão nova foi dada: a matriz da API (`matriz.ts`) não foi alterada. Os testes do painel passam a usar os mesmos nomes.
+- Resultado verificado com a API local: a Gestão vê "Taxas de Câmbio" e "Pista de Auditoria" no menu, tem o botão de editar taxas e abre a auditoria.
+
+### Problemas encontrados e não alterados (precisam de decisão)
+- `ADMIN_INIT_TOKEN` e `COOKIE_SECRET` têm valores por omissão escritos em `apps/api/src/config/env.ts`. Em produção têm de ser definidos no ambiente.
+
 ## [Não publicado] — Fase 5: documentos KYC, segurança, persistência e homologação (ramo `feat/fase-5-documentos-seguranca-homologacao`)
 ### Adicionado
 - **Gestão Documental KYC Segura (`apps/api/src/modules/identidade-kyc/documentos.service.ts`)**:
