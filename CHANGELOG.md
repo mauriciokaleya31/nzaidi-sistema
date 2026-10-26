@@ -1,6 +1,26 @@
 # Registo de alterações
 
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
+Regra: quem altera o repositório atualiza este ficheiro e docs/14-estado-atual.md.
+
+## [NZAIDI-BASE-01] — Junção da Base Unificada e Publicação em Produção (ramo eat/base-unificada)
+Unificação integral do trabalho de desenvolvimento regulatório e da renovação visual num ramo consolidado.
+
+### Unificação e Resolução de Conflitos
+- Fusão limpa de eat/melhorias-regulamentares-bna e eat/acesso-paineis-gestao-usuarios.
+- Resolução do conflito em pps/admin/src/views/dashboard.view.ts: preservou-se o novo design bancário profissional, os cartões de atalhos rápidos (com suporte à permissão er_auditoria), os botões de ação e os indicadores regulatórios do BNA (banner de alerta das 18:35 e estado dos mapas diários Suptech & SSIF).
+- Remoção dos ficheiros *.tsbuildinfo do histórico do Git em packages/design-system e packages/dominio, garantindo que o .gitignore os bloqueia definitivamente.
+- Teste em clone limpo: execução direta de 
+pm ci e 
+pm run verificar aprovada sem passos manuais (93 testes unitários e de integração aprovados com 0 falhas).
+
+### Publicação em Produção
+- Publicado nos domínios oficiais https://nzaidi.ao (website multipágina com 10 páginas HTML e .htaccess 404) e https://app.nzaidi.ao (backoffice com novo design bancário).
+- Repositório tornado público no GitHub (https://github.com/mauriciokaleya31/nzaidi-sistema).
+
+# Registo de alterações
+
+Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
 ## [Não publicado] — Renovação visual do website e do backoffice (ramo `feat/acesso-paineis-gestao-usuarios`)
