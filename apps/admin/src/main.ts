@@ -10,6 +10,7 @@ import { renderizarClientes } from "./views/clientes.view.js";
 import { renderizarCaixa } from "./views/caixa.view.js";
 import { renderizarBalcao } from "./views/balcao.view.js";
 import { renderizarUsuarios } from "./views/usuarios.view.js";
+import { renderizarIntegracoes } from "./views/integracoes.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -86,6 +87,16 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado para consulta de clientes.</div>
+          `;
+        }
+        break;
+
+      case "#integracoes":
+        if (authState.temPermissao("integracoes:consultar_manual") || authState.temPermissao("integracoes:liquidar_manual")) {
+          await renderizarIntegracoes(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado ao módulo de Integrações e Conciliação.</div>
           `;
         }
         break;

@@ -25,7 +25,9 @@ export type Permissao =
   | "operacoes:consultar"
   | "operacoes:estornar"
   | "usuarios:consultar"
-  | "usuarios:gerir";
+  | "usuarios:gerir"
+  | "integracoes:liquidar_manual"
+  | "integracoes:consultar_manual";
 
 /**
  * Matriz de permissões estritas por função (docs/07, §2).
@@ -44,6 +46,7 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "caixa:movimentar",
     "operacoes:registar",
     "operacoes:consultar",
+    "integracoes:consultar_manual",
   ],
   compliance: [
     "ver_taxas",
@@ -55,6 +58,7 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "kyc:analisar",
     "kyc:aprovar",
     "operacoes:consultar",
+    "integracoes:consultar_manual",
   ],
   tesouraria: [
     "ver_taxas",
@@ -68,6 +72,8 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "caixa:movimentar",
     "operacoes:consultar",
     "operacoes:estornar",
+    "integracoes:consultar_manual",
+    "integracoes:liquidar_manual",
   ],
   gestao: [
     "ver_taxas",
@@ -93,6 +99,8 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "operacoes:estornar",
     "usuarios:consultar",
     "usuarios:gerir",
+    "integracoes:consultar_manual",
+    "integracoes:liquidar_manual",
   ],
 };
 

@@ -153,6 +153,42 @@ export class ApiError extends Error {
   }
 }
 
+
+export interface ExecucaoIntegracaoManualItem {
+  id: string;
+  transacaoId: string;
+  tipoIntegracao: string;
+  canalOrigem: string;
+  referenciaExterna: string;
+  valorMoeda: string;
+  moeda: string;
+  estado: "pendente" | "concluida" | "rejeitada" | "cancelada";
+  operadorId: string;
+  operadorNome: string;
+  operadorFuncao: string;
+  aprovadorId?: string | null;
+  aprovadorNome?: string | null;
+  momentoExecucao: string;
+  momentoAprovacao?: string | null;
+  comprovativoArquivo?: string | null;
+  comprovativoHashSha256?: string | null;
+  notas?: string | null;
+  chaveIdempotencia: string;
+}
+
+export interface CriarExecucaoManualPayload {
+  transacaoId: string;
+  tipoIntegracao: string;
+  canalOrigem: string;
+  referenciaExterna: string;
+  valorMoeda: string;
+  moeda: string;
+  chaveIdempotencia: string;
+  notas?: string | undefined;
+  comprovativoArquivo?: string | undefined;
+  comprovativoHashSha256?: string | undefined;
+}
+
 export class AdminApiClient {
   constructor(private baseUrl = "") {}
 
@@ -449,6 +485,72 @@ export class AdminApiClient {
       method: "PATCH",
       body: JSON.stringify({ ativo }),
     });
+  }
+
+  // --- Integrações Manuais & Conciliação (Ticket NZAIDI-MANUAL-01) ---
+  public async listarIntegracoesManuais(
+    limite = 50,
+    offset = 0,
+    estado?: string
+  ): Promise<{ total: number; itens: ExecucaoIntegracaoManualItem[] }> {
+    const params = new URLSearchParams();
+    params.set("limite", String(limite));
+    params.set("offset", String(offset));
+    if (estado) params.set("estado", estado);
+
+    return this.requisitar<{ total: number; itens: ExecucaoIntegracaoManualItem[] }>(
+      `/api/v1/integracoes-manuais/execucoes?${params.toString()}`,
+      { method: "GET" }
+    );
+  }
+
+  public async obterIntegracaoManual(id: string): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      `/api/v1/integracoes-manuais/execucoes/${id}`,
+      { method: "GET" }
+    );
+    return res.execucao;
+  }
+
+  public async criarIntegracaoManual(
+    payload: CriarExecucaoManualPayload
+  ): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      "/api/v1/integracoes-manuais/execucoes",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.execucao;
+  }
+
+  public async aprovarIntegracaoManual(
+    id: string,
+    notasAprovacao?: string
+  ): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      `/api/v1/integracoes-manuais/execucoes/${id}/aprovar`,
+      {
+        method: "POST",
+        body: JSON.stringify({ notasAprovacao }),
+      }
+    );
+    return res.execucao;
+  }
+
+  public async rejeitarIntegracaoManual(
+    id: string,
+    motivo: string
+  ): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      `/api/v1/integracoes-manuais/execucoes/${id}/rejeitar`,
+      {
+        method: "POST",
+        body: JSON.stringify({ motivo }),
+      }
+    );
+    return res.execucao;
   }
 }
 

@@ -3,6 +3,27 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
+## [Não publicado] — Modo Manual e Portas de Integração (Ticket NZAIDI-MANUAL-01, ramo `feat/modo-manual-integracoes`)
+Implementação da camada de execução e conciliação manual para integrações externas (Wise, MaxPay, Realtransfers, Multicaixa/GPO e bancos comerciais angolanos).
+
+### Adicionado
+- **Documento do Ticket (`TICKET_MODO_MANUAL_INTEGRACOES_NZAIDI.md`)**:
+  - Especificação detalhada de arquitetura, estados operacionais, idempotência financeira, alçadas AML, prevenção de duplicados e critérios de aceitação.
+- **Módulo de Integrações Manuais na API (`apps/api/src/modules/integracoes-manuais/`)**:
+  - `integracoes-manuais.types.ts`: Tipos estritos e enums de canais (`wise`, `maxpay`, `realtransfers`, `multicaixa_gpo`, `banco_bai`, etc.) e estados (`pendente`, `concluida`, `rejeitada`, `cancelada`).
+  - `integracoes-manuais.repository.ts`: Tabela SQLite `execucoes_integracao_manual` com restrições `UNIQUE(canal_origem, referencia_externa)` e `UNIQUE(chave_idempotencia)`.
+  - `integracoes-manuais.service.ts`: Lógica de negócio com alçada de 4 olhos (valores >= 5.000.000 AOA exigem aprovação por segundo operador), segregação estrita de funções (criador != aprovador), garantia de não afetação do caixa físico de notas e registo na pista de auditoria regulatória.
+  - `integracoes-manuais.routes.ts`: Endpoints com autenticação de sessão e RBAC (`POST /api/v1/integracoes-manuais/execucoes`, `POST /api/v1/integracoes-manuais/execucoes/:id/aprovar`, `POST /api/v1/integracoes-manuais/execucoes/:id/rejeitar`, `GET /api/v1/integracoes-manuais/execucoes`, `GET /api/v1/integracoes-manuais/execucoes/:id`).
+  - `README.md`: Ficha técnica do módulo.
+- **Matriz de Permissões RBAC (`apps/api/src/modules/autenticacao/matriz.ts`)**:
+  - Novas permissões: `integracoes:liquidar_manual` (Tesouraria, Gestão) e `integracoes:consultar_manual` (Atendente, Compliance, Tesouraria, Gestão).
+- **Interface no Painel Administrativo (`apps/admin`)**:
+  - `apps/admin/src/views/integracoes.view.ts`: Ecrã completo de liquidações manuais e conciliação, formulário com gerador de chave de idempotência, listagem com badges de estado, botões de ação e modais de confirmação 4-olhos.
+  - Atualização do menu lateral (`menu-lateral.ts`) e roteamento (`main.ts`).
+  - Métodos no cliente da API (`cliente.ts`).
+- **Testes Automatizados (`apps/api/test/modo-manual.test.ts`)**:
+  - 7 testes dedicados cobrindo autorização, segregação de funções, idempotência, bloqueio de referências duplicadas por canal, alçadas e não contaminação de caixa físico. Monorepo com 92 testes aprovados.
+
 ## [Não publicado] — Renovação visual do website e do backoffice (ramo `feat/acesso-paineis-gestao-usuarios`)
 Só apresentação. Não altera a API, o modelo de dados, as regras financeiras, a autenticação nem as permissões.
 

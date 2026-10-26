@@ -29,6 +29,9 @@ import { registrarRotasAuditoria } from "./modules/auditoria/auditoria.routes.js
 import { registrarRotasClientes } from "./modules/identidade-kyc/clientes.routes.js";
 import { registrarRotasCaixa } from "./modules/contabilidade-tesouraria/caixa.routes.js";
 import { registrarRotasOperacoes } from "./modules/operacoes-cambio/operacoes.routes.js";
+import { IntegracoesManuaisRepository } from "./modules/integracoes-manuais/integracoes-manuais.repository.js";
+import { IntegracoesManuaisService } from "./modules/integracoes-manuais/integracoes-manuais.service.js";
+import { registrarRotasIntegracoesManuais } from "./modules/integracoes-manuais/integracoes-manuais.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -96,6 +99,12 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
     auditoriaRepo
   );
 
+  const integracoesManuaisRepo = new IntegracoesManuaisRepository(db);
+  const integracoesManuaisService = new IntegracoesManuaisService(
+    integracoesManuaisRepo,
+    auditoriaRepo
+  );
+
   // 4. Hook de Autenticação Global (identifica sessão se houver cookie/header)
   const middlewareAuth = criarMiddlewareAutenticacao(usersRepo, sessionsRepo);
   app.addHook("onRequest", middlewareAuth);
@@ -109,6 +118,7 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   registrarRotasClientes(app, clientesService, documentosService);
   registrarRotasCaixa(app, caixaService);
   registrarRotasOperacoes(app, operacoesService);
+  registrarRotasIntegracoesManuais(app, integracoesManuaisService);
 
   return app;
 }
