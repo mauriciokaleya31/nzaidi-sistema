@@ -382,6 +382,22 @@ export class AdminApiClient {
     return `${this.baseUrl}/api/v1/clientes/${clienteId}/documentos/${docId}/download`;
   }
 
+  public async impersonarCliente(
+    clienteId: string
+  ): Promise<{ sucesso: boolean; dados?: { cliente: ClienteItem; token: string; redirectUrl: string }; erro?: string }> {
+    try {
+      const res = await this.requisitar<{
+        sucesso: boolean;
+        dados: { cliente: ClienteItem; token: string; redirectUrl: string };
+      }>("/api/v1/portal/admin/impersonar/" + clienteId, {
+        method: "POST",
+      });
+      return { sucesso: true, dados: res.dados };
+    } catch (err: any) {
+      return { sucesso: false, erro: err.message || "Falha ao personificar conta de cliente." };
+    }
+  }
+
   // --- Caixa & Tesouraria ---
   public async obterCaixaAtivo(): Promise<CaixaAtivoResposta | null> {
     const res = await this.requisitar<{ sucesso: boolean; dados: CaixaAtivoResposta | null }>("/api/v1/caixa/ativo", {

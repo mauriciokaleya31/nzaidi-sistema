@@ -15,6 +15,7 @@ export type Permissao =
   | "clientes:criar"
   | "clientes:consultar"
   | "clientes:editar"
+  | "clientes:impersonar"
   | "kyc:analisar"
   | "kyc:aprovar"
   | "caixa:abrir"
@@ -55,6 +56,7 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "aprovar_casos_compliance",
     "gerar_reportes_bna",
     "clientes:consultar",
+    "clientes:impersonar",
     "kyc:analisar",
     "kyc:aprovar",
     "operacoes:consultar",
@@ -88,6 +90,7 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "clientes:criar",
     "clientes:consultar",
     "clientes:editar",
+    "clientes:impersonar",
     "kyc:analisar",
     "kyc:aprovar",
     "caixa:abrir",

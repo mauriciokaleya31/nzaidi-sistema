@@ -4,6 +4,7 @@ import { authState } from "../state/auth.state.js";
 export async function renderizarClientes(container: HTMLElement): Promise<void> {
   const podeCriar = authState.temPermissao("clientes:criar");
   const podeAprovarKyc = authState.temPermissao("kyc:analisar") || authState.temPermissao("kyc:aprovar");
+  const podeImpersonar = authState.temPermissao("clientes:impersonar");
 
   container.innerHTML = `
     <div class="view-header">
@@ -328,8 +329,17 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
                     ${
                       podeAprovarKyc
                         ? `
-                      <button class="btn btn-sm btn-secondary btn-analisar-kyc" data-id="${c.id}" data-nome="${c.nome}">
+                      <button class="btn btn-sm btn-secondary btn-analisar-kyc mr-1" data-id="${c.id}" data-nome="${c.nome}">
                         Avaliar KYC
+                      </button>
+                    `
+                        : ""
+                    }
+                    ${
+                      podeImpersonar
+                        ? `
+                      <button class="btn btn-sm btn-outline-warning btn-entrar-cliente" data-id="${c.id}" data-nome="${c.nome}" title="Aceder à conta deste cliente no Portal">
+                        👤 Entrar na Conta
                       </button>
                     `
                         : ""
@@ -357,6 +367,42 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
             const id = btn.getAttribute("data-id")!;
             const nome = btn.getAttribute("data-nome")!;
             abrirModalKyc(id, nome);
+          });
+        });
+      }
+
+      if (podeImpersonar) {
+        containerTabela.querySelectorAll(".btn-entrar-cliente").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-id")!;
+            const nome = btn.getAttribute("data-nome")!;
+
+            const confirmar = window.confirm(
+              "Deseja entrar na conta do cliente \"" + nome + "\"?\n\nEsta ação será auditada e registada com o seu utilizador na pista de auditoria."
+            );
+            if (!confirmar) return;
+
+            const btnOriginalText = btn.textContent;
+            try {
+              btn.setAttribute("disabled", "true");
+              btn.textContent = "A aceder...";
+
+              const res = await api.impersonarCliente(id);
+              if (res.sucesso && res.dados) {
+                try {
+                  localStorage.setItem("nzaidi_cliente_token", res.dados.token);
+                  localStorage.setItem("nzaidi_cliente_dados", JSON.stringify(res.dados.cliente));
+                } catch {}
+                window.open(res.dados.redirectUrl || "/cliente/#/dashboard", "_blank");
+              } else {
+                alert(res.erro || "Não foi possível aceder à conta do cliente.");
+              }
+            } catch (err: any) {
+              alert("Erro ao aceder à conta: " + (err.message || "Falha de ligação."));
+            } finally {
+              btn.removeAttribute("disabled");
+              btn.textContent = btnOriginalText;
+            }
           });
         });
       }

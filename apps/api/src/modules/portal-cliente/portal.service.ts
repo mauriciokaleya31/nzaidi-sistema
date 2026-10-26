@@ -405,4 +405,50 @@ export class PortalClienteService {
   public listarPedidosRemessa(clienteId: string): PedidoRemessa[] {
     return this.portalRepo.listarPedidosRemessaPorCliente(clienteId);
   }
+
+  public impersonarCliente(
+    clienteId: string,
+    operador: { id: string; nome: string; funcao: string },
+    ip?: string | null,
+    userAgent?: string | null
+  ): { cliente: Cliente; token: string } {
+    const cliente = this.clientesRepo.buscarPorId(clienteId);
+    if (!cliente) {
+      throw new ErroNaoEncontrado("Cliente não encontrado.");
+    }
+
+    if (cliente.estado === "bloqueado") {
+      throw new ErroValidacao("Não é permitido aceder a uma conta de cliente suspensa ou bloqueada.");
+    }
+
+    // Gerar Sessão de suporte (24 Horas)
+    const rawToken = randomBytes(32).toString("hex");
+    this.portalRepo.criarSessao(
+      cliente.id,
+      rawToken,
+      24,
+      ip,
+      `Impersonado por ${operador.nome} (${operador.funcao}) - ${userAgent ?? "Painel Admin"}`
+    );
+
+    // Registo de auditoria imutável
+    this.auditoriaRepo.registar({
+      autorId: operador.id,
+      autorNome: operador.nome,
+      autorFuncao: operador.funcao,
+      acao: "PORTAL_CLIENTE_IMPERSONAR",
+      recurso: "clientes",
+      recursoId: cliente.id,
+      detalhes: {
+        clienteNome: cliente.nome,
+        clienteNif: cliente.nif,
+        operadorId: operador.id,
+        operadorFuncao: operador.funcao,
+        motivo: "Acesso administrativo autorizado à conta do cliente",
+      },
+      ip: ip ?? null,
+    });
+
+    return { cliente, token: rawToken };
+  }
 }

@@ -365,4 +365,100 @@ describe("Módulo Portal do Cliente", () => {
     expect(listaRemessasRes.json().total).toBe(1);
     expect(listaRemessasRes.json().dados[0].id).toBe(remessa.id);
   });
+
+  it("9. Gestão deve conseguir personificar/entrar na conta do cliente e atendente deve ser bloqueado", async () => {
+    // 1. Criar administrador (gestão)
+    await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/primeiro-admin",
+      payload: {
+        tokenInicializacao: "admin-init-token-super-seguro",
+        nome: "Gestora Geral",
+        email: "gestao.impersonar@nzaidi.ao",
+        [campoSenha]: segredoTeste,
+      },
+    });
+
+    const loginGestao = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: {
+        email: "gestao.impersonar@nzaidi.ao",
+        [campoSenha]: segredoTeste,
+      },
+    });
+    const cookieGestao = loginGestao.headers["set-cookie"] as string;
+
+    // Criar atendente
+    await app.inject({
+      method: "POST",
+      url: "/api/v1/usuarios",
+      headers: { cookie: cookieGestao },
+      payload: {
+        nome: "Atendente Simples",
+        email: "atendente.impersonar@nzaidi.ao",
+        funcao: "atendente",
+        [campoSenha]: segredoTeste,
+      },
+    });
+
+    const loginAtendente = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: {
+        email: "atendente.impersonar@nzaidi.ao",
+        [campoSenha]: segredoTeste,
+      },
+    });
+    const cookieAtendente = loginAtendente.headers["set-cookie"] as string;
+
+    // 2. Registar cliente
+    const regCliente = await app.inject({
+      method: "POST",
+      url: "/api/v1/portal/auth/registo",
+      payload: {
+        nome: "Cliente Alvo Impersonar",
+        tipoPessoa: "singular",
+        nif: "NIF-CLI-IMP-1",
+        tipoDocumento: "bi",
+        numeroDocumento: "DOC-CLI-IMP-1",
+        dataNascimento: "1992-05-10",
+        nacionalidade: "Angolana",
+        endereco: "Talatona, Luanda",
+        telefone: "+244911223344",
+        email: "alvo.impersonar@exemplo.ao",
+        [campoSenha]: segredoTeste,
+      },
+    });
+    const clienteId = regCliente.json().dados.cliente.id;
+
+    // 3. Atendente tenta impersonar -> 403 Forbidden
+    const impAtendenteRes = await app.inject({
+      method: "POST",
+      url: `/api/v1/portal/admin/impersonar/${clienteId}`,
+      headers: { cookie: cookieAtendente },
+    });
+    expect(impAtendenteRes.statusCode).toBe(403);
+
+    // 4. Gestão impersona com sucesso -> 200 OK
+    const impGestaoRes = await app.inject({
+      method: "POST",
+      url: `/api/v1/portal/admin/impersonar/${clienteId}`,
+      headers: { cookie: cookieGestao },
+    });
+    expect(impGestaoRes.statusCode).toBe(200);
+    const impDados = impGestaoRes.json().dados;
+    expect(impDados.cliente.id).toBe(clienteId);
+    expect(impDados.token).toBeDefined();
+    expect(impDados.redirectUrl).toBe("/cliente/#/dashboard");
+
+    // 5. O token gerado dá acesso ao perfil do cliente
+    const perfilRes = await app.inject({
+      method: "GET",
+      url: "/api/v1/portal/perfil",
+      headers: { Authorization: `Bearer ${impDados.token}` },
+    });
+    expect(perfilRes.statusCode).toBe(200);
+    expect(perfilRes.json().dados.cliente.id).toBe(clienteId);
+  });
 });

@@ -11,7 +11,6 @@ export function renderDocumentosView(container: HTMLElement): void {
   async function carregarDados() {
     try {
       documentos = await api.listarDocumentos();
-      await authState.recarregarPerfil();
     } catch (e) {
       console.error("Erro ao carregar documentos:", e);
     } finally {
@@ -218,5 +217,6 @@ export function renderDocumentosView(container: HTMLElement): void {
     });
   }
 
+  render();
   carregarDados();
 }

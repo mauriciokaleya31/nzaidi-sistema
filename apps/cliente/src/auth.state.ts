@@ -56,14 +56,16 @@ class AuthState {
     this.notificar();
   }
 
-  public async recarregarPerfil(): Promise<void> {
+  public async recarregarPerfil(deveNotificar: boolean = false): Promise<void> {
     try {
       this.perfil = await api.obterPerfil();
       this.cliente = this.perfil.cliente;
     } catch (e) {
       console.error("Falha ao recarregar perfil:", e);
     }
-    this.notificar();
+    if (deveNotificar) {
+      this.notificar();
+    }
   }
 }
 

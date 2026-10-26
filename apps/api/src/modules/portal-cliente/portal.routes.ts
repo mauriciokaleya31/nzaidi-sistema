@@ -10,6 +10,7 @@ import {
 } from "./portal.types.js";
 import { UploadDocumentoInputSchema } from "../identidade-kyc/clientes.types.js";
 import { ErroAutenticacao } from "../../plugins/erros.js";
+import { exigirPermissao } from "../../plugins/auth.plugin.js";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -260,4 +261,36 @@ export function registrarRotasPortalCliente(
       });
     }
   );
+
+  // Rota de Personificação de Conta de Cliente (Admin -> Cliente)
+  app.post(
+    "/api/v1/portal/admin/impersonar/:clienteId",
+    { preHandler: [exigirPermissao("clientes:impersonar")] },
+    async (request, reply) => {
+      const { clienteId } = request.params as { clienteId: string };
+      const operador = request.usuario!;
+      const ip = request.ip;
+      const userAgent = request.headers["user-agent"];
+
+      const resultado = portalService.impersonarCliente(clienteId, operador, ip, userAgent);
+
+      reply.setCookie(COOKIE_NOME, resultado.token, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 86400,
+      });
+
+      return reply.send({
+        sucesso: true,
+        dados: {
+          cliente: resultado.cliente,
+          token: resultado.token,
+          redirectUrl: "/cliente/#/dashboard",
+        },
+      });
+    }
+  );
+
 }

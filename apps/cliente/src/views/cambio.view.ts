@@ -255,5 +255,6 @@ export function renderCambioView(container: HTMLElement): void {
     });
   }
 
+  render();
   carregarDados();
 }

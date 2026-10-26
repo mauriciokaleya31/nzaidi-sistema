@@ -279,5 +279,6 @@ export function renderRemessasView(container: HTMLElement): void {
     });
   }
 
+  render();
   carregarDados();
 }
