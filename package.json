@@ -17,6 +17,7 @@
     "build:site": "npm --workspace=@nzaidi/site-publico run build",
     "build:admin": "npm --workspace=@nzaidi/admin run build",
     "build:cliente": "npm --workspace=@nzaidi/cliente run build",
+    "build:parceiros": "npm --workspace=@nzaidi/parceiros run build",
     "build:api": "npm --workspace=@nzaidi/api run build",
     "iniciar:api": "npm --workspace=@nzaidi/api run start",
     "verificar": "npm run verificar:tipos && npm run testes && npm run verificar:docs"

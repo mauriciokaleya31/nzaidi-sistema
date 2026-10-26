@@ -286,6 +286,102 @@ export function inicializarSchema(db: DatabaseSync): void {
     );
     CREATE INDEX IF NOT EXISTS idx_pedidos_remessas_cliente ON pedidos_remessas(cliente_id);
     CREATE INDEX IF NOT EXISTS idx_pedidos_remessas_estado ON pedidos_remessas(estado);
+
+    -- Módulo de Parceiros Comerciais
+    CREATE TABLE IF NOT EXISTS parceiros (
+      id TEXT PRIMARY KEY,
+      codigo TEXT UNIQUE NOT NULL,
+      nome TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('remessas', 'pagamentos', 'cambio', 'correspondente')),
+      canais_suportados TEXT NOT NULL,
+      comissao_percentual TEXT NOT NULL DEFAULT '0.50',
+      limite_diario_aoa TEXT NOT NULL DEFAULT '50000000.00',
+      estado TEXT NOT NULL CHECK(estado IN ('ativo', 'suspenso', 'inativo')) DEFAULT 'ativo',
+      chave_api TEXT,
+      webhook_url TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_parceiros_codigo ON parceiros(codigo);
+    CREATE INDEX IF NOT EXISTS idx_parceiros_estado ON parceiros(estado);
+
+    CREATE TABLE IF NOT EXISTS usuarios_parceiros (
+      id TEXT PRIMARY KEY,
+      parceiro_id TEXT NOT NULL,
+      nome TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL COLLATE NOCASE,
+      senha_hash TEXT NOT NULL,
+      funcao TEXT NOT NULL CHECK(funcao IN ('operador_parceiro', 'gestor_parceiro')) DEFAULT 'operador_parceiro',
+      ativo INTEGER NOT NULL DEFAULT 1,
+      ultimo_login_em TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (parceiro_id) REFERENCES parceiros(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_usuarios_parceiros_parceiro ON usuarios_parceiros(parceiro_id);
+    CREATE INDEX IF NOT EXISTS idx_usuarios_parceiros_email ON usuarios_parceiros(email);
+
+    CREATE TABLE IF NOT EXISTS sessoes_parceiros (
+      id TEXT PRIMARY KEY,
+      parceiro_id TEXT NOT NULL,
+      usuario_parceiro_id TEXT NOT NULL,
+      expira_em TEXT NOT NULL,
+      revogado_em TEXT,
+      ip TEXT,
+      user_agent TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (parceiro_id) REFERENCES parceiros(id) ON DELETE CASCADE,
+      FOREIGN KEY (usuario_parceiro_id) REFERENCES usuarios_parceiros(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_sessoes_parceiros_parceiro ON sessoes_parceiros(parceiro_id);
+    CREATE INDEX IF NOT EXISTS idx_sessoes_parceiros_expira ON sessoes_parceiros(expira_em);
+
+    CREATE TABLE IF NOT EXISTS operacoes_parceiros (
+      id TEXT PRIMARY KEY,
+      parceiro_id TEXT NOT NULL,
+      remessa_id TEXT,
+      tipo_operacao TEXT NOT NULL CHECK(tipo_operacao IN ('remessa_saida', 'pagamento_local', 'liquidacao')),
+      canal TEXT NOT NULL,
+      beneficiario_nome TEXT NOT NULL,
+      beneficiario_pais TEXT NOT NULL,
+      beneficiario_iban TEXT NOT NULL,
+      beneficiario_banco TEXT NOT NULL,
+      beneficiario_swift TEXT,
+      moeda TEXT NOT NULL CHECK(moeda IN ('USD', 'EUR', 'GBP', 'ZAR', 'AOA')),
+      montante TEXT NOT NULL,
+      contravalor_aoa TEXT NOT NULL,
+      comissao_parceiro_aoa TEXT NOT NULL DEFAULT '0.00',
+      estado TEXT NOT NULL CHECK(estado IN ('pendente', 'em_processamento', 'liquidada', 'devolvida', 'cancelada')) DEFAULT 'pendente',
+      referencia_externa TEXT,
+      comprovativo_hash TEXT,
+      comprovativo_arquivo TEXT,
+      motivo_devolucao TEXT,
+      notas TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      liquidado_em TEXT,
+      chave_idempotencia TEXT UNIQUE,
+      FOREIGN KEY (parceiro_id) REFERENCES parceiros(id) ON DELETE CASCADE,
+      FOREIGN KEY (remessa_id) REFERENCES pedidos_remessas(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_operacoes_parceiros_parceiro ON operacoes_parceiros(parceiro_id);
+    CREATE INDEX IF NOT EXISTS idx_operacoes_parceiros_estado ON operacoes_parceiros(estado);
+    CREATE INDEX IF NOT EXISTS idx_operacoes_parceiros_canal ON operacoes_parceiros(canal);
+
+    CREATE TABLE IF NOT EXISTS reconciliacoes_parceiros (
+      id TEXT PRIMARY KEY,
+      parceiro_id TEXT NOT NULL,
+      data_referencia TEXT NOT NULL,
+      total_instrucoes INTEGER NOT NULL,
+      total_conciliadas INTEGER NOT NULL,
+      total_divergentes INTEGER NOT NULL,
+      volume_total TEXT NOT NULL,
+      detalhes_json TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (parceiro_id) REFERENCES parceiros(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_reconciliacoes_parceiros_parceiro ON reconciliacoes_parceiros(parceiro_id);
+
   `);
 }
 

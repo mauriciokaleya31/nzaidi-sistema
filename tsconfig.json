@@ -6,6 +6,7 @@
     { "path": "apps/site-publico" },
     { "path": "apps/api" },
     { "path": "apps/admin" },
-    { "path": "apps/cliente" }
+    { "path": "apps/cliente" },
+    { "path": "apps/parceiros" }
   ]
 }

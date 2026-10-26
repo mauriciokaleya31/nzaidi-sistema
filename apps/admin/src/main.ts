@@ -11,6 +11,7 @@ import { renderizarCaixa } from "./views/caixa.view.js";
 import { renderizarBalcao } from "./views/balcao.view.js";
 import { renderizarUsuarios } from "./views/usuarios.view.js";
 import { renderizarIntegracoes } from "./views/integracoes.view.js";
+import { renderizarParceiros } from "./views/parceiros.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -107,6 +108,16 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado ao módulo de Caixa e Tesouraria.</div>
+          `;
+        }
+        break;
+
+      case "#parceiros":
+        if (authState.temPermissao("usuarios:consultar") || authState.temPermissao("gerir_usuarios")) {
+          await renderizarParceiros(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado à Gestão de Parceiros Comerciais.</div>
           `;
         }
         break;

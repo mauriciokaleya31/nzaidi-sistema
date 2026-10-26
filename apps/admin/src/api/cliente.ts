@@ -1,3 +1,31 @@
+
+export interface ParceiroItem {
+  id: string;
+  codigo: string;
+  nome: string;
+  tipo: "remessas" | "pagamentos" | "cambio" | "correspondente";
+  canaisSuportados: string[];
+  comissaoPercentual: string;
+  limiteDiarioAoa: string;
+  estado: "ativo" | "suspenso" | "inativo";
+  chaveApi?: string | null;
+  webhookUrl?: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export interface CriarParceiroPayload {
+  codigo: string;
+  nome: string;
+  tipo: "remessas" | "pagamentos" | "cambio" | "correspondente";
+  canaisSuportados: string[];
+  comissaoPercentual: string;
+  limiteDiarioAoa: string;
+  emailAdmin: string;
+  nomeAdmin: string;
+  senhaAdmin: string;
+}
+
 import type { MoedaDivisa } from "@nzaidi/dominio";
 
 export type FuncaoUsuario = "atendente" | "compliance" | "tesouraria" | "gestao";
@@ -542,6 +570,59 @@ export class AdminApiClient {
     );
     return res.execucao;
   }
+
+  // --- Gestão de Parceiros Comerciais (Módulo B) ---
+  public async listarParceirosAdmin(): Promise<ParceiroItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ParceiroItem[] }>("/api/v1/admin/parceiros", {
+      method: "GET",
+    });
+    return res.dados;
+  }
+
+  public async criarParceiroAdmin(payload: CriarParceiroPayload): Promise<{ parceiro: ParceiroItem }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: { parceiro: ParceiroItem } }>("/api/v1/admin/parceiros", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async alterarStatusParceiroAdmin(id: string, estado: "ativo" | "suspenso" | "inativo"): Promise<ParceiroItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ParceiroItem }>(
+      "/api/v1/admin/parceiros/" + id + "/status",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ estado }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async atribuirRemessaParceiroAdmin(id: string, remessaId: string, canal: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      "/api/v1/admin/parceiros/" + id + "/atribuir-remessa",
+      {
+        method: "POST",
+        body: JSON.stringify({ remessaId, canal }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async impersonarParceiroAdmin(id: string): Promise<{ sucesso: boolean; dados?: any; erro?: string }> {
+    try {
+      const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+        "/api/v1/admin/parceiros/" + id + "/impersonar",
+        {
+          method: "POST",
+        }
+      );
+      return { sucesso: true, dados: res.dados };
+    } catch (err: any) {
+      return { sucesso: false, erro: err.message || "Falha ao personificar entidade parceira." };
+    }
+  }
+
 
   public async criarIntegracaoManual(
     payload: CriarExecucaoManualPayload

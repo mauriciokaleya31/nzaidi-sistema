@@ -35,6 +35,9 @@ import { registrarRotasIntegracoesManuais } from "./modules/integracoes-manuais/
 import { PortalClienteRepository } from "./modules/portal-cliente/portal.repository.js";
 import { PortalClienteService } from "./modules/portal-cliente/portal.service.js";
 import { registrarRotasPortalCliente } from "./modules/portal-cliente/portal.routes.js";
+import { ParceirosRepository } from "./modules/parceiros-comerciais/parceiros.repository.js";
+import { ParceirosService } from "./modules/parceiros-comerciais/parceiros.service.js";
+import { registrarRotasParceiros } from "./modules/parceiros-comerciais/parceiros.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -132,6 +135,9 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   );
   registrarRotasPortalCliente(app, portalService, portalRepo);
   registrarRotasIntegracoesManuais(app, integracoesManuaisService);
+  const parceirosRepo = new ParceirosRepository(db);
+  const parceirosService = new ParceirosService(db, parceirosRepo, auditoriaRepo);
+  registrarRotasParceiros(app, parceirosService, parceirosRepo);
 
   return app;
 }
