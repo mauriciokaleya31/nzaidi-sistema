@@ -31,6 +31,12 @@ export class ErroConflito extends AppError {
   }
 }
 
+export class ErroAutenticacao extends AppError {
+  constructor(mensagem = "Não autenticado", codigo = "NAO_AUTENTICADO") {
+    super(401, codigo, mensagem);
+  }
+}
+
 export class ErroPermissao extends AppError {
   constructor(mensagem: string, codigo = "ACESSO_NEGADO") {
     super(403, codigo, mensagem);

@@ -5,6 +5,7 @@
     { "path": "packages/design-system" },
     { "path": "apps/site-publico" },
     { "path": "apps/api" },
-    { "path": "apps/admin" }
+    { "path": "apps/admin" },
+    { "path": "apps/cliente" }
   ]
 }

@@ -219,6 +219,73 @@ export function inicializarSchema(db: DatabaseSync): void {
       FOREIGN KEY (operacao_id) REFERENCES operacoes_cambio(id)
     );
     CREATE INDEX IF NOT EXISTS idx_borderos_operacao ON borderos(operacao_id);
+
+    -- --- Fase 6: Portal do Cliente (Credenciais, Sessões, Pedidos e Remessas) ---
+    CREATE TABLE IF NOT EXISTS clientes_credenciais (
+      cliente_id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      telefone TEXT,
+      senha_hash TEXT NOT NULL,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_clientes_credenciais_email ON clientes_credenciais(email);
+
+    CREATE TABLE IF NOT EXISTS sessoes_clientes (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      criado_em TEXT NOT NULL,
+      expira_em TEXT NOT NULL,
+      ip TEXT,
+      user_agent TEXT,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_sessoes_clientes_token ON sessoes_clientes(token_hash);
+    CREATE INDEX IF NOT EXISTS idx_sessoes_clientes_cliente ON sessoes_clientes(cliente_id);
+
+    CREATE TABLE IF NOT EXISTS pedidos_cambio (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      tipo_operacao TEXT NOT NULL CHECK(tipo_operacao IN ('compra', 'venda')),
+      moeda TEXT NOT NULL CHECK(moeda IN ('USD', 'EUR')),
+      montante_divisa TEXT NOT NULL,
+      taxa_proposta TEXT NOT NULL,
+      total_aoa_estimado TEXT NOT NULL,
+      finalidade TEXT NOT NULL,
+      estado TEXT NOT NULL CHECK(estado IN ('pendente', 'em_analise', 'aprovado', 'rejeitado', 'concluido', 'cancelado')) DEFAULT 'pendente',
+      motivo_rejeicao TEXT,
+      operacao_id TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_pedidos_cambio_cliente ON pedidos_cambio(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_pedidos_cambio_estado ON pedidos_cambio(estado);
+
+    CREATE TABLE IF NOT EXISTS pedidos_remessas (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      beneficiario_nome TEXT NOT NULL,
+      beneficiario_pais TEXT NOT NULL,
+      beneficiario_iban TEXT NOT NULL,
+      beneficiario_banco TEXT NOT NULL,
+      beneficiario_swift TEXT,
+      moeda_destino TEXT NOT NULL CHECK(moeda_destino IN ('USD', 'EUR')),
+      montante_divisa TEXT NOT NULL,
+      taxa_cambio TEXT NOT NULL,
+      comissao_aoa TEXT NOT NULL,
+      total_aoa TEXT NOT NULL,
+      finalidade TEXT NOT NULL,
+      estado TEXT NOT NULL CHECK(estado IN ('pendente_revisao', 'em_processamento', 'executada', 'rejeitada')) DEFAULT 'pendente_revisao',
+      motivo_rejeicao TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_pedidos_remessas_cliente ON pedidos_remessas(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_pedidos_remessas_estado ON pedidos_remessas(estado);
   `);
 }
 

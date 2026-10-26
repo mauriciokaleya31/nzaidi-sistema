@@ -32,6 +32,9 @@ import { registrarRotasOperacoes } from "./modules/operacoes-cambio/operacoes.ro
 import { IntegracoesManuaisRepository } from "./modules/integracoes-manuais/integracoes-manuais.repository.js";
 import { IntegracoesManuaisService } from "./modules/integracoes-manuais/integracoes-manuais.service.js";
 import { registrarRotasIntegracoesManuais } from "./modules/integracoes-manuais/integracoes-manuais.routes.js";
+import { PortalClienteRepository } from "./modules/portal-cliente/portal.repository.js";
+import { PortalClienteService } from "./modules/portal-cliente/portal.service.js";
+import { registrarRotasPortalCliente } from "./modules/portal-cliente/portal.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -118,6 +121,16 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   registrarRotasClientes(app, clientesService, documentosService);
   registrarRotasCaixa(app, caixaService);
   registrarRotasOperacoes(app, operacoesService);
+  const portalRepo = new PortalClienteRepository(db);
+  const portalService = new PortalClienteService(
+    db,
+    portalRepo,
+    clientesRepo,
+    documentosService,
+    taxasService,
+    auditoriaRepo
+  );
+  registrarRotasPortalCliente(app, portalService, portalRepo);
   registrarRotasIntegracoesManuais(app, integracoesManuaisService);
 
   return app;
