@@ -155,14 +155,14 @@ Mensalmente, a equipa de infraestrutura deve executar o autoteste de recuperaç�
 python3 scripts/backup.py --testar
 ```
 
-### 6.3 Agendamento Automático dos Reportes BNA às 18:30 (cPanel / Cron)
+### 6.3 Agendamento Automático dos Reportes BNA (cPanel / Cron de 15 em 15 minutos)
 
 Conforme a regulamentação cambial do Banco Nacional de Angola (BNA), a casa de câmbios deve apurar o fecho diário de câmbio e de remessas e submeter os respetivos mapas às plataformas Suptech e SSIF até à hora de corte oficial (18:30, horário de Luanda / Africa/Luanda).
 
-No cPanel (menu **Cron Jobs / Tarefas Agendadas**), configure a execução diária às 18:30:
+No cPanel (menu **Cron Jobs / Tarefas Agendadas**), configure a execução contínua de 15 em 15 minutos ao longo de todo o dia:
 
-- **Minuto**: `30`
-- **Hora**: `18`
+- **Minuto**: `*/15`
+- **Hora**: `*`
 - **Dia do Mês**: `*`
 - **Mês**: `*`
 - **Dia da Semana**: `*`
@@ -171,12 +171,14 @@ No cPanel (menu **Cron Jobs / Tarefas Agendadas**), configure a execução diár
 cd /caminho/do/projeto && npm run cron:bna >> storage/logs/cron_bna.log 2>&1
 ```
 
-**Comportamento da Rotina Automática**:
-1. **Recuperação de Dias em Atraso**: Ao iniciar, verifica se existem datas anteriores com operações concluídas sem mapas gerados e procede à geração imediata.
-2. **Geração dos Mapas de Câmbio e Remessa**: Extrai todas as transações da data de corte e compõe os ficheiros formatados.
-3. **Reporte a Zero Obrigatório**: Se não houver operações no dia, gera automaticamente mapas declarativos com montante zero, prevenindo sanções e processos de contraordenação do supervisor.
-4. **Registo na Pista de Auditoria**: Cada execução é gravada com `autor_id = sistema_cron_bna` e ação `BNA_CRON_ROTINA_EXECUTADA`.
-5. **Monitorização Visual**: Se às 18:35 o mapa do dia ainda não tiver sido emitido, a Visão Geral (Dashboard) ativa um aviso de emergência regulatória visível aos operadores e à gestão.
+**Comportamento Autónomo da Rotina (`npm run cron:bna`)**:
+1. **Decisão Inteligente por Horário Oficial (Africa/Luanda)**: O fuso horário de Angola é calculado internamente pelo motor da aplicação e independe do fuso do servidor de alojamento.
+2. **Antes das 18:30 de Luanda**: Executa exclusivamente a recuperação de eventuais dias passados com movimentos pendentes. O mapa do dia de hoje **não é gerado** enquanto a sessão de câmbio estiver em curso.
+3. **A partir das 18:30 de Luanda**:
+   - Se o mapa de hoje não existir, procede à sua geração imediata (aplicando **Reporte a Zero** declarativo se não houver operações no dia).
+   - Se o mapa já existir e **não tiver sido submetido**, mas entrarem novas operações concluídas (ex.: às 19:00), a rotina **regenera automaticamente o mapa**, atualiza os volumes e o hash SHA-256 e regista o evento `BNA_REPORTE_REGENERADO` na auditoria.
+   - Se o mapa **já tiver sido submetido** em Suptech ou SSIF, a rotina **nunca o altera**. Caso alguma operação seja introduzida com data posterior à submissão oficial, o sistema dispara um alerta regulatório prioritário na Visão Geral (Dashboard).
+4. **Registo na Pista de Auditoria**: Cada ciclo de execução bem-sucedido é guardado com `autor_id = sistema_cron_bna` e ação `BNA_CRON_ROTINA_EXECUTADA`.
 
 ---
 

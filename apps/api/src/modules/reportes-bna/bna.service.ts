@@ -57,14 +57,15 @@ export class BnaService {
   public gerarReporteDoDia(
     dataReferencia: string,
     tipoMapa: TipoMapaBna,
-    operador: ContextoUsuario
+    operador: ContextoUsuario,
+    momentoGeracao?: Date
   ): BnaReporteDiario {
     const colunas = this.bnaRepo.obterColunasConfig(tipoMapa);
     if (colunas.length === 0) {
       throw new ErroValidacao(`Nenhuma coluna configurada para o reporte BNA do tipo '${tipoMapa}'.`);
     }
 
-    const agora = new Date().toISOString();
+    const agora = (momentoGeracao ?? new Date()).toISOString();
     let totalOperacoes = 0;
     let volumeAoa = "0.00";
     let volumeDivisaUsd = "0.00";
@@ -174,8 +175,11 @@ export class BnaService {
     const dataLimpa = dataReferencia.replace(/-/g, "");
     const nomeArquivo = `MAPA_BNA_${tipoMapa.toUpperCase()}_${dataLimpa}_NZAIDI.csv`;
 
+    const repJaExistente = this.bnaRepo.buscarPorDataETipo(dataReferencia, tipoMapa);
+    const idReporte = repJaExistente ? repJaExistente.id : `rep_${randomUUID()}`;
+
     const reporte: BnaReporteDiario = {
-      id: `rep_${randomUUID()}`,
+      id: idReporte,
       dataReferencia,
       tipoMapa,
       formato: "csv",
@@ -272,15 +276,30 @@ export class BnaService {
     const mapaCambioGerado = !!reporteCambio;
     const mapaRemessaGerado = !!reporteRemessa;
 
-    // Se já passou das 18:35 em Luanda e algum dos mapas não foi gerado, dispara ALERTA
+    // 1. Verifica se houve operações registadas após a submissão de qualquer mapa
+    let operacoesAposSubmissao = false;
+    if (reporteCambio && (reporteCambio.submetidoSuptechEm || reporteCambio.submetidoSsifEm)) {
+      const momentoSub = reporteCambio.submetidoSuptechEm || reporteCambio.submetidoSsifEm!;
+      const ops = this.bnaRepo.buscarNovasOperacoesApos(dataHojeLuanda, "cambio", momentoSub);
+      if (ops.length > 0) operacoesAposSubmissao = true;
+    }
+    if (reporteRemessa && (reporteRemessa.submetidoSuptechEm || reporteRemessa.submetidoSsifEm)) {
+      const momentoSub = reporteRemessa.submetidoSuptechEm || reporteRemessa.submetidoSsifEm!;
+      const rems = this.bnaRepo.buscarNovasOperacoesApos(dataHojeLuanda, "remessa", momentoSub);
+      if (rems.length > 0) operacoesAposSubmissao = true;
+    }
+
+    // 2. Se já passou das 18:35 em Luanda e algum dos mapas não foi gerado, dispara ALERTA
     const passouHorarioCorte = minutosDia >= minutosCorteAlerta;
     const faltaGerar = !mapaCambioGerado || !mapaRemessaGerado;
-    const alerta = passouHorarioCorte && faltaGerar;
+    let alerta = (passouHorarioCorte && faltaGerar) || operacoesAposSubmissao;
 
     const horaStr = `${String(hora).padStart(2, "0")}:${String(minuto).padStart(2, "0")}`;
 
     let mensagem: string | undefined;
-    if (alerta) {
+    if (operacoesAposSubmissao) {
+      mensagem = `ALERTA REGULATÓRIO GRAVE: Foram registadas operações em ${dataHojeLuanda} após a submissão oficial do mapa ao BNA! Contacte o Compliance imediatamente.`;
+    } else if (passouHorarioCorte && faltaGerar) {
       const faltantes: string[] = [];
       if (!mapaCambioGerado) faltantes.push("Câmbio");
       if (!mapaRemessaGerado) faltantes.push("Remessas");
@@ -322,10 +341,11 @@ export class BnaService {
   public registarSubmissao(
     id: string,
     plataforma: "suptech" | "ssif" | "ambas",
-    operador: ContextoUsuario
+    operador: ContextoUsuario,
+    momentoSubmissao?: Date
   ): BnaReporteDiario {
     const rep = this.buscarPorId(id);
-    const agora = new Date().toISOString();
+    const agora = (momentoSubmissao ?? new Date()).toISOString();
 
     this.bnaRepo.atualizarSubmissao(id, plataforma, agora, operador.id);
 
@@ -345,6 +365,48 @@ export class BnaService {
     });
 
     return this.buscarPorId(id);
+  }
+
+  public regenerarReporteDoDia(
+    dataReferencia: string,
+    tipoMapa: TipoMapaBna,
+    operador: ContextoUsuario,
+    motivo = "Novas operações detetadas antes da submissão",
+    momentoGeracao?: Date
+  ): BnaReporteDiario {
+    const repExistente = this.bnaRepo.buscarPorDataETipo(dataReferencia, tipoMapa);
+    if (repExistente) {
+      const foiSubmetido =
+        repExistente.estadoSuptech !== "gerado" ||
+        repExistente.estadoSsif !== "gerado";
+      if (foiSubmetido) {
+        throw new ErroValidacao(
+          `Não é permitido regenerar o reporte BNA do tipo '${tipoMapa}' de ${dataReferencia} porque já foi submetido ao supervisor.`
+        );
+      }
+    }
+
+    const novoReporte = this.gerarReporteDoDia(dataReferencia, tipoMapa, operador, momentoGeracao);
+
+    this.auditoriaRepo.registar({
+      autorId: operador.id,
+      autorNome: operador.nome,
+      autorFuncao: operador.funcao,
+      acao: "BNA_REPORTE_REGENERADO",
+      recurso: "bna_reportes_diarios",
+      recursoId: novoReporte.id,
+      detalhes: {
+        tipoMapa,
+        dataReferencia,
+        motivo,
+        novoTotalOperacoes: novoReporte.totalOperacoes,
+        novoVolumeAoa: novoReporte.volumeAoa,
+        novoHash: novoReporte.hashSha256,
+      },
+      ip: operador.ip,
+    });
+
+    return novoReporte;
   }
 
   private extrairValorColuna(col: BnaColunaConfig, registro: any): string {

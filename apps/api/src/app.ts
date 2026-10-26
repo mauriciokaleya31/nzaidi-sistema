@@ -5,7 +5,7 @@ import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import type { DatabaseSync } from "node:sqlite";
 
-import { obterEnv, type Env } from "./config/env.js";
+import { obterEnv, validarEnvProducao, type Env } from "./config/env.js";
 import { registrarTratamentoErros } from "./plugins/erros.js";
 import { criarMiddlewareAutenticacao } from "./plugins/auth.plugin.js";
 
@@ -43,6 +43,7 @@ export interface CriarAppOpcoes {
 
 export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance> {
   const env = opcoes.env ?? obterEnv();
+  validarEnvProducao(env);
   const db = opcoes.db;
   const ehProducao = env.NODE_ENV === "production";
 

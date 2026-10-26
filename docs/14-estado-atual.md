@@ -29,7 +29,8 @@ Atualizado em **26/10/2026** (Ticket NZAIDI-BASE-01, ramo `feat/base-unificada`)
 | Módulo de Reportes BNA (Suptech e SSIF) com corte 18:30, reporte a zero e rotina de cron | `apps/api/src/modules/reportes-bna/`, `apps/api/src/cron/` e `apps/admin/src/views/bna.view.ts` | **Implementado e Testado** |
 | Módulo de Remessas Internacionais com parceiros MaxPay e Realtransfers | `apps/api/src/modules/remessas/` e `apps/admin/src/views/remessas.view.ts` | **Implementado e Testado** |
 | Numeração Atómica de Borderôs sem saltos (consultas parametrizadas) | `apps/api/src/modules/operacoes-cambio/` e `apps/api/src/database/` | **Implementado e Testado** |
-| Rotina Automática cPanel Cron 18:30 (Africa/Luanda) com recuperação de atrasos | `apps/api/src/cron/gerar-reportes-bna.ts` | **Implementado e Testado** |
+| Rotina Automática cPanel Cron (15 em 15 min, fuso Africa/Luanda, com regeneração e bloqueio pós-submissão) | `apps/api/src/cron/gerar-reportes-bna.ts` | **Implementado e Testado** |
+| Arranque Seguro em Produção (validação estrita de segredos e recusa de localhost) | `apps/api/src/config/env.ts` e `apps/api/test/arranque-seguro.test.ts` | **Implementado e Testado** |
 
 ## 3. Estado das Peças Técnicas
 | Peça | Estado | Verificado |
@@ -38,7 +39,7 @@ Atualizado em **26/10/2026** (Ticket NZAIDI-BASE-01, ramo `feat/base-unificada`)
 | `packages/design-system`: cores do logótipo, tipografia, componentes base, modo escuro | Criado | Ficheiros de build limpos (sem .tsbuildinfo no git) |
 | `packages/dominio`: dinheiro em decimal exato, taxas, cotação de 90 s e recotação | Criado | 17 testes unitários passam |
 | `apps/site-publico`: Website multipágina (10 páginas) e simulador integrado | **Publicado em Produção** | `https://nzaidi.ao` ativo e testado |
-| `apps/api`: API Fastify, RBAC, KYC, Borderôs Atómicos, Reportes BNA e Remessas | **Homologado** | 93 testes automatizados (11 suites) passam a 100% |
+| `apps/api`: API Fastify, RBAC, KYC, Borderôs Atómicos, Reportes BNA e Remessas | **Homologado** | 101 testes automatizados (12 suites) passam a 100% |
 | `apps/admin`: Backoffice SPA com design bancário, 10+ módulos e menu mobile | **Publicado em Produção** | `https://app.nzaidi.ao` ativo e testado |
 | `scripts/verificar-documentacao.py`: Validação de links, segredos e ficheiros | **Aprovado** | 0 segredos detetados, 0 ligações quebradas |
 

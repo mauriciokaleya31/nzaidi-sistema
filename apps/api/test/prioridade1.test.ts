@@ -464,11 +464,11 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
     expect(res).toBeDefined();
     expect(res.ultimo_valor).toBe(1);
   });
-  it("deve executar rotina automática das 18:30 com relógio simulado, recuperação de atrasos e auditoria", async () => {
-    // 1. Inserir uma operação passada sem reporte (ex: ontem) para testar recuperação de dias em atraso
+  it("deve executar rotina automática BNA: antes das 18:30 não gera; às 18:30 gera; às 19:00 regenera não submetido; após submetido nada muda", async () => {
     const dataOntem = "2026-10-24";
     const dataHoje = "2026-10-25";
 
+    // Inserir operação atrasada em dataOntem
     db.prepare(`
       INSERT INTO operacoes_cambio (
         id, numero_operacao, cliente_id, caixa_id, tipo, tipo_operacao_bna, sentido_bna,
@@ -481,34 +481,77 @@ describe("NZAIDI — Prioridade 1: Testes Regulatórios BNA, Remessas e Borderô
       )
     `).run(clienteAprovadoId, caixaAtendenteId, `${dataOntem} 10:00:00`);
 
-    // 2. Simular execução às 18:30 de Luanda (17:30 UTC) no dia de hoje
+    // 1. ANTES DAS 18:30 DE LUANDA (ex: 15:00 Luanda = 14:00 UTC)
+    const relogio1500 = new Date(`${dataHoje}T14:00:00.000Z`);
+    const res1500 = await executarRotinaDiariaBna(db, relogio1500);
+
+    expect(res1500.jaPassou1830).toBe(false);
+    expect(res1500.recuperados).toContain(`${dataOntem}:cambio`);
+    expect(res1500.mapasHoje).toHaveLength(0);
+
+    const mapaHojeNaoExiste = db.prepare("SELECT * FROM bna_reportes_diarios WHERE data_referencia = ? AND tipo_mapa = 'cambio'").get(dataHoje);
+    expect(mapaHojeNaoExiste).toBeUndefined();
+
+    // 2. ÀS 18:30 DE LUANDA (18:30 Luanda = 17:30 UTC)
     const relogio1830 = new Date(`${dataHoje}T17:30:00.000Z`);
-    const resultado = await executarRotinaDiariaBna(db, relogio1830);
+    const res1830 = await executarRotinaDiariaBna(db, relogio1830);
 
-    // 3. Validações do resultado
-    expect(resultado.sucesso).toBe(true);
-    expect(resultado.dataHoje).toBe(dataHoje);
-    expect(resultado.recuperados).toContain(`${dataOntem}:cambio`);
-    expect(resultado.geradosHoje.cambioReporteZero).toBe(true);
-    expect(resultado.geradosHoje.remessaReporteZero).toBe(true);
+    expect(res1830.jaPassou1830).toBe(true);
+    expect(res1830.mapasHoje).toHaveLength(2);
+    const mapaCambio1830 = res1830.mapasHoje.find((m) => m.tipoMapa === "cambio")!;
+    expect(mapaCambio1830.acao).toBe("gerado");
+    expect(mapaCambio1830.reporteZero).toBe(true);
 
-    // 4. Validação na base de dados dos mapas gerados
-    const repOntem = db.prepare("SELECT * FROM bna_reportes_diarios WHERE data_referencia = ? AND tipo_mapa = 'cambio'").get(dataOntem) as any;
-    expect(repOntem).toBeDefined();
-    expect(repOntem.total_operacoes).toBe(1);
-    expect(repOntem.reporte_zero).toBe(0);
+    // 3. OPERAÇÃO NOVA ÀS 19:00 -> REGENERA O MAPA NÃO SUBMETIDO
+    db.prepare(`
+      INSERT INTO operacoes_cambio (
+        id, numero_operacao, cliente_id, caixa_id, tipo, tipo_operacao_bna, sentido_bna,
+        moeda_divisa, montante_divisa, taxa_aplicada, taxa_referencia_bna, margem_aplicada,
+        montante_aoa, fonte_taxa, estado, operador_id, operador_nome, criado_em
+      ) VALUES (
+        'op_hoje_1900', 'OP-2026-001900', ?, ?, 'venda', 'cambio', 'venda',
+        'USD', '500.00', '950.00', '930.00', '2.0',
+        '475000.00', 'demonstracao', 'confirmada', 'op_teste', 'Operador Teste', ?
+      )
+    `).run(clienteAprovadoId, caixaAtendenteId, `${dataHoje} 19:00:00`);
 
-    const repHojeCambio = db.prepare("SELECT * FROM bna_reportes_diarios WHERE data_referencia = ? AND tipo_mapa = 'cambio'").get(dataHoje) as any;
-    expect(repHojeCambio).toBeDefined();
-    expect(repHojeCambio.reporte_zero).toBe(1);
+    const relogio1905 = new Date(`${dataHoje}T18:05:00.000Z`);
+    const res1905 = await executarRotinaDiariaBna(db, relogio1905);
 
-    // 5. Validação na pista de auditoria
-    const stmtAudit = db.prepare("SELECT * FROM auditoria WHERE acao = 'BNA_CRON_ROTINA_EXECUTADA' ORDER BY momento DESC LIMIT 1");
-    const auditRow = stmtAudit.get() as any;
-    expect(auditRow).toBeDefined();
-    expect(auditRow.autor_id).toBe("sistema_cron_bna");
-    const detalhes = JSON.parse(auditRow.detalhes_json);
-    expect(detalhes.dataReferencia).toBe(dataHoje);
-    expect(detalhes.diasRecuperados).toContain(`${dataOntem}:cambio`);
+    const mapaCambio1905 = res1905.mapasHoje.find((m) => m.tipoMapa === "cambio")!;
+    expect(mapaCambio1905.acao).toBe("regenerado");
+    expect(mapaCambio1905.reporteZero).toBe(false);
+    expect(mapaCambio1905.totalOperacoes).toBe(1);
+
+    const auditRegenerado = db.prepare("SELECT * FROM auditoria WHERE acao = 'BNA_REPORTE_REGENERADO' AND recurso_id = ?").get(mapaCambio1905.id) as any;
+    expect(auditRegenerado).toBeDefined();
+
+    // 4. DEPOIS DE SUBMETIDO -> NADA MUDA, E OPERAÇÃO POSTERIOR GERA ALERTA
+    const bnaRepo = new BnaRepository(db);
+    const auditoriaRepo = new AuditoriaRepository(db);
+    const bnaService = new BnaService(bnaRepo, auditoriaRepo);
+    bnaService.registarSubmissao(mapaCambio1905.id, "suptech", { id: "admin_teste", nome: "Admin Gestao" }, new Date(`${dataHoje}T18:15:00.000Z`));
+
+    db.prepare(`
+      INSERT INTO operacoes_cambio (
+        id, numero_operacao, cliente_id, caixa_id, tipo, tipo_operacao_bna, sentido_bna,
+        moeda_divisa, montante_divisa, taxa_aplicada, taxa_referencia_bna, margem_aplicada,
+        montante_aoa, fonte_taxa, estado, operador_id, operador_nome, criado_em
+      ) VALUES (
+        'op_hoje_1930', 'OP-2026-001930', ?, ?, 'venda', 'cambio', 'venda',
+        'USD', '200.00', '950.00', '930.00', '2.0',
+        '190000.00', 'demonstracao', 'confirmada', 'op_teste', 'Operador Teste', ?
+      )
+    `).run(clienteAprovadoId, caixaAtendenteId, `${dataHoje} 19:30:00`);
+
+    const relogio1935 = new Date(`${dataHoje}T18:35:00.000Z`);
+    const res1935 = await executarRotinaDiariaBna(db, relogio1935);
+
+    const mapaCambio1935 = res1935.mapasHoje.find((m) => m.tipoMapa === "cambio")!;
+    expect(mapaCambio1935.acao).toBe("ignorado_submetido");
+
+    const alertaVisaoGeral = bnaService.verificarAlertaReporteHoje(relogio1935);
+    expect(alertaVisaoGeral.alerta).toBe(true);
+    expect(alertaVisaoGeral.mensagem).toContain("após a submissão oficial do mapa ao BNA");
   });
 });

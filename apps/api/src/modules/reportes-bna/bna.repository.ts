@@ -279,4 +279,23 @@ export class BnaRepository {
     const rows = stmt.all(tipoMapa) as { data_mov: string }[];
     return rows.map((r) => r.data_mov);
   }
+  public buscarNovasOperacoesApos(
+    dataReferencia: string,
+    tipoMapa: TipoMapaBna,
+    aposMomentoIso: string
+  ): any[] {
+    if (tipoMapa === "cambio") {
+      const stmt = this.db.prepare(`
+        SELECT id, criado_em FROM operacoes_cambio
+        WHERE criado_em LIKE ? AND datetime(criado_em) > datetime(?) AND estado = 'confirmada'
+      `);
+      return stmt.all(`${dataReferencia}%`, aposMomentoIso) as any[];
+    } else {
+      const stmt = this.db.prepare(`
+        SELECT id, criado_em FROM remessas
+        WHERE criado_em LIKE ? AND datetime(criado_em) > datetime(?) AND estado NOT IN ('cancelada')
+      `);
+      return stmt.all(`${dataReferencia}%`, aposMomentoIso) as any[];
+    }
+  }
 }

@@ -3,6 +3,12 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e docs/14-estado-atual.md.
 
+## [NZAIDI-BASE-01] — Arranque Seguro em Produção, Rotina BNA Autónoma (15 min) e Proteção Pós-Submissão
+- **Arranque Seguro em Produção**: Implementada validação estrita em `apps/api/src/config/env.ts` e `apps/api/src/app.ts`. Com `NODE_ENV=production`, a API recusa terminantemente arrancar se `COOKIE_SECRET`, `ADMIN_INIT_TOKEN` ou `DATABASE_PATH` não estiverem definidos, se `DATABASE_PATH` for `":memory:"`, ou se `CORS_ORIGIN` contiver `localhost` ou `127.0.0.1`. Eliminados todos os valores por defeito sensíveis do código-fonte. 6 novos testes em `apps/api/test/arranque-seguro.test.ts` cobrem cada cenário de recusa.
+- **Servidor de Produção Configurado e Reiniciado**: Variáveis de produção geradas com alta entropia criptográfica e gravadas em `.env` com permissões `600` no servidor. `index.js` desacoplado para leitura dinâmica sem dados sensíveis hardcoded. API online e operacional em `https://app.nzaidi.ao/api/health`.
+- **Rotina BNA de 15 em 15 minutos (npm run cron:bna)**: A rotina opera no fuso `Africa/Luanda`. Antes das 18:30 não gera mapas de hoje (apenas recupera passados). A partir das 18:30 gera os mapas diários. Se o mapa não foi submetido e surgirem novas operações (ex: às 19:00), regenera-o automaticamente e audita o evento. Depois de submetido, o mapa permanece inviolável e qualquer operação posterior ativa alerta na Visão Geral.
+- **Agendamento no cPanel**: Documentado em `docs/18-plano-implantacao-producao.md` o agendamento de 15 em 15 minutos (`*/15 * * * *`).
+
 ## [NZAIDI-BASE-01] — Segurança de Infraestrutura, Consultas Parametrizadas e Rotina Automática BNA 18:30
 - **Higienização de Documentação**: Remoção rigorosa de IPs, nomes de servidores privados, caminhos absolutos do servidor e detalhes de SSH de todos os documentos (`docs/14`, `docs/18`, `CHANGELOG`, `README`). Os detalhes privados foram preservados fora do controlo de versões.
 - **Validação Automática de Documentos**: Atualizado `scripts/verificar-documentacao.py` para bloquear automaticamente ficheiros com IPs públicos, nomes de servidores ou caminhos de alojamento.
