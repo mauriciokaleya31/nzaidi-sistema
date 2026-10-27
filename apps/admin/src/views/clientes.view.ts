@@ -1,244 +1,242 @@
 import { api, ApiError, type ClienteItem } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { aCarregar, botaoFecharModal, cabecalhoPagina, estadoKyc, icone, notificar, risco, vazio } from "../ui/componentes.js";
+import { esc, formatarData, formatarDataHora, iniciais } from "../ui/formatar.js";
+
+const ROTULOS_DOCUMENTO: Record<string, string> = {
+  bi: "BI",
+  passaporte: "Passaporte",
+  cartao_residente: "Cartão de residente",
+  nif_empresa: "NIF de empresa",
+  bi_frente: "BI, frente",
+  bi_verso: "BI, verso",
+  comprovativo_morada: "Comprovativo de morada",
+  declaracao_rendimentos: "Declaração de rendimentos",
+};
 
 export async function renderizarClientes(container: HTMLElement): Promise<void> {
   const podeCriar = authState.temPermissao("clientes:criar");
   const podeAprovarKyc = authState.temPermissao("kyc:analisar") || authState.temPermissao("kyc:aprovar");
 
   container.innerHTML = `
-    <div class="view-header">
-      <div>
-        <h1 class="view-title">Gestão de Clientes & Conformidade KYC</h1>
-        <p class="view-subtitle">Registo e diligência prévia de pessoas singulares e colectivas (Lei n.º 5/20 e BNA)</p>
-      </div>
-      <div class="view-actions">
-        ${
-          podeCriar
-            ? `
-          <button id="btn-novo-cliente" class="btn btn-primary">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 6px;">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="8.5" cy="7" r="4"></circle>
-              <line x1="20" y1="8" x2="20" y2="14"></line>
-              <line x1="23" y1="11" x2="17" y2="11"></line>
-            </svg>
-            Novo Cliente
-          </button>
-        `
-            : ""
-        }
-      </div>
-    </div>
+    ${cabecalhoPagina({
+      titulo: "Clientes e KYC",
+      descricao: "Registo e diligência prévia de pessoas singulares e colectivas, nos termos da Lei n.º 5/20 e das normas do BNA.",
+      accoes: podeCriar
+        ? `<button id="btn-novo-cliente" class="nz-botao nz-botao--primario">${icone("utilizador-mais")}Novo cliente</button>`
+        : "",
+    })}
 
-    <div id="alerta-clientes" class="alert-box d-none"></div>
+    <div id="alerta-clientes" class="nz-alerta d-none"></div>
 
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="form-row">
-          <div class="col-8">
-            <input 
-              type="text" 
-              id="input-busca-cliente" 
-              class="form-input" 
-              placeholder="Pesquisar por nome, número de documento, NIF ou telefone..." 
-            />
-          </div>
-          <div class="col-4">
-            <select id="select-filtro-kyc" class="form-select">
-              <option value="">Todos os Estados KYC</option>
-              <option value="aprovado">Aprovado</option>
-              <option value="pendente">Pendente</option>
-              <option value="em_analise">Em Análise</option>
-              <option value="rejeitado">Rejeitado</option>
-            </select>
-          </div>
+    <section class="nz-painel">
+      <div class="barra-filtros" role="search">
+        <div class="nz-entrada-grupo barra-filtros__pesquisa">
+          ${icone("pesquisa")}
+          <input
+            type="search"
+            id="input-busca-cliente"
+            class="nz-entrada"
+            placeholder="Nome, documento, NIF ou telefone"
+            aria-label="Pesquisar clientes"
+          />
         </div>
+        <select id="select-filtro-kyc" class="nz-seletor" aria-label="Filtrar por estado KYC">
+          <option value="">Todos os estados KYC</option>
+          <option value="aprovado">Aprovado</option>
+          <option value="pendente">Pendente</option>
+          <option value="em_analise">Em análise</option>
+          <option value="rejeitado">Rejeitado</option>
+        </select>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Ficheiro de Clientes Cadastrados</h2>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive" id="tabela-clientes-container">
-          <div class="loading-state">A carregar registos de clientes...</div>
-        </div>
-      </div>
-    </div>
+      <div id="tabela-clientes-container">${aCarregar(6, "A carregar clientes")}</div>
+    </section>
 
     <!-- Modal Novo Cliente -->
-    <div id="modal-cliente" class="modal-overlay d-none">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3 class="modal-title">Registar Novo Cliente</h3>
-          <button id="btn-fechar-modal-cliente" class="btn-fechar-modal">&times;</button>
+    <div id="modal-cliente" class="nz-modal nz-modal--largo d-none" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-cliente">
+      <div class="nz-modal__painel">
+        <div class="nz-modal__cabecalho">
+          <div>
+            <h2 class="nz-modal__titulo" id="titulo-modal-cliente">Registar novo cliente</h2>
+            <p class="nz-modal__descricao">O cliente fica com KYC pendente até à decisão de compliance.</p>
+          </div>
+          ${botaoFecharModal("btn-fechar-modal-cliente")}
         </div>
         <form id="form-criar-cliente" class="modal-form">
-          <div id="modal-erro-cliente" class="alert-box alert-error d-none"></div>
+          <div class="nz-modal__corpo">
+            <div id="modal-erro-cliente" class="nz-alerta nz-alerta--erro d-none" role="alert"></div>
 
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">Tipo de Pessoa</label>
-              <select id="novo-tipo" class="form-select">
-                <option value="singular">Pessoa Singular (Particular)</option>
-                <option value="colectivo">Pessoa Colectiva (Empresa)</option>
-              </select>
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label">Nacionalidade</label>
-              <input type="text" id="novo-nacionalidade" class="form-input" value="AO" required />
-            </div>
+            <fieldset class="nz-seccao-formulario">
+              <legend class="nz-seccao-formulario__titulo">Identificação</legend>
+              <div class="nz-grelha-campos">
+                <div class="nz-campo">
+                  <label class="nz-campo__rotulo" for="novo-tipo">Tipo de pessoa</label>
+                  <select id="novo-tipo" class="nz-seletor">
+                    <option value="singular">Pessoa singular (particular)</option>
+                    <option value="colectivo">Pessoa colectiva (empresa)</option>
+                  </select>
+                </div>
+                <div class="nz-campo">
+                  <label class="nz-campo__rotulo" for="novo-nacionalidade">Nacionalidade</label>
+                  <input type="text" id="novo-nacionalidade" class="nz-entrada" value="AO" required autocapitalize="characters" />
+                  <span class="nz-campo__ajuda">Código do país, por exemplo AO.</span>
+                </div>
+                <div class="nz-campo nz-campo--inteiro">
+                  <label class="nz-campo__rotulo" for="novo-nome">Nome completo ou denominação social<span class="nz-campo__obrigatorio">*</span></label>
+                  <input type="text" id="novo-nome" class="nz-entrada" required minlength="3" placeholder="Como consta no documento" autocomplete="off" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="nz-seccao-formulario">
+              <legend class="nz-seccao-formulario__titulo">Documento e fiscalidade</legend>
+              <div class="nz-grelha-campos">
+                <div class="nz-campo">
+                  <label class="nz-campo__rotulo" for="novo-tipo-doc">Tipo de documento</label>
+                  <select id="novo-tipo-doc" class="nz-seletor">
+                    <option value="bi">Bilhete de Identidade (BI)</option>
+                    <option value="passaporte">Passaporte</option>
+                    <option value="cartao_residente">Cartão de Residente</option>
+                    <option value="nif_empresa">NIF de Empresa</option>
+                  </select>
+                </div>
+                <div class="nz-campo">
+                  <label class="nz-campo__rotulo" for="novo-num-doc">Número do documento<span class="nz-campo__obrigatorio">*</span></label>
+                  <input type="text" id="novo-num-doc" class="nz-entrada nz-mono" required minlength="5" autocomplete="off" autocapitalize="characters" />
+                </div>
+                <div class="nz-campo">
+                  <label class="nz-campo__rotulo" for="novo-nif">NIF<span class="nz-campo__obrigatorio">*</span></label>
+                  <input type="text" id="novo-nif" class="nz-entrada nz-mono" required minlength="5" inputmode="numeric" autocomplete="off" />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="nz-seccao-formulario">
+              <legend class="nz-seccao-formulario__titulo">Contactos e morada</legend>
+              <div class="nz-grelha-campos">
+                <div class="nz-campo">
+                  <label class="nz-campo__rotulo" for="novo-telefone">Telefone<span class="nz-campo__obrigatorio">*</span></label>
+                  <input type="tel" id="novo-telefone" class="nz-entrada" required minlength="7" inputmode="tel" autocomplete="off" placeholder="9XX XXX XXX" />
+                </div>
+                <div class="nz-campo">
+                  <label class="nz-campo__rotulo" for="novo-email">Correio electrónico <span class="nz-texto-discreto">(opcional)</span></label>
+                  <input type="email" id="novo-email" class="nz-entrada" inputmode="email" autocomplete="off" autocapitalize="off" />
+                </div>
+                <div class="nz-campo nz-campo--inteiro">
+                  <label class="nz-campo__rotulo" for="novo-morada">Morada de residência ou sede<span class="nz-campo__obrigatorio">*</span></label>
+                  <input type="text" id="novo-morada" class="nz-entrada" required minlength="5" autocomplete="off" placeholder="Rua, número, bairro, município" />
+                </div>
+              </div>
+            </fieldset>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="novo-nome">Nome Completo / Denominação Social</label>
-            <input type="text" id="novo-nome" class="form-input" required placeholder="Ex: Manuel António Domingos" />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">Tipo de Documento</label>
-              <select id="novo-tipo-doc" class="form-select">
-                <option value="bi">Bilhete de Identidade (BI)</option>
-                <option value="passaporte">Passaporte</option>
-                <option value="cartao_residente">Cartão de Residente</option>
-                <option value="nif_empresa">NIF de Empresa</option>
-              </select>
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label" for="novo-num-doc">Número do Documento</label>
-              <input type="text" id="novo-num-doc" class="form-input" required placeholder="Ex: Número do documento" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label" for="novo-nif">NIF</label>
-              <input type="text" id="novo-nif" class="form-input" required placeholder="Ex: 5001928374" />
-            </div>
-            <div class="form-group col-6">
-              <label class="form-label" for="novo-telefone">Telefone</label>
-              <input type="text" id="novo-telefone" class="form-input" required placeholder="Ex: 923456789" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="novo-email">Correio Electrónico (Opcional)</label>
-            <input type="email" id="novo-email" class="form-input" placeholder="cliente@exemplo.ao" />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="novo-morada">Morada de Residência / Sede</label>
-            <input type="text" id="novo-morada" class="form-input" required placeholder="Ex: Rua Comandante Gika, Luanda" />
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" id="btn-cancelar-cliente" class="btn btn-secondary">Cancelar</button>
-            <button type="submit" id="btn-salvar-cliente" class="btn btn-primary">Gravar Registo</button>
+          <div class="nz-modal__rodape">
+            <button type="button" id="btn-cancelar-cliente" class="nz-botao nz-botao--secundario">Cancelar</button>
+            <button type="submit" id="btn-salvar-cliente" class="nz-botao nz-botao--primario">Registar cliente</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- Modal Análise KYC -->
-    <div id="modal-kyc" class="modal-overlay d-none">
-      <div class="modal-container">
-        <div class="modal-header">
-          <h3 class="modal-title">Diligência Prévia KYC & Avaliação de Risco</h3>
-          <button id="btn-fechar-modal-kyc" class="btn-fechar-modal">&times;</button>
+    <div id="modal-kyc" class="nz-modal d-none" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-kyc">
+      <div class="nz-modal__painel">
+        <div class="nz-modal__cabecalho">
+          <div>
+            <h2 class="nz-modal__titulo" id="titulo-modal-kyc">Decisão KYC e avaliação de risco</h2>
+            <p class="nz-modal__descricao">A decisão e o parecer ficam registados na pista de auditoria.</p>
+          </div>
+          ${botaoFecharModal("btn-fechar-modal-kyc")}
         </div>
         <form id="form-decisao-kyc" class="modal-form">
-          <input type="hidden" id="kyc-cliente-id" />
-          <div id="modal-erro-kyc" class="alert-box alert-error d-none"></div>
+          <div class="nz-modal__corpo">
+            <input type="hidden" id="kyc-cliente-id" />
+            <div id="modal-erro-kyc" class="nz-alerta nz-alerta--erro d-none" role="alert"></div>
 
-          <div class="form-group">
-            <label class="form-label">Cliente sob Análise</label>
-            <input type="text" id="kyc-cliente-nome" class="form-input" readonly disabled />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group col-6">
-              <label class="form-label">Decisão de Conformidade</label>
-              <select id="kyc-decisao" class="form-select">
-                <option value="aprovado">Aprovar KYC (Habilitar para Câmbio)</option>
-                <option value="em_analise">Em Análise / Diligência Adicional</option>
-                <option value="actualizacao_necessaria">Solicitar Atualização de Documento</option>
-                <option value="rejeitado">Rejeitar (Bloquear Operações)</option>
-              </select>
+            <div class="nz-campo">
+              <label class="nz-campo__rotulo" for="kyc-cliente-nome">Cliente em análise</label>
+              <input type="text" id="kyc-cliente-nome" class="nz-entrada" readonly disabled />
             </div>
-            <div class="form-group col-6">
-              <label class="form-label">Classificação de Risco AML</label>
-              <select id="kyc-risco" class="form-select">
-                <option value="baixo">Baixo Risco</option>
-                <option value="medio">Médio Risco</option>
-                <option value="alto">Alto Risco (PEP / Reforçada)</option>
-              </select>
+
+            <div class="nz-grelha-campos">
+              <div class="nz-campo">
+                <label class="nz-campo__rotulo" for="kyc-decisao">Decisão de conformidade</label>
+                <select id="kyc-decisao" class="nz-seletor">
+                  <option value="aprovado">Aprovar (habilita operações de câmbio)</option>
+                  <option value="em_analise">Manter em análise (diligência adicional)</option>
+                  <option value="actualizacao_necessaria">Pedir actualização de documento</option>
+                  <option value="rejeitado">Rejeitar (bloqueia operações)</option>
+                </select>
+              </div>
+              <div class="nz-campo">
+                <label class="nz-campo__rotulo" for="kyc-risco">Classificação de risco AML</label>
+                <select id="kyc-risco" class="nz-seletor">
+                  <option value="baixo">Risco baixo</option>
+                  <option value="medio">Risco médio</option>
+                  <option value="alto">Risco alto (PEP ou diligência reforçada)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="nz-campo">
+              <label class="nz-campo__rotulo" for="kyc-motivo">Parecer de compliance<span class="nz-campo__obrigatorio">*</span></label>
+              <textarea
+                id="kyc-motivo"
+                class="nz-area-texto"
+                rows="4"
+                placeholder="Resultado da verificação documental e da consulta às listas restritivas."
+                required
+              ></textarea>
+              <span class="nz-campo__ajuda">Obrigatório. Este texto é guardado de forma permanente.</span>
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="kyc-motivo">
-              Parecer Formal de Compliance <span class="required-indicator">* (Obrigatório)</span>
-            </label>
-            <textarea 
-              id="kyc-motivo" 
-              class="form-textarea" 
-              rows="3" 
-              placeholder="Descreva o parecer da verificação documental e checagem de listas restritivas..." 
-              required
-            ></textarea>
-          </div>
-
-          <div class="modal-footer">
-            <button type="button" id="btn-cancelar-kyc" class="btn btn-secondary">Cancelar</button>
-            <button type="submit" id="btn-salvar-kyc" class="btn btn-primary">Submeter Decisão</button>
+          <div class="nz-modal__rodape">
+            <button type="button" id="btn-cancelar-kyc" class="nz-botao nz-botao--secundario">Cancelar</button>
+            <button type="submit" id="btn-salvar-kyc" class="nz-botao nz-botao--primario">Registar decisão</button>
           </div>
         </form>
       </div>
     </div>
 
     <!-- Modal Documentos KYC -->
-    <div id="modal-docs" class="modal-overlay d-none">
-      <div class="modal-container" style="max-width: 700px;">
-        <div class="modal-header">
-          <h3 class="modal-title">Dossiê Documental KYC do Cliente</h3>
-          <button id="btn-fechar-modal-docs" class="btn-fechar-modal">&times;</button>
-        </div>
-        <div class="modal-body p-4">
-          <input type="hidden" id="docs-cliente-id" />
-          <h4 id="docs-cliente-nome" class="font-bold mb-3">Documentos Anexados</h4>
-
-          <div id="lista-documentos-container" class="mb-4">
-            <div class="loading-state">A carregar documentos...</div>
+    <div id="modal-docs" class="nz-modal nz-modal--largo d-none" role="dialog" aria-modal="true" aria-labelledby="docs-cliente-nome">
+      <div class="nz-modal__painel">
+        <div class="nz-modal__cabecalho">
+          <div>
+            <h2 class="nz-modal__titulo" id="docs-cliente-nome">Documentos anexados</h2>
+            <p class="nz-modal__descricao">Dossiê documental KYC. Os ficheiros são verificados pelo servidor antes de serem aceites.</p>
           </div>
+          ${botaoFecharModal("btn-fechar-modal-docs")}
+        </div>
+        <div class="nz-modal__corpo">
+          <input type="hidden" id="docs-cliente-id" />
 
-          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+          <div id="lista-documentos-container">${aCarregar(3, "A carregar documentos")}</div>
 
-          <h4 class="font-bold mb-2">Carregar Novo Documento (PDF, PNG, JPEG máx. 5MB)</h4>
-          <div id="modal-erro-upload" class="alert-box alert-error d-none"></div>
-
-          <form id="form-upload-doc">
-            <div class="form-row">
-              <div class="form-group col-6">
-                <label class="form-label">Tipo Documental</label>
-                <select id="upload-tipo-doc" class="form-select">
-                  <option value="bi_frente">BI — Frente</option>
-                  <option value="bi_verso">BI — Verso</option>
-                  <option value="passaporte">Passaporte (Página Principal)</option>
-                  <option value="nif_empresa">Certidão Comercial / NIF</option>
-                  <option value="comprovativo_morada">Comprovativo de Morada / Residência</option>
-                  <option value="declaracao_rendimentos">Declaração de Rendimentos / Origem Fundos</option>
+          <form id="form-upload-doc" class="dossie-carregar">
+            <h3 class="nz-seccao-formulario__titulo">${icone("carregar", "nz-icone--sm")}Anexar documento</h3>
+            <div id="modal-erro-upload" class="nz-alerta nz-alerta--erro d-none" role="alert"></div>
+            <div class="nz-grelha-campos">
+              <div class="nz-campo">
+                <label class="nz-campo__rotulo" for="upload-tipo-doc">Tipo de documento</label>
+                <select id="upload-tipo-doc" class="nz-seletor">
+                  <option value="bi_frente">BI, frente</option>
+                  <option value="bi_verso">BI, verso</option>
+                  <option value="passaporte">Passaporte (página principal)</option>
+                  <option value="nif_empresa">Certidão comercial ou NIF</option>
+                  <option value="comprovativo_morada">Comprovativo de morada</option>
+                  <option value="declaracao_rendimentos">Declaração de rendimentos ou origem dos fundos</option>
                 </select>
               </div>
-              <div class="form-group col-6">
-                <label class="form-label">Ficheiro (PDF, PNG, JPEG)</label>
-                <input type="file" id="upload-input-file" class="form-input" accept=".pdf,image/png,image/jpeg" required />
+              <div class="nz-campo">
+                <label class="nz-campo__rotulo" for="upload-input-file">Ficheiro</label>
+                <input type="file" id="upload-input-file" class="nz-entrada" accept=".pdf,image/png,image/jpeg" required />
+                <span class="nz-campo__ajuda">PDF, PNG ou JPEG, até 5 MB.</span>
               </div>
             </div>
-
-            <button type="submit" id="btn-enviar-doc" class="btn btn-primary btn-block">
-              Anexar ao Dossiê KYC
+            <button type="submit" id="btn-enviar-doc" class="nz-botao nz-botao--secundario">
+              ${icone("carregar")}Anexar ao dossiê
             </button>
           </form>
         </div>
@@ -273,74 +271,94 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
 
   async function carregarLista(): Promise<void> {
     if (!containerTabela) return;
-    containerTabela.innerHTML = `<div class="loading-state">A carregar registos de clientes...</div>`;
+    containerTabela.innerHTML = aCarregar(6, "A carregar clientes");
 
     const termo = inputBusca?.value.trim() || undefined;
-    const estadoKyc = selectFiltroKyc?.value || undefined;
+    const estadoKycFiltro = selectFiltroKyc?.value || undefined;
 
     try {
-      listaClientes = await api.listarClientes(termo, estadoKyc);
+      listaClientes = await api.listarClientes(termo, estadoKycFiltro);
       if (!listaClientes || listaClientes.length === 0) {
-        containerTabela.innerHTML = `<p class="p-4 text-muted">Nenhum cliente encontrado para os critérios selecionados.</p>`;
+        containerTabela.innerHTML =
+          termo || estadoKycFiltro
+            ? vazio({
+                icone: "pesquisa",
+                titulo: "Nenhum cliente encontrado",
+                texto: "Nenhum registo corresponde à pesquisa ou ao filtro seleccionado.",
+              })
+            : vazio({
+                icone: "clientes",
+                titulo: "Ainda não há clientes registados",
+                texto: "Registe o primeiro cliente para iniciar a diligência KYC.",
+                accoes: podeCriar
+                  ? `<button type="button" class="nz-botao nz-botao--primario" data-accao="novo-cliente">${icone("utilizador-mais")}Novo cliente</button>`
+                  : "",
+              });
+        containerTabela.querySelector('[data-accao="novo-cliente"]')?.addEventListener("click", () => btnNovoCliente?.click());
         return;
       }
 
       containerTabela.innerHTML = `
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Documento</th>
-              <th>NIF</th>
-              <th>Telefone</th>
-              <th>Estado KYC</th>
-              <th>Risco</th>
-              <th>Data Cadastro</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${listaClientes
-              .map((c) => {
-                const kycBadge =
-                  c.estadoKyc === "aprovado"
-                    ? "badge-success"
-                    : c.estadoKyc === "rejeitado"
-                    ? "badge-danger"
-                    : "badge-warning";
-
-                return `
+        <div class="nz-tabela-envoltorio">
+          <table class="nz-tabela nz-tabela--cartoes">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Documento</th>
+                <th>NIF</th>
+                <th>Telefone</th>
+                <th>Estado KYC</th>
+                <th>Risco</th>
+                <th>Registo</th>
+                <th class="nz-tabela__direita">Acções</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${listaClientes
+                .map(
+                  (c) => `
                 <tr>
-                  <td>
-                    <div><strong>${c.nome}</strong></div>
-                    <small class="text-muted">${c.tipo === "singular" ? "Pessoa Singular" : "Empresa"}</small>
+                  <td data-principal>
+                    <div class="celula-pessoa">
+                      <span class="nz-avatar" aria-hidden="true">${esc(iniciais(c.nome))}</span>
+                      <div>
+                        <span class="nz-tabela__principal">${esc(c.nome)}</span>
+                        <span class="nz-tabela__secundario">${c.tipo === "singular" ? "Pessoa singular" : "Pessoa colectiva"}${c.estado !== "ativo" ? ` · ${esc(c.estado)}` : ""}</span>
+                      </div>
+                    </div>
                   </td>
-                  <td><code>${c.tipoDocumento.toUpperCase()}: ${c.numeroDocumento}</code></td>
-                  <td>${c.nif}</td>
-                  <td>${c.telefone}</td>
-                  <td><span class="badge ${kycBadge}">${c.estadoKyc.toUpperCase()}</span></td>
-                  <td><span class="badge badge-info">${c.nivelRisco.toUpperCase()}</span></td>
-                  <td><small class="text-muted">${new Date(c.criadoEm).toLocaleDateString("pt-AO")}</small></td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary btn-ver-docs mr-1" data-id="${c.id}" data-nome="${c.nome}">
-                      Dossiê Docs
-                    </button>
-                    ${
-                      podeAprovarKyc
-                        ? `
-                      <button class="btn btn-sm btn-secondary btn-analisar-kyc" data-id="${c.id}" data-nome="${c.nome}">
-                        Avaliar KYC
+                  <td data-label="Documento"><span class="nz-etiqueta">${esc(ROTULOS_DOCUMENTO[c.tipoDocumento] ?? c.tipoDocumento)}</span> <span class="nz-mono">${esc(c.numeroDocumento)}</span></td>
+                  <td data-label="NIF" class="nz-mono">${esc(c.nif)}</td>
+                  <td data-label="Telefone" class="nz-valor">${esc(c.telefone)}</td>
+                  <td data-label="Estado KYC">${estadoKyc(c.estadoKyc)}</td>
+                  <td data-label="Risco">${risco(c.nivelRisco)}</td>
+                  <td data-label="Registo" class="nz-texto-discreto">${formatarData(c.criadoEm)}</td>
+                  <td class="nz-tabela__accoes">
+                    <div class="nz-grupo-botoes">
+                      <button class="nz-botao nz-botao--secundario nz-botao--sm btn-ver-docs" data-id="${esc(c.id)}" data-nome="${esc(c.nome)}">
+                        ${icone("pasta")}Dossiê
                       </button>
-                    `
-                        : ""
-                    }
+                      ${
+                        podeAprovarKyc
+                          ? `
+                        <button class="nz-botao nz-botao--secundario nz-botao--sm btn-analisar-kyc" data-id="${esc(c.id)}" data-nome="${esc(c.nome)}">
+                          ${icone("auditoria")}Avaliar KYC
+                        </button>
+                      `
+                          : ""
+                      }
+                    </div>
                   </td>
                 </tr>
-              `;
-              })
-              .join("")}
-          </tbody>
-        </table>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+        <div class="nz-painel__rodape">
+          <span class="nz-paginacao__info">${listaClientes.length} ${listaClientes.length === 1 ? "cliente" : "clientes"}${listaClientes.length >= 50 ? " (primeiros 50 resultados; refine a pesquisa)" : ""}</span>
+        </div>
       `;
 
       containerTabela.querySelectorAll(".btn-ver-docs").forEach((btn) => {
@@ -361,7 +379,14 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
         });
       }
     } catch {
-      containerTabela.innerHTML = `<p class="p-4 text-danger">Erro ao carregar lista de clientes.</p>`;
+      containerTabela.innerHTML = vazio({
+        icone: "alerta",
+        titulo: "Não foi possível carregar os clientes",
+        texto: "Verifique a ligação ao servidor e tente novamente.",
+        variante: "erro",
+        accoes: `<button type="button" class="nz-botao nz-botao--secundario" data-accao="tentar">${icone("actualizar")}Tentar novamente</button>`,
+      });
+      containerTabela.querySelector('[data-accao="tentar"]')?.addEventListener("click", () => void carregarLista());
     }
   }
 
@@ -378,7 +403,7 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
   async function abrirModalDocs(id: string, nome: string): Promise<void> {
     if (!modalDocs || !docsClienteId || !docsClienteNome || !listaDocsContainer) return;
     docsClienteId.value = id;
-    docsClienteNome.textContent = `Dossiê KYC: ${nome}`;
+    docsClienteNome.textContent = `Dossiê KYC de ${nome}`;
     modalErroUpload?.classList.add("d-none");
     modalDocs.classList.remove("d-none");
 
@@ -387,35 +412,46 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
 
   async function carregarDocumentosDoCliente(clienteId: string): Promise<void> {
     if (!listaDocsContainer) return;
-    listaDocsContainer.innerHTML = `<div class="loading-state">A consultar ficheiros anexados...</div>`;
+    listaDocsContainer.innerHTML = aCarregar(3, "A consultar ficheiros anexados");
 
     try {
       const docs = await api.listarDocumentosKyc(clienteId);
       if (!docs || docs.length === 0) {
-        listaDocsContainer.innerHTML = `<p class="text-sm text-muted">Nenhum documento físico ou comprovativo anexado a este cadastro.</p>`;
+        listaDocsContainer.innerHTML = `<div class="dossie-vazio">${vazio({
+          icone: "pasta",
+          titulo: "Dossiê sem documentos",
+          texto: "Anexe o documento de identificação e o comprovativo de morada para avançar com a diligência.",
+        })}</div>`;
         return;
       }
 
       listaDocsContainer.innerHTML = `
-        <div class="docs-list" style="display: flex; flex-direction: column; gap: 8px;">
+        <ul class="docs-list dossie">
           ${docs
-            .map((d: any) => `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
-              <div>
-                <strong>${d.tipoDocumento.toUpperCase()}</strong>: ${d.nomeArquivo}
-                <div style="font-size: 0.75rem; color: #64748b;">
-                  Tamanho: ${(d.tamanhoBytes / 1024).toFixed(1)} KB | Data: ${new Date(d.enviadoEm).toLocaleString("pt-AO")}
-                </div>
+            .map(
+              (d: any) => `
+            <li class="dossie__item">
+              <span class="dossie__icone">${icone("documento")}</span>
+              <div class="dossie__texto">
+                <span class="dossie__tipo">${esc(ROTULOS_DOCUMENTO[d.tipoDocumento] ?? d.tipoDocumento)}</span>
+                <span class="dossie__meta">${esc(d.nomeArquivo)} · ${(Number(d.tamanhoBytes) / 1024).toFixed(1).replace(".", ",")} KB · ${formatarDataHora(d.enviadoEm)}</span>
               </div>
-              <a href="${api.obterUrlDownloadDocumento(clienteId, d.id)}" target="_blank" class="btn btn-sm btn-secondary">
-                Descarregar
+              <a href="${api.obterUrlDownloadDocumento(clienteId, d.id)}" target="_blank" rel="noopener" class="nz-botao nz-botao--secundario nz-botao--sm">
+                ${icone("descarregar")}Descarregar
               </a>
-            </div>
-          `).join("")}
-        </div>
+            </li>
+          `
+            )
+            .join("")}
+        </ul>
       `;
     } catch {
-      listaDocsContainer.innerHTML = `<p class="text-sm text-danger">Erro ao listar documentos do cliente.</p>`;
+      listaDocsContainer.innerHTML = vazio({
+        icone: "alerta",
+        titulo: "Não foi possível listar os documentos",
+        texto: "Tente novamente dentro de instantes.",
+        variante: "erro",
+      });
     }
   }
 
@@ -424,20 +460,22 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
     if (!docsClienteId || !modalErroUpload) return;
     const inputFile = container.querySelector<HTMLInputElement>("#upload-input-file");
     const selectTipoDoc = container.querySelector<HTMLSelectElement>("#upload-tipo-doc");
+    const btnEnviar = container.querySelector<HTMLButtonElement>("#btn-enviar-doc");
 
     if (!inputFile?.files || inputFile.files.length === 0 || !inputFile.files[0]) {
-      modalErroUpload.textContent = "Selecione um ficheiro PDF, PNG ou JPEG.";
+      modalErroUpload.textContent = "Seleccione um ficheiro PDF, PNG ou JPEG.";
       modalErroUpload.classList.remove("d-none");
       return;
     }
 
     const file = inputFile.files[0];
     if (file.size > 5 * 1024 * 1024) {
-      modalErroUpload.textContent = "O ficheiro excede o tamanho máximo de 5MB.";
+      modalErroUpload.textContent = "O ficheiro excede o tamanho máximo de 5 MB.";
       modalErroUpload.classList.remove("d-none");
       return;
     }
 
+    btnEnviar?.setAttribute("aria-busy", "true");
     const reader = new FileReader();
     reader.onload = async () => {
       try {
@@ -454,8 +492,10 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
         inputFile.value = "";
         await carregarDocumentosDoCliente(docsClienteId.value);
       } catch (err) {
-        modalErroUpload.textContent = err instanceof ApiError ? err.message : "Erro ao carregar documento.";
+        modalErroUpload.textContent = err instanceof ApiError ? err.message : "Não foi possível anexar o documento.";
         modalErroUpload.classList.remove("d-none");
+      } finally {
+        btnEnviar?.removeAttribute("aria-busy");
       }
     };
     reader.readAsDataURL(file);
@@ -495,7 +535,9 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
     const telefone = (container.querySelector("#novo-telefone") as HTMLInputElement).value;
     const email = (container.querySelector("#novo-email") as HTMLInputElement).value || null;
     const morada = (container.querySelector("#novo-morada") as HTMLInputElement).value;
+    const btnSalvar = container.querySelector<HTMLButtonElement>("#btn-salvar-cliente");
 
+    btnSalvar?.setAttribute("aria-busy", "true");
     try {
       await api.criarCliente({
         nome,
@@ -510,25 +552,25 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
       });
 
       modalCliente?.classList.add("d-none");
-      if (alerta) {
-        alerta.className = "alert-box alert-success";
-        alerta.textContent = `Cliente ${nome} registado com sucesso!`;
-        alerta.classList.remove("d-none");
-        setTimeout(() => alerta.classList.add("d-none"), 5000);
-      }
+      formCliente.reset();
+      notificar(alerta, `Cliente ${nome} registado. O KYC fica pendente até à decisão de compliance.`);
       await carregarLista();
     } catch (err) {
       if (modalErroCliente) {
-        modalErroCliente.textContent = err instanceof ApiError ? err.message : "Erro ao registar cliente.";
+        modalErroCliente.textContent = err instanceof ApiError ? err.message : "Não foi possível registar o cliente.";
         modalErroCliente.classList.remove("d-none");
       }
+    } finally {
+      btnSalvar?.removeAttribute("aria-busy");
     }
   });
 
   formKyc?.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!kycClienteId || !kycDecisao || !kycRisco || !kycMotivo) return;
+    const btnSalvar = container.querySelector<HTMLButtonElement>("#btn-salvar-kyc");
 
+    btnSalvar?.setAttribute("aria-busy", "true");
     try {
       await api.decidirKyc(kycClienteId.value, {
         estadoNovo: kycDecisao.value as any,
@@ -537,18 +579,15 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
       });
 
       modalKyc?.classList.add("d-none");
-      if (alerta) {
-        alerta.className = "alert-box alert-success";
-        alerta.textContent = "Decisão de KYC e conformidade registada com sucesso na auditoria!";
-        alerta.classList.remove("d-none");
-        setTimeout(() => alerta.classList.add("d-none"), 5000);
-      }
+      notificar(alerta, "Decisão KYC registada na pista de auditoria.");
       await carregarLista();
     } catch (err) {
       if (modalErroKyc) {
-        modalErroKyc.textContent = err instanceof ApiError ? err.message : "Erro ao submeter decisão KYC.";
+        modalErroKyc.textContent = err instanceof ApiError ? err.message : "Não foi possível registar a decisão KYC.";
         modalErroKyc.classList.remove("d-none");
       }
+    } finally {
+      btnSalvar?.removeAttribute("aria-busy");
     }
   });
 

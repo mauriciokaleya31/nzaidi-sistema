@@ -1,3 +1,5 @@
+import "@nzaidi/design-system/tokens.css";
+import "@nzaidi/design-system/componentes.css";
 import "./estilo.css";
 import { authState } from "./state/auth.state.js";
 import { renderizarCabecalho } from "./components/cabecalho.js";
@@ -10,18 +12,26 @@ import { renderizarClientes } from "./views/clientes.view.js";
 import { renderizarCaixa } from "./views/caixa.view.js";
 import { renderizarBalcao } from "./views/balcao.view.js";
 import { renderizarUsuarios } from "./views/usuarios.view.js";
+import { renderizarOperacoes } from "./views/operacoes.view.js";
+import { semAcesso } from "./ui/componentes.js";
+import { instalarComportamentoModais } from "./ui/dialogo.js";
+import { itemDaRota } from "./ui/navegacao.js";
 
 const appRoot = document.getElementById("app");
+
+// O backoffice usa sempre o tema claro (ambiente de trabalho com iluminação de escritório)
+document.documentElement.dataset.tema = "claro";
 
 async function renderizarAplicacao(): Promise<void> {
   if (!appRoot) return;
 
   if (authState.estaCarregando()) {
     appRoot.innerHTML = `
-      <div class="app-loading-screen">
-        <img class="loading-logo" src="/simbolo.png" alt="" width="84" height="84" />
-        <h2>NZAIDI CÂMBIOS</h2>
-        <p class="text-muted">A verificar credenciais de acesso seguro...</p>
+      <div class="app-loading-screen" role="status" aria-live="polite">
+        <img class="loading-logo" src="/simbolo.png" alt="" width="56" height="56" />
+        <div class="app-loading-screen__marca">NZAIDI</div>
+        <span class="nz-carregador" aria-hidden="true"></span>
+        <p class="app-loading-screen__texto">A verificar a sessão segura…</p>
       </div>
     `;
     return;
@@ -35,6 +45,7 @@ async function renderizarAplicacao(): Promise<void> {
     if (window.location.hash !== "#login") {
       window.location.hash = "#login";
     }
+    document.title = "Iniciar sessão · NZAIDI Backoffice";
     renderizarLogin(appRoot);
     return;
   }
@@ -45,16 +56,26 @@ async function renderizarAplicacao(): Promise<void> {
     return;
   }
 
+  document.title = `${itemDaRota(rotaAtual)?.titulo ?? "Backoffice"} · NZAIDI Backoffice`;
+  document.documentElement.classList.remove("menu-aberto");
+
   // Estrutura do Layout Administrativo Completo
   appRoot.innerHTML = `
+    <a class="saltar-conteudo" href="#view-container">Saltar para o conteúdo</a>
     <div class="app-layout">
       <div id="sidebar-container"></div>
       <div class="app-main-wrapper">
         <div id="header-container"></div>
-        <main class="app-content" id="view-container"></main>
+        <main class="app-content" id="view-container" tabindex="-1" data-rota="${rotaAtual.slice(1)}"></main>
       </div>
     </div>
   `;
+
+  // A ligação "saltar para o conteúdo" não pode mudar o hash (o hash é a rota)
+  appRoot.querySelector(".saltar-conteudo")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("view-container")?.focus();
+  });
 
   const sidebarContainer = document.getElementById("sidebar-container");
   const headerContainer = document.getElementById("header-container");
@@ -65,8 +86,10 @@ async function renderizarAplicacao(): Promise<void> {
   }
 
   if (headerContainer) {
-    renderizarCabecalho(headerContainer);
+    renderizarCabecalho(headerContainer, rotaAtual);
   }
+
+  window.scrollTo({ top: 0 });
 
   if (viewContainer) {
     switch (rotaAtual) {
@@ -74,9 +97,15 @@ async function renderizarAplicacao(): Promise<void> {
         if (authState.temPermissao("operacoes:registar") || authState.temPermissao("registar_operacao_balcao")) {
           await renderizarBalcao(viewContainer);
         } else {
-          viewContainer.innerHTML = `
-            <div class="alert-box alert-error">Acesso não autorizado ao Balcão Operacional de Câmbios.</div>
-          `;
+          viewContainer.innerHTML = semAcesso("O seu perfil não está autorizado a registar operações no balcão de câmbios.");
+        }
+        break;
+
+      case "#operacoes":
+        if (authState.temPermissao("operacoes:consultar")) {
+          await renderizarOperacoes(viewContainer);
+        } else {
+          viewContainer.innerHTML = semAcesso("O seu perfil não está autorizado a consultar o diário de operações.");
         }
         break;
 
@@ -84,9 +113,7 @@ async function renderizarAplicacao(): Promise<void> {
         if (authState.temPermissao("clientes:consultar")) {
           await renderizarClientes(viewContainer);
         } else {
-          viewContainer.innerHTML = `
-            <div class="alert-box alert-error">Acesso não autorizado para consulta de clientes.</div>
-          `;
+          viewContainer.innerHTML = semAcesso("O seu perfil não está autorizado a consultar clientes.");
         }
         break;
 
@@ -94,9 +121,7 @@ async function renderizarAplicacao(): Promise<void> {
         if (authState.temPermissao("caixa:consultar") || authState.temPermissao("caixa:abrir")) {
           await renderizarCaixa(viewContainer);
         } else {
-          viewContainer.innerHTML = `
-            <div class="alert-box alert-error">Acesso não autorizado ao módulo de Caixa e Tesouraria.</div>
-          `;
+          viewContainer.innerHTML = semAcesso("O seu perfil não está autorizado a aceder ao caixa e à tesouraria.");
         }
         break;
 
@@ -104,9 +129,7 @@ async function renderizarAplicacao(): Promise<void> {
         if (authState.temPermissao("ver_taxas")) {
           await renderizarTaxas(viewContainer);
         } else {
-          viewContainer.innerHTML = `
-            <div class="alert-box alert-error">Acesso não autorizado para consulta de taxas.</div>
-          `;
+          viewContainer.innerHTML = semAcesso("O seu perfil não está autorizado a consultar as taxas de câmbio.");
         }
         break;
 
@@ -114,9 +137,7 @@ async function renderizarAplicacao(): Promise<void> {
         if (authState.temPermissao("ver_auditoria")) {
           await renderizarAuditoria(viewContainer);
         } else {
-          viewContainer.innerHTML = `
-            <div class="alert-box alert-error">Acesso não autorizado para consulta de auditoria.</div>
-          `;
+          viewContainer.innerHTML = semAcesso("A pista de auditoria está reservada aos perfis de compliance e gestão.");
         }
         break;
 
@@ -124,9 +145,7 @@ async function renderizarAplicacao(): Promise<void> {
         if (authState.temPermissao("gerir_usuarios") || authState.temPermissao("usuarios:consultar")) {
           await renderizarUsuarios(viewContainer);
         } else {
-          viewContainer.innerHTML = `
-            <div class="alert-box alert-error">Acesso não autorizado ao módulo de gestão de equipa e utilizadores.</div>
-          `;
+          viewContainer.innerHTML = semAcesso("A gestão da equipa e dos acessos está reservada ao perfil de gestão.");
         }
         break;
 
@@ -140,6 +159,8 @@ async function renderizarAplicacao(): Promise<void> {
 
 // Inicializar aplicação
 async function iniciar(): Promise<void> {
+  instalarComportamentoModais();
+
   window.addEventListener("hashchange", () => {
     void renderizarAplicacao();
   });

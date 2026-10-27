@@ -1,118 +1,100 @@
+import { icone } from "@nzaidi/design-system";
 import { api, ApiError } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
 
 export function renderizarLogin(container: HTMLElement): void {
   container.innerHTML = `
     <div class="login-wrapper">
-      <aside class="login-visual" aria-hidden="true">
+      <aside class="login-visual">
         <div class="login-visual-marca">
-          <img src="/simbolo.png" alt="" width="52" height="52" />
+          <img src="/simbolo.png" alt="" width="44" height="44" />
           <div>
             <strong>NZAIDI</strong>
-            <span>Casa de Câmbios</span>
+            <span>Casa de Câmbios &amp; Transferência</span>
           </div>
         </div>
+
         <div class="login-visual-texto">
-          <h2>Backoffice de <em>operações cambiais</em></h2>
-          <p>Balcão, clientes, tesouraria, taxas e auditoria num único ambiente seguro.</p>
+          <p class="login-visual-sobretitulo">Backoffice operacional</p>
+          <h2>Operações cambiais com rigor, rastreabilidade e controlo.</h2>
+          <ul class="login-garantias">
+            <li>${icone("cadeado")}<span><strong>Sessão protegida</strong> Cookie seguro no servidor; nenhuma credencial guardada no navegador.</span></li>
+            <li>${icone("auditoria")}<span><strong>Tudo auditado</strong> Cada acção fica registada com autor, hora e origem.</span></li>
+            <li>${icone("equipa")}<span><strong>Acesso por perfil</strong> Cada função vê apenas o que lhe compete.</span></li>
+          </ul>
         </div>
-        <div class="login-lema"><span>Confiança</span><span>Segurança</span><span>Agilidade</span></div>
-        <div class="login-cena">
-          <div class="login-anel"></div>
-          <div class="login-anel login-anel--2"></div>
-          <div class="login-moeda login-moeda--a">$</div>
-          <div class="login-moeda login-moeda--b">€</div>
-          <div class="login-moeda login-moeda--c">Kz</div>
-        </div>
+
+        <p class="login-visual-rodape">Instituição financeira não bancária sujeita à supervisão do Banco Nacional de Angola.</p>
+        <svg class="login-guilloche" viewBox="0 0 600 600" aria-hidden="true" focusable="false">
+          ${Array.from({ length: 18 }, (_, i) => `<ellipse cx="300" cy="300" rx="${290 - i * 6}" ry="${120 + i * 9}" transform="rotate(${i * 10} 300 300)"/>`).join("")}
+        </svg>
       </aside>
+
       <div class="login-painel">
-      <div class="login-card">
-        <div class="login-header">
-          <div class="login-logo-container">
-            <div class="brand-badge-circle brand-badge-large">NZ</div>
+        <div class="login-card">
+          <div class="login-header">
+            <div class="login-logo-container">
+              <img src="/simbolo.png" alt="" width="40" height="40" />
+              <span>NZAIDI</span>
+            </div>
+            <h1 class="login-title">Iniciar sessão</h1>
+            <p class="login-subtitle">Use as credenciais institucionais atribuídas pela gestão.</p>
           </div>
-          <h1 class="login-title">Iniciar sessão</h1>
-          <p class="login-subtitle">Sistema Integrado de Gestão & Operações Cambiais</p>
-          <div class="login-bna-badge">
-            <svg class="bna-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            Instituição Não Bancária Sujeita à Supervisão do BNA
-          </div>
-        </div>
 
-        <div id="login-alerta" class="alert-box alert-error d-none"></div>
+          <div id="login-alerta" class="nz-alerta nz-alerta--erro d-none" role="alert"></div>
 
-        <form id="form-login" class="login-form" novalidate>
-          <div class="form-group">
-            <label for="input-email" class="form-label">Correio Electrónico Institucional</label>
-            <div class="input-with-icon">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-              <input 
-                type="email" 
-                id="input-email" 
-                class="form-input" 
-                placeholder="operador@nzaidi.ao" 
-                required 
-                autocomplete="username"
-              />
+          <form id="form-login" class="login-form nz-formulario" novalidate>
+            <div class="nz-campo">
+              <label for="input-email" class="nz-campo__rotulo">Correio electrónico</label>
+              <div class="nz-entrada-grupo">
+                ${icone("utilizador")}
+                <input
+                  type="email"
+                  id="input-email"
+                  class="nz-entrada"
+                  placeholder="nome@nzaidi.ao"
+                  required
+                  autocomplete="username"
+                  inputmode="email"
+                  autocapitalize="off"
+                  spellcheck="false"
+                />
+              </div>
+            </div>
+
+            <div class="nz-campo">
+              <label for="input-senha" class="nz-campo__rotulo">Palavra-passe</label>
+              <div class="nz-entrada-grupo input-password-group">
+                ${icone("cadeado")}
+                <input
+                  type="password"
+                  id="input-senha"
+                  class="nz-entrada"
+                  placeholder="Introduza a palavra-passe"
+                  required
+                  autocomplete="current-password"
+                />
+                <button type="button" id="btn-toggle-senha" class="nz-entrada-grupo__accao btn-toggle-senha" aria-label="Mostrar palavra-passe" aria-pressed="false">
+                  <span id="eye-icon">${icone("olho")}</span>
+                  <span id="eye-off-icon" class="d-none">${icone("olho-fechado")}</span>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" id="btn-submit-login" class="nz-botao nz-botao--primario nz-botao--bloco nz-botao--lg">
+              <span class="btn-text">Entrar</span>
+              <span class="btn-spinner d-none"><span class="nz-carregador nz-carregador--inverso" aria-hidden="true"></span>A verificar credenciais…</span>
+            </button>
+          </form>
+
+          <div class="login-footer">
+            <div class="security-indicator">
+              ${icone("escudo", "nz-icone--sm")}
+              Ligação cifrada. Tentativas de acesso são registadas.
             </div>
           </div>
-
-          <div class="form-group">
-            <label for="input-senha" class="form-label">Palavra-passe de Acesso</label>
-            <div class="input-with-icon input-password-group">
-              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-              <input 
-                type="password" 
-                id="input-senha" 
-                class="form-input" 
-                placeholder="Introduza a sua credencial" 
-                required 
-                autocomplete="current-password"
-              />
-              <button type="button" id="btn-toggle-senha" class="btn-toggle-senha" title="Mostrar ou ocultar palavra-passe" aria-label="Mostrar ou ocultar palavra-passe">
-                <svg id="eye-icon" class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                  <circle cx="12" cy="12" r="3"></circle>
-                </svg>
-                <svg id="eye-off-icon" class="eye-icon d-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                  <line x1="1" y1="1" x2="23" y2="23"></line>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <button type="submit" id="btn-submit-login" class="btn btn-primary btn-block btn-lg">
-            <span class="btn-text">Autenticar no Sistema</span>
-            <span class="btn-spinner d-none">
-              <svg class="spinner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 2a10 10 0 0 1 10 10"></path>
-              </svg>
-              A autenticar...
-            </span>
-          </button>
-        </form>
-
-        <div class="login-footer">
-          <div class="security-indicator">
-            <svg class="sec-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
-            Sessão encriptada com proteção RBAC e auditoria contínua
-          </div>
-          <small>© 2026 NZAIDI — Casa de Câmbios & Transferência, Lda. Todos os direitos reservados.</small>
         </div>
-      </div>
+        <small class="login-copyright">© 2026 NZAIDI, Casa de Câmbios &amp; Transferência, Lda.</small>
       </div>
     </div>
   `;
@@ -123,14 +105,16 @@ export function renderizarLogin(container: HTMLElement): void {
   const inputEmail = container.querySelector<HTMLInputElement>("#input-email");
   const inputSenha = container.querySelector<HTMLInputElement>("#input-senha");
   const btnToggle = container.querySelector<HTMLButtonElement>("#btn-toggle-senha");
-  const eyeIcon = container.querySelector<SVGElement>("#eye-icon");
-  const eyeOffIcon = container.querySelector<SVGElement>("#eye-off-icon");
+  const eyeIcon = container.querySelector<HTMLElement>("#eye-icon");
+  const eyeOffIcon = container.querySelector<HTMLElement>("#eye-off-icon");
 
   // Alternar visibilidade da senha
   btnToggle?.addEventListener("click", () => {
     if (!inputSenha || !eyeIcon || !eyeOffIcon) return;
     const estaVisivel = inputSenha.type === "text";
     inputSenha.type = estaVisivel ? "password" : "text";
+    btnToggle.setAttribute("aria-pressed", String(!estaVisivel));
+    btnToggle.setAttribute("aria-label", estaVisivel ? "Mostrar palavra-passe" : "Ocultar palavra-passe");
     if (estaVisivel) {
       eyeIcon.classList.remove("d-none");
       eyeOffIcon.classList.add("d-none");
@@ -146,13 +130,18 @@ export function renderizarLogin(container: HTMLElement): void {
 
     alerta.classList.add("d-none");
     alerta.textContent = "";
+    inputEmail.removeAttribute("aria-invalid");
+    inputSenha.removeAttribute("aria-invalid");
 
     const email = inputEmail.value.trim();
     const credencialAcesso = inputSenha.value;
 
     if (!email || !credencialAcesso) {
-      alerta.textContent = "Por favor preencha todos os campos obrigatórios.";
+      alerta.textContent = "Preencha o correio electrónico e a palavra-passe.";
       alerta.classList.remove("d-none");
+      if (!email) inputEmail.setAttribute("aria-invalid", "true");
+      if (!credencialAcesso) inputSenha.setAttribute("aria-invalid", "true");
+      (email ? inputSenha : inputEmail).focus();
       return;
     }
 
@@ -168,9 +157,9 @@ export function renderizarLogin(container: HTMLElement): void {
       window.location.hash = "#dashboard";
     } catch (err) {
       if (err instanceof ApiError) {
-        alerta.textContent = err.message || "Credenciais inválidas. Verifique o email e palavra-passe.";
+        alerta.textContent = err.message || "Credenciais inválidas. Verifique o correio electrónico e a palavra-passe.";
       } else {
-        alerta.textContent = "Erro de conexão com o servidor da API. Verifique a sua ligação.";
+        alerta.textContent = "Não foi possível contactar o servidor. Verifique a ligação e tente novamente.";
       }
       alerta.classList.remove("d-none");
     } finally {

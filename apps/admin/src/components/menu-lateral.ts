@@ -1,108 +1,31 @@
+import { icone } from "@nzaidi/design-system";
 import { authState } from "../state/auth.state.js";
+import { itensVisiveis, type ItemNavegacao } from "../ui/navegacao.js";
 
-interface ItemMenu {
-  id: string;
-  rota: string;
-  titulo: string;
-  icone: string;
-  permissaoRequerida?: string;
+/** Abre ou fecha o menu lateral (gaveta no telemóvel, painel sobreposto no tablet). */
+export function alternarMenuLateral(abrir?: boolean): void {
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) return;
+  const aberto = sidebar.classList.toggle("open", abrir);
+  document.getElementById("sidebar-fundo")?.classList.toggle("visivel", aberto);
+  document.documentElement.classList.toggle("menu-aberto", aberto);
+  for (const id of ["btn-menu-lateral", "btn-menu-inferior"]) {
+    document.getElementById(id)?.setAttribute("aria-expanded", String(aberto));
+  }
+  if (aberto) sidebar.querySelector<HTMLElement>(".nav-item.active, .nav-item")?.focus();
 }
 
-const ITENS_MENU: ItemMenu[] = [
-  {
-    id: "nav-dashboard",
-    rota: "#dashboard",
-    titulo: "Visão Geral",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="7" height="7"></rect>
-        <rect x="14" y="3" width="7" height="7"></rect>
-        <rect x="14" y="14" width="7" height="7"></rect>
-        <rect x="3" y="14" width="7" height="7"></rect>
-      </svg>
-    `,
-  },
-  {
-    id: "nav-balcao",
-    rota: "#balcao",
-    titulo: "Balcão de Câmbios",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-      </svg>
-    `,
-    permissaoRequerida: "operacoes:registar",
-  },
-  {
-    id: "nav-clientes",
-    rota: "#clientes",
-    titulo: "Clientes & KYC",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-    `,
-    permissaoRequerida: "clientes:consultar",
-  },
-  {
-    id: "nav-caixa",
-    rota: "#caixa",
-    titulo: "Tesouraria & Caixa",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-        <line x1="12" y1="22.08" x2="12" y2="12"></line>
-      </svg>
-    `,
-    permissaoRequerida: "caixa:consultar",
-  },
-  {
-    id: "nav-taxas",
-    rota: "#taxas",
-    titulo: "Taxas de Câmbio",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="1" x2="12" y2="23"></line>
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-      </svg>
-    `,
-    permissaoRequerida: "ver_taxas",
-  },
-  {
-    id: "nav-auditoria",
-    rota: "#auditoria",
-    titulo: "Pista de Auditoria",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="16" y1="13" x2="8" y2="13"></line>
-        <line x1="16" y1="17" x2="8" y2="17"></line>
-        <polyline points="10 9 9 9 8 9"></polyline>
-      </svg>
-    `,
-    permissaoRequerida: "ver_auditoria",
-  },
-  {
-    id: "nav-usuarios",
-    rota: "#usuarios",
-    titulo: "Equipa & Utilizadores",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-    `,
-    permissaoRequerida: "gerir_usuarios",
-  },
-];
+function ligacao(item: ItemNavegacao, rotaAtual: string): string {
+  const activo = rotaAtual === item.rota;
+  return `
+    <li>
+      <a href="${item.rota}" class="nav-item ${activo ? "active" : ""}" id="${item.id}" title="${item.titulo}"${activo ? ' aria-current="page"' : ""}>
+        <span class="nav-icon">${icone(item.icone)}</span>
+        <span class="nav-label">${item.titulo}</span>
+      </a>
+    </li>
+  `;
+}
 
 export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string): void {
   const usuario = authState.getUsuario();
@@ -111,58 +34,68 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
     return;
   }
 
-  const itensVisiveis = ITENS_MENU.filter((item) => {
-    if (!item.permissaoRequerida) return true;
-    return authState.temPermissao(item.permissaoRequerida);
-  });
+  const itens = itensVisiveis();
+  const grupos = new Map<string, ItemNavegacao[]>();
+  for (const item of itens) {
+    grupos.set(item.grupo, [...(grupos.get(item.grupo) ?? []), item]);
+  }
 
-  const linksHtml = itensVisiveis
+  const gruposHtml = Array.from(grupos.entries())
+    .map(
+      ([grupo, lista]) => `
+        <div class="nav-grupo">
+          <p class="nav-grupo__titulo">${grupo}</p>
+          <ul class="nav-list">${lista.map((i) => ligacao(i, rotaAtual)).join("")}</ul>
+        </div>
+      `
+    )
+    .join("");
+
+  // Barra inferior do telemóvel: até 4 destinos principais e o acesso ao menu completo
+  const principais = itens.filter((i) => ["#dashboard", "#balcao", "#clientes", "#caixa", "#operacoes", "#taxas"].includes(i.rota)).slice(0, 4);
+  const inferiorHtml = principais
     .map((item) => {
-      const estaAtivo = rotaAtual === item.rota;
-
+      const activo = rotaAtual === item.rota;
       return `
-        <li>
-          <a href="${item.rota}" class="nav-item ${estaAtivo ? "active" : ""}" id="${item.id}">
-            <span class="nav-icon">${item.icone}</span>
-            <span class="nav-label">${item.titulo}</span>
-          </a>
-        </li>
+        <a href="${item.rota}" class="nav-inferior__item${activo ? " activo" : ""}"${activo ? ' aria-current="page"' : ""}>
+          ${icone(item.icone)}<span>${item.tituloCurto}</span>
+        </a>
       `;
     })
     .join("");
 
   container.innerHTML = `
     <div class="sidebar-fundo" id="sidebar-fundo"></div>
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
       <div class="sidebar-brand">
-        <img class="sidebar-logo" src="/simbolo.png" alt="" width="44" height="44" />
+        <img class="sidebar-logo" src="/simbolo.png" alt="" width="36" height="36" />
         <div class="brand-meta">
-          <div class="brand-title">NZAIDI CÂMBIOS</div>
-          <div class="brand-sub">Casa de Câmbios, Lda.</div>
+          <div class="brand-title">NZAIDI</div>
+          <div class="brand-sub">Backoffice operacional</div>
         </div>
+        <button type="button" class="sidebar-fechar" id="btn-fechar-menu" aria-label="Fechar menu">${icone("fechar")}</button>
       </div>
 
-      <nav class="sidebar-nav">
-        <ul class="nav-list">
-          ${linksHtml}
-        </ul>
-      </nav>
+      <nav class="sidebar-nav">${gruposHtml}</nav>
 
       <div class="sidebar-footer">
         <div class="footer-status">
-          <span class="status-dot"></span>
-          <span class="status-text">Ambiente Seguro</span>
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="status-text">Sessão protegida e auditada</span>
         </div>
-        <div class="footer-compliance">
-          <span>Supervisão BNA</span>
-        </div>
+        <div class="footer-compliance">Instituição supervisionada pelo BNA</div>
       </div>
     </aside>
+
+    <nav class="nav-inferior" aria-label="Navegação rápida">
+      ${inferiorHtml}
+      <button type="button" class="nav-inferior__item" id="btn-menu-inferior" aria-controls="sidebar" aria-expanded="false">
+        ${icone("menu")}<span>Menu</span>
+      </button>
+    </nav>
   `;
 
-  // Telemóvel: fechar o menu ao tocar no fundo escurecido
-  container.querySelector("#sidebar-fundo")?.addEventListener("click", () => {
-    container.querySelector("#sidebar")?.classList.remove("open");
-    container.querySelector("#sidebar-fundo")?.classList.remove("visivel");
-  });
+  container.querySelector("#sidebar-fundo")?.addEventListener("click", () => alternarMenuLateral(false));
+  container.querySelector("#btn-fechar-menu")?.addEventListener("click", () => alternarMenuLateral(false));
+  container.querySelector("#btn-menu-inferior")?.addEventListener("click", () => alternarMenuLateral());
 }

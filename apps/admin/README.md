@@ -35,26 +35,21 @@ Aplicação SPA (Single Page Application) desenvolvida em TypeScript estrito, Vi
 
 ## 3. Módulos e Vistas Implementadas
 
-1. **Login Seguro (`#login`)**:
-   - Autenticação por credenciais com controlo de tentativas e mensagens de erro normativas.
-   - Pré-visualização dos perfis de demonstração para facilidade de testes em ambiente de homologação.
+A interface usa o Design System v2 (`packages/design-system`). Estrutura: barra lateral por áreas, cabeçalho com trilho e pesquisa de páginas (Ctrl/Cmd + K), barra lateral compacta no tablet, gaveta e barra inferior no telemóvel.
 
-2. **Painel Geral de Controlo (`#dashboard`)**:
-   - Resumo do operador autenticado e respetivos privilégios.
-   - Cotações de USD e EUR em tempo real.
-   - Estado de conexão à API e atalhos rápidos contextuais à função do utilizador.
+| Rota | Vista | Permissão |
+| --- | --- | --- |
+| `#login` | Início de sessão | — |
+| `#dashboard` | Visão geral: cotações, caixa do operador, fila KYC, últimas operações | sessão |
+| `#balcao` | Balcão: operação de compra/venda com cotação de 90 s e borderô | `operacoes:registar` |
+| `#operacoes` | Diário de operações (só leitura) | `operacoes:consultar` |
+| `#caixa` | Caixa: abertura, suprimento, sangria e fecho com conferência | `caixa:consultar` |
+| `#clientes` | Clientes, decisão KYC e dossiê documental | `clientes:consultar` |
+| `#auditoria` | Pista de auditoria | `ver_auditoria` |
+| `#taxas` | Taxas de câmbio (edição só para `alterar_taxas`) | `ver_taxas` |
+| `#usuarios` | Equipa e acessos | `gerir_usuarios` |
 
-3. **Gestão de Taxas de Câmbio (`#taxas`)**:
-   - Consulta detalhada da tabela de taxas (taxa de referência BNA, margens de compra/venda, spread balcão).
-   - Modal de edição de taxas exclusivo para o perfil `gestao`.
-   - Validação estrita de motivo de alteração para envio à auditoria.
-
-4. **Pista de Auditoria Regulatória (`#auditoria`)**:
-   - Exclusivo para `compliance` e `gestao`.
-   - Consulta cronológica dos últimos eventos do sistema (logins, alterações de taxas, tentativas de acesso).
-
-5. **Balcão e Tesouraria (`#operacional` / `#tesouraria`)**:
-   - Módulos operacionais integrados com aviso de transição para a Fase 4 (emissão de borderôs e fecho de caixa).
+Código de interface partilhado em `src/ui/`: `formatar.ts` (valores, datas, escape de HTML), `componentes.ts` (estados, cabeçalhos, estados vazios), `navegacao.ts` (mapa único do menu), `dialogo.ts` (confirmação e comportamento dos modais).
 
 ---
 
