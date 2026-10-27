@@ -400,6 +400,102 @@ export function inicializarSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_tarefas_responsavel ON tarefas_operacionais(responsavel_id);
     CREATE INDEX IF NOT EXISTS idx_tarefas_estado ON tarefas_operacionais(estado);
 
+    -- Módulo D: Contabilidade, Livro de Movimentos e Reconciliação Financeira
+    CREATE TABLE IF NOT EXISTS contas_contabeis (
+      codigo TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      natureza TEXT NOT NULL CHECK(natureza IN ('devedora', 'credora')),
+      tipo TEXT NOT NULL CHECK(tipo IN ('ativo', 'passivo', 'patrimonio', 'proveito', 'custo')),
+      moeda TEXT NOT NULL CHECK(moeda IN ('AOA', 'USD', 'EUR', 'MULTI')),
+      descricao TEXT,
+      ativo INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE INDEX IF NOT EXISTS idx_contas_tipo ON contas_contabeis(tipo);
+
+    CREATE TABLE IF NOT EXISTS lancamentos_contabeis (
+      id TEXT PRIMARY KEY,
+      numero_lancamento TEXT UNIQUE NOT NULL,
+      data_movimento TEXT NOT NULL,
+      origem_tipo TEXT NOT NULL CHECK(origem_tipo IN (
+        'cambio_balcao', 'cambio_online', 'remessa_cliente', 'liquidacao_parceiro',
+        'suprimento_caixa', 'sangria_caixa', 'quebra_fecho_caixa', 'sobra_fecho_caixa', 'estorno_operacao'
+      )),
+      origem_id TEXT NOT NULL,
+      descricao TEXT NOT NULL,
+      moeda TEXT NOT NULL CHECK(moeda IN ('AOA', 'USD', 'EUR')),
+      montante_original TEXT NOT NULL,
+      taxa_cambio TEXT,
+      contravalor_aoa TEXT NOT NULL,
+      estado TEXT NOT NULL CHECK(estado IN ('confirmado', 'estornado')) DEFAULT 'confirmado',
+      estornado_em TEXT,
+      estorno_lancamento_id TEXT,
+      motivo_estorno TEXT,
+      operador_id TEXT NOT NULL,
+      operador_nome TEXT NOT NULL,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (operador_id) REFERENCES usuarios(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_lancamentos_origem ON lancamentos_contabeis(origem_tipo, origem_id);
+    CREATE INDEX IF NOT EXISTS idx_lancamentos_data ON lancamentos_contabeis(data_movimento);
+    CREATE INDEX IF NOT EXISTS idx_lancamentos_estado ON lancamentos_contabeis(estado);
+
+    CREATE TABLE IF NOT EXISTS partidas_contabeis (
+      id TEXT PRIMARY KEY,
+      lancamento_id TEXT NOT NULL,
+      conta_codigo TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('D', 'C')),
+      montante_original TEXT NOT NULL,
+      moeda TEXT NOT NULL CHECK(moeda IN ('AOA', 'USD', 'EUR')),
+      montante_aoa TEXT NOT NULL,
+      descricao_linha TEXT,
+      ordem INTEGER NOT NULL DEFAULT 1,
+      FOREIGN KEY (lancamento_id) REFERENCES lancamentos_contabeis(id) ON DELETE CASCADE,
+      FOREIGN KEY (conta_codigo) REFERENCES contas_contabeis(codigo)
+    );
+    CREATE INDEX IF NOT EXISTS idx_partidas_lancamento ON partidas_contabeis(lancamento_id);
+    CREATE INDEX IF NOT EXISTS idx_partidas_conta ON partidas_contabeis(conta_codigo);
+
+    CREATE TABLE IF NOT EXISTS divergencias_reconciliacao (
+      id TEXT PRIMARY KEY,
+      tipo TEXT NOT NULL CHECK(tipo IN (
+        'cambio_vs_liquidacao', 'bordero_vs_movimento', 'remessa_vs_parceiro',
+        'liquidacao_manual_vs_comprovativo', 'comissao_prevista_vs_apurada', 'caixa_vs_contagem'
+      )),
+      referencia_id TEXT NOT NULL,
+      origem TEXT NOT NULL,
+      valor_esperado TEXT NOT NULL,
+      valor_observado TEXT NOT NULL,
+      moeda TEXT NOT NULL CHECK(moeda IN ('AOA', 'USD', 'EUR')),
+      diferenca TEXT NOT NULL,
+      estado TEXT NOT NULL CHECK(estado IN ('aberta', 'em_analise', 'resolvida', 'desconsiderada_autorizada')) DEFAULT 'aberta',
+      motivo_resolucao TEXT,
+      resolvido_por_id TEXT,
+      resolvido_por_nome TEXT,
+      resolvido_em TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (resolvido_por_id) REFERENCES usuarios(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_divergencias_tipo ON divergencias_reconciliacao(tipo);
+    CREATE INDEX IF NOT EXISTS idx_divergencias_ref ON divergencias_reconciliacao(referencia_id);
+    CREATE INDEX IF NOT EXISTS idx_divergencias_estado ON divergencias_reconciliacao(estado);
+
+    CREATE TABLE IF NOT EXISTS taxas_historico (
+      id TEXT PRIMARY KEY,
+      moeda TEXT NOT NULL CHECK(moeda IN ('USD', 'EUR')),
+      referencia TEXT NOT NULL,
+      margem_compra TEXT NOT NULL,
+      margem_venda TEXT NOT NULL,
+      taxa_compra TEXT NOT NULL,
+      taxa_venda TEXT NOT NULL,
+      fonte TEXT NOT NULL,
+      alterado_por_id TEXT,
+      alterado_por_nome TEXT,
+      motivo TEXT,
+      criado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_taxas_hist_moeda ON taxas_historico(moeda);
+    CREATE INDEX IF NOT EXISTS idx_taxas_hist_criado ON taxas_historico(criado_em);
+
   `);
 }
 

@@ -13,6 +13,9 @@ import { renderizarUsuarios } from "./views/usuarios.view.js";
 import { renderizarIntegracoes } from "./views/integracoes.view.js";
 import { renderizarParceiros } from "./views/parceiros.view.js";
 import { renderizarOperacional } from "./views/operacional.view.js";
+import { renderizarContabilidade } from "./views/contabilidade.view.js";
+import { renderizarRelatorios } from "./views/relatorios.view.js";
+
 
 const appRoot = document.getElementById("app");
 
@@ -73,6 +76,13 @@ async function renderizarAplicacao(): Promise<void> {
 
   if (viewContainer) {
     switch (rotaAtual.split("?")[0]) {
+      case "#contabilidade":
+        renderizarContabilidade(viewContainer);
+        break;
+
+      case "#relatorios":
+        renderizarRelatorios(viewContainer);
+        break;
       case "#operacional":
         await renderizarOperacional(viewContainer);
         break;

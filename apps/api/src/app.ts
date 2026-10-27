@@ -41,6 +41,10 @@ import { registrarRotasParceiros } from "./modules/parceiros-comerciais/parceiro
 import { OperacionalRepository } from "./modules/operacional/operacional.repository.js";
 import { OperacionalService } from "./modules/operacional/operacional.service.js";
 import { registrarRotasOperacional } from "./modules/operacional/operacional.routes.js";
+import { ContabilidadeRepository } from "./modules/contabilidade/contabilidade.repository.js";
+import { ContabilidadeService } from "./modules/contabilidade/contabilidade.service.js";
+import { registrarRotasContabilidade } from "./modules/contabilidade/contabilidade.routes.js";
+
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -96,8 +100,10 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   const clientesRepo = new ClientesRepository(db);
   const clientesService = new ClientesService(clientesRepo, auditoriaRepo);
   const documentosService = new DocumentosKycService(db, auditoriaRepo);
+  const contabilidadeRepo = new ContabilidadeRepository(db);
+  const contabilidadeService = new ContabilidadeService(db, contabilidadeRepo, auditoriaRepo);
   const caixaRepo = new CaixaRepository(db);
-  const caixaService = new CaixaService(db, caixaRepo, auditoriaRepo);
+  const caixaService = new CaixaService(db, caixaRepo, auditoriaRepo, contabilidadeService);
   const operacoesRepo = new OperacoesRepository(db);
   const operacoesService = new OperacoesService(
     db,
@@ -105,7 +111,8 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
     clientesRepo,
     caixaRepo,
     taxasService,
-    auditoriaRepo
+    auditoriaRepo,
+    contabilidadeService
   );
 
   const integracoesManuaisRepo = new IntegracoesManuaisRepository(db);
@@ -153,6 +160,7 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
     parceirosRepo
   );
   registrarRotasOperacional(app, operacionalService);
+  registrarRotasContabilidade(app, contabilidadeService, contabilidadeRepo);
 
   return app;
 }

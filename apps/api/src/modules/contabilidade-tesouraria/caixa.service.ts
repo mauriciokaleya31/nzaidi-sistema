@@ -3,6 +3,8 @@ import { decimal, D } from "@nzaidi/dominio";
 import type { DatabaseSync } from "node:sqlite";
 import type { CaixaRepository } from "./caixa.repository.js";
 import type { AuditoriaRepository } from "../auditoria/auditoria.repository.js";
+import type { ContabilidadeService } from "../contabilidade/contabilidade.service.js";
+
 import type {
   Caixa,
   AbrirCaixaInput,
@@ -25,7 +27,8 @@ export class CaixaService {
   constructor(
     private db: DatabaseSync,
     private caixaRepo: CaixaRepository,
-    private auditoriaRepo: AuditoriaRepository
+    private auditoriaRepo: AuditoriaRepository,
+    private contabilidadeService?: ContabilidadeService
   ) {}
 
   public abrirCaixa(dados: AbrirCaixaInput, operador: ContextoOperador): Caixa {
@@ -156,6 +159,19 @@ export class CaixaService {
         operadorId: operador.id,
       });
 
+      if (this.contabilidadeService) {
+        this.contabilidadeService.lancarMovimentoTesourariaCaixa({
+          caixaId,
+          numeroCaixa: caixa.numeroCaixa,
+          tipo: dados.tipo,
+          moeda: dados.moeda,
+          montante: dados.montante,
+          descricao: dados.descricao,
+          operadorId: operador.id,
+          operadorNome: operador.nome,
+        });
+      }
+
       this.auditoriaRepo.registar({
         autorId: operador.id,
         autorNome: operador.nome,
@@ -238,6 +254,41 @@ export class CaixaService {
         ip: operador.ip,
       });
 
+      if (this.contabilidadeService) {
+        if (!difAoa.isZero()) {
+          this.contabilidadeService.lancarDiferencaFechoCaixa({
+            caixaId,
+            numeroCaixa: caixa.numeroCaixa,
+            moeda: 'AOA',
+            diferenca: difAoa.toFixed(2),
+            justificativa: dados.justificativaDiferenca ?? null,
+            operadorId: operador.id,
+            operadorNome: operador.nome,
+          });
+        }
+        if (!difUsd.isZero()) {
+          this.contabilidadeService.lancarDiferencaFechoCaixa({
+            caixaId,
+            numeroCaixa: caixa.numeroCaixa,
+            moeda: 'USD',
+            diferenca: difUsd.toFixed(2),
+            justificativa: dados.justificativaDiferenca ?? null,
+            operadorId: operador.id,
+            operadorNome: operador.nome,
+          });
+        }
+        if (!difEur.isZero()) {
+          this.contabilidadeService.lancarDiferencaFechoCaixa({
+            caixaId,
+            numeroCaixa: caixa.numeroCaixa,
+            moeda: 'EUR',
+            diferenca: difEur.toFixed(2),
+            justificativa: dados.justificativaDiferenca ?? null,
+            operadorId: operador.id,
+            operadorNome: operador.nome,
+          });
+        }
+      }
       return this.caixaRepo.buscarCaixaPorId(caixaId)!;
     });
   }

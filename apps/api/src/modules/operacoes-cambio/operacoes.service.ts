@@ -15,6 +15,8 @@ import type { ClientesRepository } from "../identidade-kyc/clientes.repository.j
 import type { CaixaRepository } from "../contabilidade-tesouraria/caixa.repository.js";
 import type { TaxasService } from "../taxas-cambio/taxas.service.js";
 import type { AuditoriaRepository } from "../auditoria/auditoria.repository.js";
+import type { ContabilidadeService } from "../contabilidade/contabilidade.service.js";
+
 import type {
   OperacaoCambio,
   Bordero,
@@ -42,7 +44,8 @@ export class OperacoesService {
     private clientesRepo: ClientesRepository,
     private caixaRepo: CaixaRepository,
     private taxasService: TaxasService,
-    private auditoriaRepo: AuditoriaRepository
+    private auditoriaRepo: AuditoriaRepository,
+    private contabilidadeService?: ContabilidadeService
   ) {}
 
   public async criarOperacao(
@@ -282,6 +285,20 @@ export class OperacoesService {
         ip: operador.ip,
       });
 
+            if (this.contabilidadeService) {
+        this.contabilidadeService.lancarOperacaoCambio({
+          id: operacao.id,
+          numeroOperacao: operacao.numeroOperacao,
+          tipo: operacao.tipo,
+          moedaDivisa: operacao.moedaDivisa,
+          montanteDivisa: operacao.montanteDivisa,
+          montanteAoa: operacao.montanteAoa,
+          taxaAplicada: operacao.taxaAplicada,
+          taxaReferenciaBna: operacao.taxaReferenciaBna,
+          operadorId: operador.id,
+          operadorNome: operador.nome,
+        });
+      }
       return { operacao, bordero };
     });
   }

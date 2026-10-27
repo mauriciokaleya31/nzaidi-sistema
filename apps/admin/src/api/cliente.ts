@@ -1,4 +1,84 @@
 
+// --- Tipos Contábeis e Financeiros (Módulo D) ---
+export interface ContaContabilItem {
+  codigo: string;
+  nome: string;
+  natureza: 'devedora' | 'credora';
+  tipo: 'ativo' | 'passivo' | 'patrimonio' | 'proveito' | 'custo';
+  moeda: string;
+  totalDebitoAoa?: string;
+  totalCreditoAoa?: string;
+  saldoAoa?: string;
+}
+
+export interface PartidaContabilItem {
+  id: string;
+  lancamentoId: string;
+  contaCodigo: string;
+  contaNome: string;
+  tipo: 'D' | 'C';
+  montanteOriginal: string;
+  moeda: string;
+  montanteAoa: string;
+  descricaoLinha?: string | null;
+  ordem?: number;
+}
+
+export interface LancamentoContabilItem {
+  id: string;
+  numeroLancamento: string;
+  dataMovimento: string;
+  origemTipo: string;
+  origemId: string;
+  descricao: string;
+  moeda: string;
+  montanteOriginal: string;
+  taxaCambio?: string | null;
+  contravalorAoa: string;
+  estado: 'confirmado' | 'estornado';
+  estornadoEm?: string | null;
+  estornoLancamentoId?: string | null;
+  motivoEstorno?: string | null;
+  operadorNome: string;
+  criadoEm: string;
+  partidas?: PartidaContabilItem[];
+}
+
+export interface DivergenciaReconciliacaoItem {
+  id: string;
+  tipo: string;
+  referenciaId: string;
+  origem: string;
+  valorEsperado: string;
+  valorObservado: string;
+  moeda: string;
+  diferenca: string;
+  estado: 'aberta' | 'em_analise' | 'resolvida' | 'desconsiderada_autorizada';
+  motivoResolucao?: string | null;
+  resolvidoPorNome?: string | null;
+  resolvidoEm?: string | null;
+  criadoEm: string;
+}
+
+export interface ResumoDiarioRelatorio {
+  periodo: { dataInicio: string; dataFim: string };
+  operacoesCambio: { tipo: string; moeda: string; quantidade: number; totalDivisa: string; totalAoa: string }[];
+  remessas: { moeda: string; quantidade: number; totalDivisa: string; totalAoa: string; totalComissaoAoa: string }[];
+  receitasApuradas: { contaCodigo: string; contaNome: string; totalAoa: string }[];
+}
+
+export interface PosicaoCambialRelatorio {
+  periodo: { dataInicio: string; dataFim: string };
+  posicao: {
+    moeda: string;
+    compras: { quantidade: number; totalDivisa: string; totalAoa: string; taxaMedia: string };
+    vendas: { quantidade: number; totalDivisa: string; totalAoa: string; taxaMedia: string };
+    posicaoLiquidaDivisa: string;
+    margemBrutaEstimadaAoa: string;
+  }[];
+}
+
+
 export interface ParceiroItem {
   id: string;
   codigo: string;
@@ -820,6 +900,122 @@ export class AdminApiClient {
     );
     return res.dados;
   }
+
+  // --- Módulo D: Contabilidade, Livro Razão e Reconciliação ---
+  public async obterContasContabeis(): Promise<ContaContabilItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ContaContabilItem[] }>('/api/v1/contabilidade/contas');
+    return res.dados;
+  }
+
+  public async obterBalanceteContabil(): Promise<ContaContabilItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ContaContabilItem[] }>('/api/v1/contabilidade/balancete');
+    return res.dados;
+  }
+
+  public async listarLivroRazao(filtros: {
+    dataInicio?: string | undefined;
+    dataFim?: string | undefined;
+    contaCodigo?: string | undefined;
+    origemTipo?: string | undefined;
+    limite?: number | undefined;
+    offset?: number | undefined;
+  }): Promise<{ itens: any[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filtros.dataInicio) params.set('dataInicio', filtros.dataInicio);
+    if (filtros.dataFim) params.set('dataFim', filtros.dataFim);
+    if (filtros.contaCodigo) params.set('contaCodigo', filtros.contaCodigo);
+    if (filtros.origemTipo) params.set('origemTipo', filtros.origemTipo);
+    if (filtros.limite) params.set('limite', String(filtros.limite));
+    if (filtros.offset) params.set('offset', String(filtros.offset));
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: { itens: any[]; total: number } }>(
+      `/api/v1/contabilidade/livro-razao?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async obterLancamentoContabil(id: string): Promise<LancamentoContabilItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: LancamentoContabilItem }>(
+      `/api/v1/contabilidade/lancamentos/${id}`
+    );
+    return res.dados;
+  }
+
+  public async estornarLancamentoContabil(id: string, motivo: string): Promise<LancamentoContabilItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: LancamentoContabilItem }>(
+      `/api/v1/contabilidade/lancamentos/${id}/estorno`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ motivo }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarDivergencias(filtros: {
+    tipo?: string | undefined;
+    estado?: string | undefined;
+    limite?: number | undefined;
+    offset?: number | undefined;
+  }): Promise<{ itens: DivergenciaReconciliacaoItem[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filtros.tipo) params.set('tipo', filtros.tipo);
+    if (filtros.estado) params.set('estado', filtros.estado);
+    if (filtros.limite) params.set('limite', String(filtros.limite));
+    if (filtros.offset) params.set('offset', String(filtros.offset));
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: { itens: DivergenciaReconciliacaoItem[]; total: number } }>(
+      `/api/v1/contabilidade/reconciliacao/divergencias?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async executarReconciliacaoGeral(): Promise<{ totalVerificadas: number; novasDivergencias: number }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: { totalVerificadas: number; novasDivergencias: number } }>(
+      '/api/v1/contabilidade/reconciliacao/executar',
+      { method: 'POST' }
+    );
+    return res.dados;
+  }
+
+  public async resolverDivergencia(id: string, estado: 'resolvida' | 'desconsiderada_autorizada', motivo: string): Promise<void> {
+    await this.requisitar<{ sucesso: boolean }>(
+      `/api/v1/contabilidade/reconciliacao/divergencias/${id}/resolver`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ estado, motivo }),
+      }
+    );
+  }
+
+  public async obterRelatorioResumoDiario(filtros: { dataInicio?: string | undefined; dataFim?: string | undefined }): Promise<ResumoDiarioRelatorio> {
+    const params = new URLSearchParams();
+    if (filtros.dataInicio) params.set('dataInicio', filtros.dataInicio);
+    if (filtros.dataFim) params.set('dataFim', filtros.dataFim);
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: ResumoDiarioRelatorio }>(
+      `/api/v1/contabilidade/relatorios/resumo-diario?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async obterRelatorioPosicaoCambial(filtros: { dataInicio?: string | undefined; dataFim?: string | undefined }): Promise<PosicaoCambialRelatorio> {
+    const params = new URLSearchParams();
+    if (filtros.dataInicio) params.set('dataInicio', filtros.dataInicio);
+    if (filtros.dataFim) params.set('dataFim', filtros.dataFim);
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: PosicaoCambialRelatorio }>(
+      `/api/v1/contabilidade/relatorios/posicao-cambial?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async obterHistoricoTaxas(moeda?: string | undefined): Promise<any[]> {
+    const url = moeda ? `/api/v1/contabilidade/taxas/historico?moeda=${moeda}` : '/api/v1/contabilidade/taxas/historico';
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(url);
+    return res.dados;
+  }
+
 }
 
 export const api = new AdminApiClient();
