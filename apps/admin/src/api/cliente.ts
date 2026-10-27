@@ -1282,6 +1282,94 @@ export class AdminApiClient {
     });
     return res.dados;
   }
+
+  // --- MÓDULO CARTOES VISA VIRTUAIS COM STROWALLET ---
+  public async obterDashboardCartoes(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/dashboard');
+    return res.dados;
+  }
+
+  public async obterConfigCartoes(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/config');
+    return res.dados;
+  }
+
+  public async atualizarConfigCartoes(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/config', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async obterComercialCartoes(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/comercial');
+    return res.dados;
+  }
+
+  public async atualizarComercialCartoes(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/comercial', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async testarConexaoStroWallet(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/testar-conexao', {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async listarCartoesAdmin(filtros?: { estado?: string; busca?: string }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filtros?.estado) params.set('estado', filtros.estado);
+    if (filtros?.busca) params.set('busca', filtros.busca);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/cartoes/admin/cartoes?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async obterDetalhesCartaoAdmin(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/cartoes/admin/cartoes/${id}`);
+    return res.dados;
+  }
+
+  public async alterarStatusCartaoAdmin(id: string, novoEstado: 'ativo' | 'congelado'): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/cartoes/admin/cartoes/${id}/alterar-status`, {
+      method: 'POST',
+      body: JSON.stringify({ novoEstado }),
+    });
+    return res.dados;
+  }
+
+  public async sincronizarCartaoAdmin(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/cartoes/admin/cartoes/${id}/sincronizar`, {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async listarTransacoesCartoesAdmin(filtros?: { tipo?: string; estado?: string }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filtros?.tipo) params.set('tipo', filtros.tipo);
+    if (filtros?.estado) params.set('estado', filtros.estado);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/cartoes/admin/transacoes?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async listarAdesoesCartoesAdmin(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/cartoes/admin/adesao');
+    return res.dados;
+  }
+
+  public async avaliarAdesaoCartaoAdmin(clienteId: string, aprovado: boolean, motivo?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; mensagem: string }>(`/api/v1/cartoes/admin/adesao/${clienteId}/avaliar`, {
+      method: 'POST',
+      body: JSON.stringify({ aprovado, motivo }),
+    });
+    return res;
+  }
 }
 
 export const api = new AdminApiClient();

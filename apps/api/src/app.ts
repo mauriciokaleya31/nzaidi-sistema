@@ -53,6 +53,8 @@ import { registrarRotasDashboardExecutivo } from "./modules/operacional/dashboar
 import { PagamentosRepository } from "./modules/pagamentos/pagamentos.repository.js";
 import { PagamentosService } from "./modules/pagamentos/pagamentos.service.js";
 import { registrarRotasPagamentos } from "./modules/pagamentos/pagamentos.routes.js";
+import { CartoesService } from "./modules/cartoes-strowallet/cartoes.service.js";
+import { registrarRotasCartoes } from "./modules/cartoes-strowallet/cartoes.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -182,6 +184,9 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   const pagamentosRepo = new PagamentosRepository(db);
   const pagamentosService = new PagamentosService(pagamentosRepo, auditoriaRepo);
   registrarRotasPagamentos(app, pagamentosService);
+
+  const cartoesService = new CartoesService(db, auditoriaRepo);
+  registrarRotasCartoes(app, cartoesService, portalRepo);
 
   return app;
 }

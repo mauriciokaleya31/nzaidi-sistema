@@ -713,6 +713,149 @@ export function inicializarSchema(db: DatabaseSync): void {
     );
   `).run(agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos);
 
+  // ==========================================
+  // MÓDULO CARTOES VISA VIRTUAIS COM STROWALLET
+  // ==========================================
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cartoes_config (
+      id TEXT PRIMARY KEY,
+      servico_ativo INTEGER NOT NULL DEFAULT 0,
+      visivel_portal INTEGER NOT NULL DEFAULT 0,
+      modo_manutencao INTEGER NOT NULL DEFAULT 0,
+      mensagem_manutencao TEXT,
+      estado_ativacao TEXT NOT NULL DEFAULT 'em_preparacao' CHECK(estado_ativacao IN ('em_preparacao', 'em_testes', 'pronto_ativacao', 'ativo', 'suspenso')),
+      fornecedor TEXT NOT NULL DEFAULT 'strowallet',
+      ambiente TEXT NOT NULL DEFAULT 'sandbox' CHECK(ambiente IN ('sandbox', 'live')),
+      public_key TEXT,
+      secret_key TEXT,
+      webhook_secret TEXT,
+      base_url TEXT NOT NULL DEFAULT 'https://strowallet.com/api/bitvcard',
+      saldo_alerta_minimo_usd REAL NOT NULL DEFAULT 100.0,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      atualizado_por TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS cartoes_parametros_comerciais (
+      id TEXT PRIMARY KEY,
+      taxa_emissao_usd REAL NOT NULL DEFAULT 5.0,
+      custo_emissao_fornecedor_usd REAL NOT NULL DEFAULT 3.0,
+      comissao_carregamento_pct REAL NOT NULL DEFAULT 2.5,
+      comissao_carregamento_fixa_usd REAL NOT NULL DEFAULT 1.0,
+      custo_carregamento_fornecedor_pct REAL NOT NULL DEFAULT 1.0,
+      margem_cambial_pct REAL NOT NULL DEFAULT 3.0,
+      taxa_manutencao_mensal_usd REAL NOT NULL DEFAULT 1.0,
+      limite_min_carregamento_usd REAL NOT NULL DEFAULT 10.0,
+      limite_max_carregamento_usd REAL NOT NULL DEFAULT 2500.0,
+      limite_diario_usd REAL NOT NULL DEFAULT 1000.0,
+      limite_mensal_usd REAL NOT NULL DEFAULT 5000.0,
+      saldo_maximo_cartao_usd REAL NOT NULL DEFAULT 5000.0,
+      atualizado_em TEXT NOT NULL,
+      atualizado_por TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS cartoes_clientes_adesao (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL UNIQUE,
+      estado_adesao TEXT NOT NULL DEFAULT 'pendente' CHECK(estado_adesao IN ('pendente', 'aprovado', 'rejeitado')),
+      termos_aceites_em TEXT,
+      strowallet_customer_id TEXT,
+      motivo_rejeicao TEXT,
+      aprovado_por TEXT,
+      aprovado_em TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_cartoes_adesao_cliente ON cartoes_clientes_adesao(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_cartoes_adesao_estado ON cartoes_clientes_adesao(estado_adesao);
+
+    CREATE TABLE IF NOT EXISTS cartoes_virtuais (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      strowallet_card_id TEXT NOT NULL UNIQUE,
+      titular_nome TEXT NOT NULL,
+      ultimos_4_digitos TEXT NOT NULL,
+      marca TEXT NOT NULL DEFAULT 'visa',
+      moeda TEXT NOT NULL DEFAULT 'USD',
+      mes_expiracao TEXT NOT NULL,
+      ano_expiracao TEXT NOT NULL,
+      estado TEXT NOT NULL DEFAULT 'ativo' CHECK(estado IN ('ativo', 'congelado', 'bloqueado', 'cancelado')),
+      saldo_usd REAL NOT NULL DEFAULT 0.0,
+      rotulo TEXT,
+      billing_address_json TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_cartoes_cliente ON cartoes_virtuais(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_cartoes_strowallet_id ON cartoes_virtuais(strowallet_card_id);
+
+    CREATE TABLE IF NOT EXISTS cartoes_transacoes (
+      id TEXT PRIMARY KEY,
+      cartao_id TEXT NOT NULL,
+      cliente_id TEXT NOT NULL,
+      tipo TEXT NOT NULL CHECK(tipo IN ('emissao', 'carregamento', 'saque', 'manutencao', 'compra_online', 'estorno')),
+      montante_usd REAL NOT NULL,
+      taxa_cambio_aplicada REAL,
+      contravalor_aoa REAL,
+      comissao_aoa REAL,
+      margem_cambial_aoa REAL,
+      custo_fornecedor_usd REAL,
+      receita_liquida_aoa REAL,
+      saldo_apos_usd REAL,
+      descricao TEXT,
+      referencia_transacao TEXT NOT NULL UNIQUE,
+      estado TEXT NOT NULL CHECK(estado IN ('pendente', 'confirmada', 'recusada', 'estornada')),
+      strowallet_ref TEXT,
+      detalhes_json TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (cartao_id) REFERENCES cartoes_virtuais(id),
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_cartoes_transacoes_cartao ON cartoes_transacoes(cartao_id);
+    CREATE INDEX IF NOT EXISTS idx_cartoes_transacoes_cliente ON cartoes_transacoes(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_cartoes_transacoes_ref ON cartoes_transacoes(referencia_transacao);
+
+    CREATE TABLE IF NOT EXISTS cartoes_webhooks_auditoria (
+      id TEXT PRIMARY KEY,
+      evento_tipo TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      processado INTEGER NOT NULL DEFAULT 0,
+      resultado TEXT,
+      ip_origem TEXT,
+      recebido_em TEXT NOT NULL
+    );
+  `);
+
+  // Inserir configuração e parâmetros comerciais padrão para cartões se ainda não existirem
+  const agoraCartoes = new Date().toISOString();
+  db.prepare(`
+    INSERT OR IGNORE INTO cartoes_config (
+      id, servico_ativo, visivel_portal, modo_manutencao, mensagem_manutencao,
+      estado_ativacao, fornecedor, ambiente, public_key, secret_key, webhook_secret,
+      base_url, saldo_alerta_minimo_usd, criado_em, atualizado_em, atualizado_por
+    ) VALUES (
+      'config_padrao', 0, 0, 0, 'O serviço NZAIDI Cartões encontra-se temporariamente em manutenção para melhorias técnicas.',
+      'em_preparacao', 'strowallet', 'sandbox', '', '', '',
+      'https://strowallet.com/api/bitvcard', 100.0, ?, ?, 'sistema'
+    );
+  `).run(agoraCartoes, agoraCartoes);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO cartoes_parametros_comerciais (
+      id, taxa_emissao_usd, custo_emissao_fornecedor_usd, comissao_carregamento_pct,
+      comissao_carregamento_fixa_usd, custo_carregamento_fornecedor_pct, margem_cambial_pct,
+      taxa_manutencao_mensal_usd, limite_min_carregamento_usd, limite_max_carregamento_usd,
+      limite_diario_usd, limite_mensal_usd, saldo_maximo_cartao_usd, atualizado_em, atualizado_por
+    ) VALUES (
+      'comercial_padrao', 5.0, 3.0, 2.5,
+      1.0, 1.0, 3.0,
+      1.0, 10.0, 2500.0,
+      1000.0, 5000.0, 5000.0, ?, 'sistema'
+    );
+  `).run(agoraCartoes);
+
   // Migrações seguras de colunas adicionais para tabelas existentes
   const migrarColuna = (tabela: string, coluna: string, tipo: string) => {
     try {

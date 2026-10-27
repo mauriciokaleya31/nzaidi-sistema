@@ -274,6 +274,104 @@ class ApiService {
     );
     return res.dados;
   }
+
+  // --- NZAIDI Cartões (Visa Virtual USD) ---
+
+  public async obterStatusCartoesPortal(): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>(
+      "/api/v1/cartoes/portal/status"
+    );
+    return res.dados;
+  }
+
+  public async calcularEmissaoCartao(montanteInicialUsd: number): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>(
+      "/api/v1/cartoes/portal/calcular-emissao",
+      {
+        method: "POST",
+        body: JSON.stringify({ montanteInicialUsd }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async calcularCarregamentoCartao(montanteUsd: number): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>(
+      "/api/v1/cartoes/portal/calcular-carregamento",
+      {
+        method: "POST",
+        body: JSON.stringify({ montanteUsd }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async aderirCartoesPortal(): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; mensagem: string; dados: any }>(
+      "/api/v1/cartoes/portal/aderir",
+      {
+        method: "POST",
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarMeusCartoes(): Promise<any[]> {
+    const res = await this.request<{ sucesso: boolean; dados: any[] }>(
+      "/api/v1/cartoes/portal/meus-cartoes"
+    );
+    return res.dados;
+  }
+
+  public async solicitarCartaoVisa(montanteInicialUsd: number, rotulo?: string): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; mensagem: string; dados: any }>(
+      "/api/v1/cartoes/portal/solicitar",
+      {
+        method: "POST",
+        body: JSON.stringify({ montanteInicialUsd, rotulo }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async carregarCartaoVisa(cartaoId: string, montanteUsd: number): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; mensagem: string; dados: any }>(
+      "/api/v1/cartoes/portal/carregar",
+      {
+        method: "POST",
+        body: JSON.stringify({ cartaoId, montanteUsd }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async alterarEstadoCartaoVisa(cartaoId: string, novoEstado: "ativo" | "congelado"): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; mensagem: string; dados: any }>(
+      "/api/v1/cartoes/portal/alterar-estado",
+      {
+        method: "POST",
+        body: JSON.stringify({ cartaoId, novoEstado }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarTransacoesCartao(cartaoId: string): Promise<any[]> {
+    const res = await this.request<{ sucesso: boolean; dados: any[] }>(
+      `/api/v1/cartoes/portal/${cartaoId}/transacoes`
+    );
+    return res.dados;
+  }
+
+  public async revelarDadosCartao(cartaoId: string): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>(
+      `/api/v1/cartoes/portal/${cartaoId}/revelar-dados`,
+      {
+        method: "POST",
+      }
+    );
+    return res.dados;
+  }
 }
 
 export const api = new ApiService();

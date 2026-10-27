@@ -6,6 +6,7 @@ import { renderCambioView } from "./views/cambio.view.js";
 import { renderRemessasView } from "./views/remessas.view.js";
 import { renderDocumentosView } from "./views/documentos.view.js";
 import { renderPerfilView } from "./views/perfil.view.js";
+import { renderizarCartoes } from "./views/cartoes.view.js";
 
 const appRoot = document.getElementById("app") as HTMLElement;
 let cleanupViewAtual: (() => void) | null = null;
@@ -38,6 +39,9 @@ function renderizarHeader(clienteNome: string, rotaAtiva: string): string {
           </a>
           <a href="#/remessas" class="nav-link ${rotaAtiva === "/remessas" ? "ativo" : ""}">
             Remessas
+          </a>
+          <a href="#/cartoes" class="nav-link ${rotaAtiva === "/cartoes" ? "ativo" : ""}">
+            Cartões Visa
           </a>
           <a href="#/documentos" class="nav-link ${rotaAtiva === "/documentos" ? "ativo" : ""}">
             Documentos KYC
@@ -126,6 +130,9 @@ async function renderApp(): Promise<void> {
       break;
     case "/remessas":
       renderRemessasView(mainContainer);
+      break;
+    case "/cartoes":
+      renderizarCartoes(mainContainer);
       break;
     case "/documentos":
       renderDocumentosView(mainContainer);

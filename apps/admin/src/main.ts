@@ -21,6 +21,7 @@ import { renderizarComunicacao } from "./views/comunicacao.view.js";
 import { renderizarConfigComunicacao } from "./views/config-comunicacao.view.js";
 import { renderizarNotificacoes } from "./views/notificacoes.view.js";
 import { renderizarPagamentosView } from "./views/pagamentos.view.js";
+import { renderCartoesView } from "./views/cartoes.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -139,6 +140,16 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado aos Métodos de Pagamento.</div>
+          `;
+        }
+        break;
+
+      case "#cartoes":
+        if (authState.temPermissao("operacoes:consultar") || authState.temPermissao("contabilidade_tesouraria")) {
+          await renderCartoesView(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado ao módulo NZAIDI Cartões.</div>
           `;
         }
         break;

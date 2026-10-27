@@ -153,6 +153,20 @@ const ITENS_MENU: ItemMenu[] = [
     permissaoRequerida: "caixa:consultar",
   },
   {
+    id: "nav-cartoes",
+    rota: "#cartoes",
+    titulo: "Cartões Visa Virtuais",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+        <line x1="2" y1="10" x2="22" y2="10"></line>
+        <circle cx="7" cy="15" r="1"></circle>
+        <circle cx="11" cy="15" r="1"></circle>
+      </svg>
+    `,
+    permissaoRequerida: "operacoes:consultar",
+  },
+  {
     id: "nav-taxas",
     rota: "#taxas",
     titulo: "Taxas de Câmbio",
