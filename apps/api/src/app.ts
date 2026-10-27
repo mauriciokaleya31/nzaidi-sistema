@@ -38,6 +38,9 @@ import { registrarRotasPortalCliente } from "./modules/portal-cliente/portal.rou
 import { ParceirosRepository } from "./modules/parceiros-comerciais/parceiros.repository.js";
 import { ParceirosService } from "./modules/parceiros-comerciais/parceiros.service.js";
 import { registrarRotasParceiros } from "./modules/parceiros-comerciais/parceiros.routes.js";
+import { OperacionalRepository } from "./modules/operacional/operacional.repository.js";
+import { OperacionalService } from "./modules/operacional/operacional.service.js";
+import { registrarRotasOperacional } from "./modules/operacional/operacional.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -138,6 +141,18 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   const parceirosRepo = new ParceirosRepository(db);
   const parceirosService = new ParceirosService(db, parceirosRepo, auditoriaRepo);
   registrarRotasParceiros(app, parceirosService, parceirosRepo);
+
+  const operacionalRepo = new OperacionalRepository(db);
+  const operacionalService = new OperacionalService(
+    db,
+    operacionalRepo,
+    auditoriaRepo,
+    documentosService,
+    clientesRepo,
+    usersRepo,
+    parceirosRepo
+  );
+  registrarRotasOperacional(app, operacionalService);
 
   return app;
 }

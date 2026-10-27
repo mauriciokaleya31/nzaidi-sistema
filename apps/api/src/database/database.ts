@@ -382,6 +382,24 @@ export function inicializarSchema(db: DatabaseSync): void {
     );
     CREATE INDEX IF NOT EXISTS idx_reconciliacoes_parceiros_parceiro ON reconciliacoes_parceiros(parceiro_id);
 
+    -- Módulo C: Gestão Operacional de Tarefas e Filas da Equipa
+    CREATE TABLE IF NOT EXISTS tarefas_operacionais (
+      id TEXT PRIMARY KEY,
+      tipo TEXT NOT NULL CHECK(tipo IN ('kyc_dossie', 'pedido_cambio', 'pedido_remessa', 'liquidacao_manual', 'alerta_caixa')),
+      referencia_id TEXT NOT NULL,
+      responsavel_id TEXT,
+      responsavel_nome TEXT,
+      prioridade TEXT NOT NULL CHECK(prioridade IN ('urgente', 'alta', 'normal')) DEFAULT 'normal',
+      estado TEXT NOT NULL CHECK(estado IN ('pendente', 'em_analise', 'concluida', 'rejeitada')) DEFAULT 'pendente',
+      notas TEXT,
+      atribuido_em TEXT,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (responsavel_id) REFERENCES usuarios(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tarefas_tipo_ref ON tarefas_operacionais(tipo, referencia_id);
+    CREATE INDEX IF NOT EXISTS idx_tarefas_responsavel ON tarefas_operacionais(responsavel_id);
+    CREATE INDEX IF NOT EXISTS idx_tarefas_estado ON tarefas_operacionais(estado);
+
   `);
 }
 

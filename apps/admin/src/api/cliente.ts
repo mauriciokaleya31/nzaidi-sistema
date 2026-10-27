@@ -217,6 +217,60 @@ export interface CriarExecucaoManualPayload {
   comprovativoHashSha256?: string | undefined;
 }
 
+export interface ItemFilaOperacional {
+  id: string;
+  tipo: "kyc_dossie" | "pedido_cambio" | "pedido_remessa" | "liquidacao_manual" | "alerta_caixa";
+  referenciaId: string;
+  codigoVisual: string;
+  titulo: string;
+  descricao: string;
+  clienteNome?: string | null;
+  clienteId?: string | null;
+  montante?: string | null;
+  moeda?: string | null;
+  prioridade: "urgente" | "alta" | "normal";
+  estado: "pendente" | "em_analise" | "concluida" | "rejeitada";
+  responsavelId?: string | null;
+  responsavelNome?: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+  detalhes: Record<string, any>;
+}
+
+export interface AtividadeOperadorRecente {
+  id: string;
+  acao: string;
+  recurso: string;
+  recursoId?: string | null;
+  detalhes?: any;
+  criadoEm: string;
+}
+
+export interface ResumoDashboardOperacional {
+  pedidosCambioPendentes: number;
+  pedidosRemessasPendentes: number;
+  kycPendentes: number;
+  kycAprovados: number;
+  kycRejeitados: number;
+  liquidacoesManuaisPendentes: number;
+  caixasAbertos: number;
+  alertasDivergencia: number;
+  minhasTarefasPendentes: number;
+  totalTarefasPendentes: number;
+  atividadesRecentes: AtividadeOperadorRecente[];
+}
+
+export interface FiltrosFilaOperacional {
+  tipo?: "kyc_dossie" | "pedido_cambio" | "pedido_remessa" | "liquidacao_manual" | "alerta_caixa" | undefined;
+  estado?: "pendente" | "em_analise" | "concluida" | "rejeitada" | undefined;
+  prioridade?: "urgente" | "alta" | "normal" | undefined;
+  responsavelId?: string | undefined;
+  apenasMinhas?: boolean | undefined;
+  busca?: string | undefined;
+  limite?: number | undefined;
+  offset?: number | undefined;
+}
+
 export class AdminApiClient {
   constructor(private baseUrl = "") {}
 
@@ -663,6 +717,108 @@ export class AdminApiClient {
       }
     );
     return res.execucao;
+  }
+
+  // ==========================================
+  // MÓDULO C — PAINEL OPERACIONAL DA EQUIPA
+  // ==========================================
+
+  public async obterDashboardOperacional(): Promise<ResumoDashboardOperacional> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ResumoDashboardOperacional }>(
+      "/api/v1/operacional/dashboard"
+    );
+    return res.dados;
+  }
+
+  public async listarFilaOperacional(
+    filtros: FiltrosFilaOperacional = {}
+  ): Promise<{ itens: ItemFilaOperacional[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filtros.tipo) params.set("tipo", filtros.tipo);
+    if (filtros.estado) params.set("estado", filtros.estado);
+    if (filtros.prioridade) params.set("prioridade", filtros.prioridade);
+    if (filtros.responsavelId) params.set("responsavelId", filtros.responsavelId);
+    if (filtros.apenasMinhas) params.set("apenasMinhas", "true");
+    if (filtros.busca) params.set("busca", filtros.busca);
+    if (filtros.limite) params.set("limite", String(filtros.limite));
+    if (filtros.offset) params.set("offset", String(filtros.offset));
+
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    const res = await this.requisitar<{ sucesso: boolean; total: number; dados: ItemFilaOperacional[] }>(
+      `/api/v1/operacional/fila${qs}`
+    );
+    return { itens: res.dados, total: res.total };
+  }
+
+  public async obterDetalhesItemOperacional(tipo: string, id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/fila/${tipo}/${id}`
+    );
+    return res.dados;
+  }
+
+  public async atribuirTarefaOperacional(
+    tipo: string,
+    id: string,
+    payload: { responsavelId?: string | null | undefined; prioridade?: "urgente" | "alta" | "normal" | undefined; notas?: string | undefined }
+  ): Promise<{ sucesso: boolean; responsavelId?: string | null; responsavelNome?: string | null }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/fila/${tipo}/${id}/atribuir`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async processarPedidoCambioOperacional(
+    id: string,
+    payload: { decisao: "aprovar" | "rejeitar"; motivoRejeicao?: string | undefined; caixaId?: string | undefined; notas?: string | undefined }
+  ): Promise<{ sucesso: boolean; estado: string }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/pedidos-cambio/${id}/processar`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async processarPedidoRemessaOperacional(
+    id: string,
+    payload: { decisao: "atribuir_parceiro" | "liquidar_direto" | "rejeitar"; parceiroId?: string | undefined; motivoRejeicao?: string | undefined; notas?: string | undefined }
+  ): Promise<{ sucesso: boolean; estado: string; parceiroNome?: string }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/pedidos-remessas/${id}/processar`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async decidirDocumentoKycOperacional(
+    id: string,
+    payload: { statusValidacao: "aprovado" | "rejeitado" | "pendente_atualizacao"; motivoRejeicao?: string | undefined }
+  ): Promise<{ sucesso: boolean; status: string }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/kyc/documentos/${id}/decisao`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarCaixasOperacional(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; total: number; dados: any[] }>(
+      "/api/v1/operacional/caixas"
+    );
+    return res.dados;
   }
 }
 

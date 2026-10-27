@@ -12,6 +12,7 @@ import { renderizarBalcao } from "./views/balcao.view.js";
 import { renderizarUsuarios } from "./views/usuarios.view.js";
 import { renderizarIntegracoes } from "./views/integracoes.view.js";
 import { renderizarParceiros } from "./views/parceiros.view.js";
+import { renderizarOperacional } from "./views/operacional.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -71,7 +72,11 @@ async function renderizarAplicacao(): Promise<void> {
   }
 
   if (viewContainer) {
-    switch (rotaAtual) {
+    switch (rotaAtual.split("?")[0]) {
+      case "#operacional":
+        await renderizarOperacional(viewContainer);
+        break;
+
       case "#balcao":
         if (authState.temPermissao("operacoes:registar") || authState.temPermissao("registar_operacao_balcao")) {
           await renderizarBalcao(viewContainer);
