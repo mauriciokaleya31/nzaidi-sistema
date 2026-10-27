@@ -94,7 +94,7 @@ export function renderCambioView(container: HTMLElement): void {
               <div style="background: #0f172a; border: 1px solid var(--cor-borda); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--cor-texto-mutado);">
                   <span>Taxa Aplicada (${tipoOperacao === "compra" ? "Compra" : "Venda"}):</span>
-                  <strong style="color: #fff;">${taxa.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} AOA</strong>
+                  <strong style="color: var(--cor-texto-forte);">${taxa.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} AOA</strong>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--cor-borda); padding-top: 0.5rem;">
                   <span style="font-weight: 600; font-size: 0.95rem;">Contravalor Estimado:</span>
@@ -127,23 +127,23 @@ export function renderCambioView(container: HTMLElement): void {
               <h2 class="card-title" style="margin-bottom: 1rem;">Como funciona o seu pedido?</h2>
               <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--cor-texto-mutado);">
                 <div style="display: flex; gap: 0.75rem;">
-                  <span style="background: rgba(196, 155, 69, 0.2); color: var(--cor-primaria); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</span>
+                  <span style="background: var(--nz-azul-claro-100); color: var(--nz-azul-800); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</span>
                   <div>
-                    <strong style="color: #fff;">Registo Digital da Intenção:</strong><br>
+                    <strong style="color: var(--cor-texto-forte);">Registo Digital da Intenção:</strong><br>
                     O seu pedido é gravado de imediato nos nossos sistemas com o código único de rastreio e cotação oficial fixada.
                   </div>
                 </div>
                 <div style="display: flex; gap: 0.75rem;">
-                  <span style="background: rgba(196, 155, 69, 0.2); color: var(--cor-primaria); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</span>
+                  <span style="background: var(--nz-azul-claro-100); color: var(--nz-azul-800); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</span>
                   <div>
-                    <strong style="color: #fff;">Conferência Documental (KYC):</strong><br>
+                    <strong style="color: var(--cor-texto-forte);">Conferência Documental (KYC):</strong><br>
                     Para operações cambiais, assegure-se de que os seus documentos estão aprovados na área de documentos.
                   </div>
                 </div>
                 <div style="display: flex; gap: 0.75rem;">
-                  <span style="background: rgba(196, 155, 69, 0.2); color: var(--cor-primaria); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</span>
+                  <span style="background: var(--nz-azul-claro-100); color: var(--nz-azul-800); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</span>
                   <div>
-                    <strong style="color: #fff;">Levantamento no Balcão:</strong><br>
+                    <strong style="color: var(--cor-texto-forte);">Levantamento no Balcão:</strong><br>
                     Apresente a referência do pedido em qualquer dos nossos balcões autorizados para liquidação e emissão do Borderô oficial com selo BNA.
                   </div>
                 </div>

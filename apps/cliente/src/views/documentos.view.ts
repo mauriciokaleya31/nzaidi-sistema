@@ -51,14 +51,14 @@ export function renderDocumentosView(container: HTMLElement): void {
         <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
           <div>
             <div style="font-size: 0.85rem; color: var(--cor-texto-mutado);">Estado Atual da sua Conta:</div>
-            <div style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0.2rem;">
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--cor-texto-forte); margin-top: 0.2rem;">
               ${
                 cliente.estadoKyc === "aprovado"
-                  ? "✓ Identidade Verificada & Aprovada"
+                  ? "Identidade Verificada & Aprovada"
                   : cliente.estadoKyc === "em_analise"
-                  ? "⏳ Em Análise pela Equipa de Conformidade"
+                  ? "Em Análise pela Equipa de Conformidade"
                   : cliente.estadoKyc === "rejeitado" || cliente.estadoKyc === "actualizacao_necessaria"
-                  ? "⚠️ Reenvio de Documentos Necessário"
+                  ? "Reenvio de Documentos Necessário"
                   : "Aguardando Envio de Documentos"
               }
             </div>

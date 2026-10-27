@@ -81,22 +81,22 @@ export function renderRemessasView(container: HTMLElement): void {
               </div>
 
               <!-- Cálculo de Custos Transparente -->
-              <div style="background: #0f172a; border: 1px solid var(--cor-borda); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+              <div style="background: var(--cor-superficie-hover); border: 1px solid var(--cor-borda); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem; color: var(--cor-texto-mutado);">
                   <span>Taxa de Câmbio de Venda:</span>
-                  <span style="color: #fff;">${taxa.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} AOA</span>
+                  <span style="color: var(--cor-texto-forte); font-weight: 600;">${taxa.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} AOA</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.35rem; color: var(--cor-texto-mutado);">
                   <span>Contravalor da Divisa:</span>
-                  <span style="color: #fff;">${contravalor.toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA</span>
+                  <span style="color: var(--cor-texto-forte); font-weight: 600;">${contravalor.toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--cor-texto-mutado);">
                   <span>Comissão de Serviço NZAIDI (2%):</span>
-                  <span style="color: #fff;">${comissao.toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA</span>
+                  <span style="color: var(--cor-texto-forte); font-weight: 600;">${comissao.toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--cor-borda); padding-top: 0.5rem;">
-                  <strong style="color: #fff;">Total a Pagar (AOA):</strong>
-                  <span style="font-size: 1.35rem; font-weight: 800; color: var(--cor-primaria);">
+                  <strong style="color: var(--cor-texto-forte);">Total a Pagar (AOA):</strong>
+                  <span style="font-size: 1.35rem; font-weight: 800; color: var(--nz-azul-800);">
                     ${totalAoa.toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA
                   </span>
                 </div>
@@ -161,25 +161,25 @@ export function renderRemessasView(container: HTMLElement): void {
               <h2 class="card-title" style="margin-bottom: 1rem;">Processamento de Remessas</h2>
               <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--cor-texto-mutado);">
                 <div>
-                  <strong style="color: #fff;">Prazos Médios de Execução:</strong>
+                  <strong style="color: var(--cor-texto-forte);">Prazos Médios de Execução:</strong>
                   <ul style="margin-top: 0.35rem; margin-left: 1.25rem;">
                     <li>Zona Euro (SEPA): 24h a 48h úteis após liquidação.</li>
                     <li>Internacional (SWIFT / USD): 2 a 3 dias úteis.</li>
                   </ul>
                 </div>
                 <div>
-                  <strong style="color: #fff;">Documentação Exigida:</strong>
+                  <strong style="color: var(--cor-texto-forte);">Documentação Exigida:</strong>
                   <p style="margin-top: 0.25rem;">Remessas internacionais exigem documento de identificação aprovado na plataforma e justificação documental conforme normativo do BNA.</p>
                 </div>
                 <div>
-                  <strong style="color: #fff;">Segurança e Rastreabilidade:</strong>
+                  <strong style="color: var(--cor-texto-forte);">Segurança e Rastreabilidade:</strong>
                   <p style="margin-top: 0.25rem;">Todas as remessas recebem comprovativo oficial com carimbo criptográfico SHA-256 da NZAIDI.</p>
                 </div>
               </div>
             </div>
 
-            <div style="margin-top: 1.5rem; padding: 0.85rem; background: rgba(16, 185, 129, 0.1); border-left: 3px solid var(--cor-sucesso); border-radius: 4px; font-size: 0.8rem; color: #86efac;">
-              ✓ Sem custos ocultos. O montante em Kwanzas apresentado inclui todas as despesas operacionais da NZAIDI.
+            <div style="margin-top: 1.5rem; padding: 0.85rem; background: var(--cor-sucesso-fundo); border-left: 3px solid var(--cor-sucesso); border-radius: 4px; font-size: 0.8rem; color: var(--cor-sucesso);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>Sem custos ocultos. O montante em Kwanzas apresentado inclui todas as despesas operacionais da NZAIDI.
             </div>
           </div>
         </div>

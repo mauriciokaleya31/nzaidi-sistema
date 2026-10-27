@@ -35,7 +35,7 @@ export function renderDashboardView(container: HTMLElement): () => void {
       bannerKyc = `
         <div class="kyc-banner kyc-banner-aprovado">
           <div>
-            <strong>✓ Conta Verificada (KYC Aprovado)</strong>
+            <strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>Conta Verificada (KYC Aprovado)</strong>
             <p style="font-size: 0.85rem; margin-top: 0.2rem;">A sua identidade foi conferida e validada pela equipa de conformidade. Todos os limites de câmbio e remessas estão disponíveis.</p>
           </div>
           <span class="badge badge-aprovado">Aprovado</span>
@@ -45,7 +45,7 @@ export function renderDashboardView(container: HTMLElement): () => void {
       bannerKyc = `
         <div class="kyc-banner" style="background: rgba(2, 132, 199, 0.1); border: 1px solid rgba(2, 132, 199, 0.3); color: #7dd3fc;">
           <div>
-            <strong>⏳ Documentos em Análise de Conformidade</strong>
+            <strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Documentos em Análise de Conformidade</strong>
             <p style="font-size: 0.85rem; margin-top: 0.2rem;">Os seus documentos foram submetidos e estão a ser verificados pela equipa de conformidade do NZAIDI.</p>
           </div>
           <a href="#/documentos" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">Ver Documentos</a>
@@ -55,7 +55,7 @@ export function renderDashboardView(container: HTMLElement): () => void {
       bannerKyc = `
         <div class="kyc-banner kyc-banner-rejeitado">
           <div>
-            <strong>⚠️ Atenção: Atualização de Documentos Necessária</strong>
+            <strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>Atenção: Atualização de Documentos Necessária</strong>
             <p style="font-size: 0.85rem; margin-top: 0.2rem;">A verificação da sua conta necessita de reenvio de documentos. Por favor consulte a área documental para regularizar.</p>
           </div>
           <a href="#/documentos" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">Submeter Novamente</a>

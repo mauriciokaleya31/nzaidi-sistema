@@ -73,7 +73,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
     if (containerCaixa) {
       containerCaixa.innerHTML = `
         <div class="card p-4 text-center">
-          <div class="mb-4" style="font-size: 3rem;">⚠️</div>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-4" style="margin: 0 auto 1rem;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
           <h2 class="text-xl font-bold mb-2">Caixa do Operador Não Encontrado</h2>
           <p class="text-muted mb-4">
             Para realizar operações de compra e venda de moeda estrangeira, é obrigatório abrir um caixa operacional com os respetivos fundos iniciais de Kwanza e divisas.
@@ -334,7 +334,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
               <option value="">Nenhum cliente com KYC aprovado disponível</option>
             </select>
             <div class="alert-box alert-warning mt-2" style="font-size: 0.85rem; padding: 10px 14px;">
-              ⚠️ <strong>Nenhum cliente elegível.</strong> Operações cambiais requerem estritamente diligência de identificação concluída. Clientes com KYC pendente ou rejeitado não são selecionáveis.
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> <strong>Nenhum cliente elegível.</strong> Operações cambiais requerem estritamente diligência de identificação concluída. Clientes com KYC pendente ou rejeitado não são selecionáveis.
               <div style="margin-top: 6px;">
                 <a href="#clientes" style="color: var(--nz-azul-600); font-weight: 600; text-decoration: underline;">
                   Aceder a Clientes & KYC para registar ou aprovar dossiês →
@@ -360,7 +360,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
               ${opcoes}
             </select>
             <small class="text-muted" style="font-size: 0.8rem; display: block; margin-top: 4px;">
-              ✓ Verificação documental e conformidade regulamentar BNA aprovadas.
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Verificação documental e conformidade regulamentar BNA aprovadas.
             </small>
           `;
 

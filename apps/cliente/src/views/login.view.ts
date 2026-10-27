@@ -12,7 +12,7 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
           <div style="text-align: center; margin-bottom: 1.5rem;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
               <span class="brand-logo-badge">NZ</span>
-              <span style="font-size: 1.35rem; font-weight: 800; color: #fff;">NZAIDI</span>
+              <span style="font-size: 1.35rem; font-weight: 800; color: var(--nz-azul-900);">NZAIDI</span>
             </div>
             <p style="color: var(--cor-texto-mutado); font-size: 0.85rem;">Portal Digital do Cliente — Câmbios & Transferências</p>
           </div>

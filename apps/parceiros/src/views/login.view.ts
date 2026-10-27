@@ -3,12 +3,12 @@ import { api } from "../api.js";
 
 export function renderizarLogin(container: HTMLElement): void {
   container.innerHTML = `
-    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(circle at top right, #0f172a, #0a0f1d);">
-      <div class="card" style="width: 100%; max-width: 440px; border-color: #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(135deg, #021530 0%, #052d62 100%);">
+      <div class="card" style="width: 100%; max-width: 460px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 14px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); padding: 36px;">
         <div style="text-align: center; margin-bottom: 28px;">
-          <img src="/simbolo.png" alt="NZAIDI" width="60" height="60" style="margin-bottom: 12px;" />
-          <h2 style="font-size: 1.4rem; font-weight: 700; color: #fff;">PORTAL DOS PARCEIROS</h2>
-          <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 4px;">Acesso institucional seguro para correspondentes e parceiros</p>
+          <img src="/simbolo.png" alt="NZAIDI" width="60" height="60" style="margin-bottom: 12px; display: inline-block;" />
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--nz-azul-900); font-family: var(--font-titles); letter-spacing: 0.5px;">PORTAL DOS PARCEIROS</h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Acesso institucional seguro para correspondentes e parceiros</p>
         </div>
 
         <div id="login-erro" class="alert-box alert-error d-none"></div>
@@ -23,7 +23,7 @@ export function renderizarLogin(container: HTMLElement): void {
           <div class="form-group">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <label for="senha" style="margin-bottom: 0;">Palavra-passe</label>
-              <a href="javascript:void(0)" id="link-esqueci" style="font-size: 0.8rem; color: #10b981; text-decoration: none;">Recuperar acesso?</a>
+              <a href="javascript:void(0)" id="link-esqueci" style="font-size: 0.8rem; color: var(--nz-azul-600); text-decoration: none; font-weight: 600;">Recuperar acesso?</a>
             </div>
             <input type="password" id="senha" class="form-control" placeholder="••••••••" required autocomplete="current-password" />
           </div>
@@ -33,8 +33,8 @@ export function renderizarLogin(container: HTMLElement): void {
           </button>
         </form>
 
-        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #334155; text-align: center;">
-          <small style="color: #64748b; font-size: 0.75rem;">
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center;">
+          <small style="color: var(--text-muted); font-size: 0.75rem;">
             Acesso monitorado e sujeito às normas do Banco Nacional de Angola (BNA).
           </small>
         </div>

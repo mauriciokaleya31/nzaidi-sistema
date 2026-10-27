@@ -8,7 +8,7 @@ export async function renderizarReconciliacao(container: HTMLElement): Promise<v
         <p style="color: var(--text-muted); font-size: 0.85rem;">Conferência de lotes de instruções liquidadas entre o Parceiro e o NZAIDI</p>
       </div>
       <div>
-        <button id="btn-novo-lote" class="btn btn-primary">➕ Submeter Lote para Reconciliação</button>
+        <button id="btn-novo-lote" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Submeter Lote para Reconciliação</button>
       </div>
     </div>
 

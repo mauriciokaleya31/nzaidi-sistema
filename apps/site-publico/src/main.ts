@@ -151,10 +151,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnRecotar) {
       if (estado.expirada) {
         btnRecotar.classList.remove("secundario");
-        btnRecotar.textContent = "⚠️ Cotação Expirada — Clique para Recotar";
+        btnRecotar.textContent = "Cotação Expirada — Clique para Recotar";
       } else {
         btnRecotar.classList.add("secundario");
-        btnRecotar.textContent = "↻ Atualizar / Recotar Agora";
+        btnRecotar.textContent = "Atualizar / Recotar Agora";
       }
     }
   }

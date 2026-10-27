@@ -14,7 +14,7 @@ export async function renderizarParceiros(container: HTMLElement): Promise<void>
       <div>
         ${
           podeGerir
-            ? `<button id="btn-novo-parceiro" class="btn btn-primary">➕ Novo Parceiro Comercial</button>`
+            ? `<button id="btn-novo-parceiro" class="btn btn-primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Novo Parceiro Comercial</button>`
             : ""
         }
       </div>
@@ -179,7 +179,7 @@ export async function renderizarParceiros(container: HTMLElement): Promise<void>
                       podeImpersonar
                         ? `
                       <button class="btn btn-sm btn-outline-warning btn-entrar-parceiro mr-1" data-id="${p.id}" data-nome="${p.nome}" title="Entrar no Portal do Parceiro">
-                        👤 Entrar na Conta
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>Entrar na Conta
                       </button>
                     `
                         : ""

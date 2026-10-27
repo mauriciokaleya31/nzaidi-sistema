@@ -142,8 +142,8 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
             <label for="op-filtro-prioridade" style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Prioridade</label>
             <select id="op-filtro-prioridade" class="form-input">
               <option value="">Todas</option>
-              <option value="urgente" ${filtroPrioridade === "urgente" ? "selected" : ""}>🔥 Urgente</option>
-              <option value="alta" ${filtroPrioridade === "alta" ? "selected" : ""}>⚡ Alta</option>
+              <option value="urgente" ${filtroPrioridade === "urgente" ? "selected" : ""}>Urgente</option>
+              <option value="alta" ${filtroPrioridade === "alta" ? "selected" : ""}>Alta</option>
               <option value="normal" ${filtroPrioridade === "normal" ? "selected" : ""}>Normal</option>
             </select>
           </div>
@@ -290,7 +290,7 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
 
       if (textoDivergencia) {
         if (dash.alertasDivergencia > 0) {
-          textoDivergencia.innerHTML = `<span style="color: var(--color-error); font-weight: 600;">⚠️ ${dash.alertasDivergencia} fecho(s) com divergência</span>`;
+          textoDivergencia.innerHTML = `<span style="color: var(--color-error); font-weight: 600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>${dash.alertasDivergencia} fecho(s) com divergência</span>`;
         } else {
           textoDivergencia.textContent = "Sessões ativas no momento";
         }
@@ -417,7 +417,7 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
               <td>
                 ${
                   item.responsavelNome
-                    ? `<span style="font-size: 13px; font-weight: 500;">👤 ${escapeHtml(item.responsavelNome)}</span>`
+                    ? `<span style="font-size: 13px; font-weight: 500;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(item.responsavelNome)}</span>`
                     : `<span class="text-muted" style="font-size: 12px;">Não atribuído</span>`
                 }
               </td>
@@ -429,7 +429,7 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
                   Tratar
                 </button>
                 <button class="btn btn-secondary btn-atribuir" data-tipo="${item.tipo}" data-id="${item.id}" style="padding: 4px 8px; font-size: 12px; margin-left: 4px;" title="Atribuir Responsável">
-                  👤
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
                 </button>
               </td>
             </tr>
@@ -485,7 +485,7 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
                 <label class="form-label">Responsável da Equipa</label>
                 <select id="modal-atribuir-usuario" class="form-input">
                   <option value="">-- Não Atribuído (Fila Geral) --</option>
-                  <option value="${usuario!.id}">➡️ Atribuir a Mim (${escapeHtml(usuario!.nome)})</option>
+                  <option value="${usuario!.id}">Atribuir a Mim (${escapeHtml(usuario!.nome)})</option>
                   ${listaUsuarios
                     .filter((u) => u.id !== usuario!.id && u.ativo)
                     .map((u) => `<option value="${u.id}" ${detalhes.tarefa?.responsavelId === u.id ? "selected" : ""}>${escapeHtml(u.nome)} (${u.funcao})</option>`)
@@ -497,8 +497,8 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
                 <label class="form-label">Prioridade da Tarefa</label>
                 <select id="modal-atribuir-prioridade" class="form-input">
                   <option value="normal" ${detalhes.tarefa?.prioridade === "normal" ? "selected" : ""}>Normal</option>
-                  <option value="alta" ${detalhes.tarefa?.prioridade === "alta" ? "selected" : ""}>⚡ Alta</option>
-                  <option value="urgente" ${detalhes.tarefa?.prioridade === "urgente" ? "selected" : ""}>🔥 Urgente</option>
+                  <option value="alta" ${detalhes.tarefa?.prioridade === "alta" ? "selected" : ""}>Alta</option>
+                  <option value="urgente" ${detalhes.tarefa?.prioridade === "urgente" ? "selected" : ""}>Urgente</option>
                 </select>
               </div>
 
@@ -1060,17 +1060,17 @@ function formatarData(dataStr: any): string {
 function formatarTipoBadge(tipo: string): string {
   switch (tipo) {
     case "pedido_cambio":
-      return `<span class="badge badge-info">💱 Câmbio Online</span>`;
+      return `<span class="badge badge-info"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M7 10h14l-4-4"></path><path d="M17 14H3l4 4"></path></svg>Câmbio Online</span>`;
     case "pedido_remessa":
-      return `<span class="badge badge-primary" style="background: var(--nz-azul-600); color: #fff;">🌍 Remessa</span>`;
+      return `<span class="badge badge-primary" style="background: var(--nz-azul-600); color: #fff;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>Remessa</span>`;
     case "kyc_dossie":
     case "kyc_documento":
-      return `<span class="badge badge-warning">🛡️ Dossiê KYC</span>`;
+      return `<span class="badge badge-warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>Dossiê KYC</span>`;
     case "liquidacao_manual":
-      return `<span class="badge badge-danger">👁️ 4 Olhos AML</span>`;
+      return `<span class="badge badge-danger"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>4 Olhos AML</span>`;
     case "alerta_caixa":
     case "caixa_alerta":
-      return `<span class="badge badge-warning">💼 Alerta Caixa</span>`;
+      return `<span class="badge badge-warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Alerta Caixa</span>`;
     default:
       return `<span class="badge badge-secondary">${escapeHtml(tipo)}</span>`;
   }
@@ -1079,9 +1079,9 @@ function formatarTipoBadge(tipo: string): string {
 function formatarPrioridadeBadge(prioridade: string): string {
   switch (prioridade) {
     case "urgente":
-      return `<span class="badge badge-danger" style="animation: pulse 1.5s infinite;">🔥 Urgente</span>`;
+      return `<span class="badge badge-danger" style="animation: pulse 1.5s infinite;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>Urgente</span>`;
     case "alta":
-      return `<span class="badge badge-warning">⚡ Alta</span>`;
+      return `<span class="badge badge-warning"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>Alta</span>`;
     case "normal":
     default:
       return `<span class="badge badge-secondary">Normal</span>`;
