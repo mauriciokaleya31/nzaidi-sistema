@@ -596,6 +596,123 @@ export function inicializarSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_servicos_tipo ON servicos_comunicacao_config(tipo);
   `);
 
+  // Tabela de Configuração dos Métodos de Pagamento (Manual & Automático AppyPay)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS metodos_pagamento (
+      id TEXT PRIMARY KEY,
+      nome TEXT NOT NULL,
+      descricao TEXT,
+      tipo TEXT NOT NULL CHECK(tipo IN ('manual', 'automatico')),
+      canal TEXT NOT NULL CHECK(canal IN ('transferencia_bancaria', 'deposito_multicaixa', 'appypay_express', 'appypay_referencia', 'outro')),
+      ativo INTEGER NOT NULL DEFAULT 1,
+      disponivel_cliente INTEGER NOT NULL DEFAULT 1,
+      instrucoes TEXT,
+      config_json TEXT,
+      estado_integracao TEXT NOT NULL CHECK(estado_integracao IN ('ativo', 'inativo', 'em_preparacao', 'pendente_credenciais')),
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_metodos_tipo ON metodos_pagamento(tipo);
+    CREATE INDEX IF NOT EXISTS idx_metodos_ativo ON metodos_pagamento(ativo, disponivel_cliente);
+  `);
+
+  // Tabela de Transações de Pagamento (Comprovativos Manuais e Cobranças AppyPay)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pagamentos_transacoes (
+      id TEXT PRIMARY KEY,
+      metodo_id TEXT NOT NULL,
+      tipo_metodo TEXT NOT NULL CHECK(tipo_metodo IN ('manual', 'automatico')),
+      origem_tipo TEXT NOT NULL,
+      origem_id TEXT NOT NULL,
+      cliente_id TEXT,
+      cliente_nome TEXT,
+      cliente_telefone TEXT,
+      cliente_email TEXT,
+      montante_aoa REAL NOT NULL,
+      moeda TEXT NOT NULL DEFAULT 'AOA',
+      referencia_transacao TEXT UNIQUE NOT NULL,
+      referencia_externa TEXT,
+      comprovativo_url TEXT,
+      comprovativo_hash TEXT,
+      notas_cliente TEXT,
+      estado TEXT NOT NULL CHECK(estado IN ('pendente_confirmacao', 'confirmado', 'rejeitado', 'cancelado', 'expirado')),
+      motivo_rejeicao TEXT,
+      confirmado_por_id TEXT,
+      confirmado_por_nome TEXT,
+      confirmado_em TEXT,
+      notas_internas TEXT,
+      appypay_charge_id TEXT,
+      appypay_raw_response TEXT,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (metodo_id) REFERENCES metodos_pagamento(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_pagamentos_origem ON pagamentos_transacoes(origem_tipo, origem_id);
+    CREATE INDEX IF NOT EXISTS idx_pagamentos_estado ON pagamentos_transacoes(estado);
+    CREATE INDEX IF NOT EXISTS idx_pagamentos_ref_transacao ON pagamentos_transacoes(referencia_transacao);
+    CREATE INDEX IF NOT EXISTS idx_pagamentos_appypay_charge ON pagamentos_transacoes(appypay_charge_id);
+  `);
+
+  // Inserção idempotente dos métodos de pagamento predefinidos
+  const agoraMetodos = new Date().toISOString();
+  db.prepare(`
+    INSERT OR IGNORE INTO metodos_pagamento (
+      id, nome, descricao, tipo, canal, ativo, disponivel_cliente, instrucoes, config_json, estado_integracao, criado_em, atualizado_em
+    ) VALUES 
+    (
+      'manual_transferencia',
+      'Transferência Bancária (BAI / BFA / BIC / BMA)',
+      'Pagamento manual através de transferência interbancária ou expressa para as contas da NZAIDI.',
+      'manual',
+      'transferencia_bancaria',
+      1,
+      1,
+      'Efectue a transferência para um dos IBANs oficiais da NZAIDI:\n• BAI: AO06.0040.0000.1234.5678.9012.3\n• BFA: AO06.0006.0000.9876.5432.1098.7\nTitular: NZAIDI CÂMBIOS E TRANSFERÊNCIAS LDA.\nApós a realização, anexe o comprovativo em PDF ou imagem legível e indique a referência do talão.',
+      '{"bancos":[{"nome":"BAI","iban":"AO06.0040.0000.1234.5678.9012.3"},{"nome":"BFA","iban":"AO06.0006.0000.9876.5432.1098.7"}],"titular":"NZAIDI CÂMBIOS E TRANSFERÊNCIAS LDA"}',
+      'ativo',
+      ?, ?
+    ),
+    (
+      'manual_multicaixa',
+      'Depósito Direto / ATM Multicaixa',
+      'Depósito de numerário no balcão ou terminal ATM Multicaixa.',
+      'manual',
+      'deposito_multicaixa',
+      1,
+      1,
+      'Efectue o depósito na conta da NZAIDI no ATM Multicaixa mais próximo ou ao balcão. Guarde o talão com a data, hora e montante legíveis e anexe o comprovativo.',
+      '{"titular":"NZAIDI CÂMBIOS E TRANSFERÊNCIAS LDA"}',
+      'ativo',
+      ?, ?
+    ),
+    (
+      'auto_appypay_mcx',
+      'Multicaixa Express (AppyPay)',
+      'Pagamento automático e instantâneo através da aplicação Multicaixa Express via AppyPay.',
+      'automatico',
+      'appypay_express',
+      0,
+      0,
+      'Introduza o seu número de telemóvel associado ao Multicaixa Express e aprove a notificação no seu telemóvel.',
+      '{"ambiente":"sandbox","endpoint":"https://app-appypay-api-tst.azurewebsites.net/v1.2","auth_url":"https://login.microsoftonline.com/appypaydev.onmicrosoft.com/oauth2/token","client_id":"","client_secret":"","resource":"https://appypaydev.onmicrosoft.com/api"}',
+      'em_preparacao',
+      ?, ?
+    ),
+    (
+      'auto_appypay_ref',
+      'Pagamento por Referência Multicaixa (AppyPay)',
+      'Geração de entidade e referência para liquidação na rede Multicaixa (ATM ou Internet Banking).',
+      'automatico',
+      'appypay_referencia',
+      0,
+      0,
+      'Gera uma entidade e referência Multicaixa válida para pagamento em qualquer caixa eletrónico ou banca pela Internet.',
+      '{"ambiente":"sandbox","endpoint":"https://app-appypay-api-tst.azurewebsites.net/v1.2","auth_url":"https://login.microsoftonline.com/appypaydev.onmicrosoft.com/oauth2/token","client_id":"","client_secret":"","resource":"https://appypaydev.onmicrosoft.com/api"}',
+      'pendente_credenciais',
+      ?, ?
+    );
+  `).run(agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos, agoraMetodos);
+
   // Migrações seguras de colunas adicionais para tabelas existentes
   const migrarColuna = (tabela: string, coluna: string, tipo: string) => {
     try {

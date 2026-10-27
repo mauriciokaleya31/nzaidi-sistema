@@ -1237,6 +1237,51 @@ export class AdminApiClient {
     });
     return res.dados;
   }
+
+  // --- MÉTODOS DE PAGAMENTO (MANUAL E APPYPAY) ---
+  public async listarMetodosPagamentoAdmin(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/pagamentos/admin/metodos');
+    return res.dados;
+  }
+
+  public async atualizarMetodoPagamentoAdmin(id: string, payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/pagamentos/admin/metodos/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async testarConexaoAppyPay(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; mensagem: string; dados: any }>('/api/v1/pagamentos/admin/metodos/appypay/testar', {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async listarTransacoesPagamentoAdmin(filtros?: { estado?: string; limite?: number }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filtros?.estado) params.set('estado', filtros.estado);
+    if (filtros?.limite) params.set('limite', filtros.limite.toString());
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/pagamentos?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async confirmarPagamentoManual(id: string, notasInternas?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/pagamentos/${id}/confirmar`, {
+      method: 'POST',
+      body: JSON.stringify({ notasInternas }),
+    });
+    return res.dados;
+  }
+
+  public async rejeitarPagamentoManual(id: string, motivo: string, notasInternas?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/pagamentos/${id}/rejeitar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo, notasInternas }),
+    });
+    return res.dados;
+  }
 }
 
 export const api = new AdminApiClient();

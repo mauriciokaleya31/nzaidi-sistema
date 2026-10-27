@@ -20,6 +20,7 @@ import { renderizarRelatorios } from "./views/relatorios.view.js";
 import { renderizarComunicacao } from "./views/comunicacao.view.js";
 import { renderizarConfigComunicacao } from "./views/config-comunicacao.view.js";
 import { renderizarNotificacoes } from "./views/notificacoes.view.js";
+import { renderizarPagamentosView } from "./views/pagamentos.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -128,6 +129,16 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado ao módulo de Integrações e Conciliação.</div>
+          `;
+        }
+        break;
+
+      case "#pagamentos":
+        if (authState.temPermissao("caixa:consultar") || authState.temPermissao("contabilidade_tesouraria")) {
+          renderizarPagamentosView(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado aos Métodos de Pagamento.</div>
           `;
         }
         break;

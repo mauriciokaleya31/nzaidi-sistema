@@ -245,6 +245,35 @@ class ApiService {
     );
     return res.dados;
   }
+
+  // --- Métodos de Pagamento e Liquidação Manual ---
+
+  public async obterMetodosPagamento(): Promise<any[]> {
+    const res = await this.request<{ sucesso: boolean; dados: any[] }>(
+      "/api/v1/pagamentos/metodos"
+    );
+    return res.dados;
+  }
+
+  public async submeterComprovativoPagamento(dados: {
+    metodoId: string;
+    origemTipo: "pedido_cambio" | "pedido_remessa" | "deposito" | "outro";
+    origemId: string;
+    montanteAoa: number;
+    referenciaExterna: string;
+    comprovativoBase64?: string | null | undefined;
+    comprovativoNome?: string | null | undefined;
+    notasCliente?: string | null | undefined;
+  }): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; mensagem: string; dados: any }>(
+      "/api/v1/pagamentos/submeter",
+      {
+        method: "POST",
+        body: JSON.stringify(dados),
+      }
+    );
+    return res.dados;
+  }
 }
 
 export const api = new ApiService();

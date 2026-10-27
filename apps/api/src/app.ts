@@ -50,6 +50,9 @@ import { ComunicacaoRepository } from "./modules/comunicacao/comunicacao.reposit
 import { ComunicacaoService } from "./modules/comunicacao/comunicacao.service.js";
 import { registrarRotasComunicacao } from "./modules/comunicacao/comunicacao.routes.js";
 import { registrarRotasDashboardExecutivo } from "./modules/operacional/dashboard-executivo.routes.js";
+import { PagamentosRepository } from "./modules/pagamentos/pagamentos.repository.js";
+import { PagamentosService } from "./modules/pagamentos/pagamentos.service.js";
+import { registrarRotasPagamentos } from "./modules/pagamentos/pagamentos.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -175,6 +178,10 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   registrarRotasComunicacao(app, comunicacaoService);
 
   registrarRotasDashboardExecutivo(app, db);
+
+  const pagamentosRepo = new PagamentosRepository(db);
+  const pagamentosService = new PagamentosService(pagamentosRepo, auditoriaRepo);
+  registrarRotasPagamentos(app, pagamentosService);
 
   return app;
 }
