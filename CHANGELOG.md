@@ -3,6 +3,31 @@
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
+## [Não publicado] — Redesign integral do backoffice e Design System v2 "Livro-Razão" (ramo `claude/compassionate-allen-ek87og`)
+Só apresentação e experiência de utilização. Não altera a API, os contratos, o modelo de dados, as regras financeiras, a autenticação, as permissões nem os schemas de validação. Identificadores (`id`) e ganchos usados pelo código (`d-none`, `btn-text`, `btn-spinner`, `btn-ver-docs`, `btn-analisar-kyc`, `btn-editar-taxa`, `btn-status`, `nav-item`/`active`, `sidebar`/`open`, `sidebar-fundo`/`visivel`, `data-*`) mantêm-se.
+
+### Design System (`packages/design-system`)
+- `tokens.css` v2: neutros "ardósia", cores de navegação, estados com fundo e borda (sucesso, aviso, erro, info, pendente, neutro), cores de entrada/saída e de gráficos, escala tipográfica de 11 a 36 px, espaçamentos de 4 px, raios, sombras só para o que flutua, camadas, larguras e pontos de quebra documentados. Nomes da v1 mantidos por compatibilidade.
+- `componentes.css` v2: botões (primário, secundário, fantasma, perigo, perigo-contorno, a carregar), campos com prefixo/sufixo e validação, controlo segmentado, painéis, indicadores (KPI), tabelas financeiras que viram cartões abaixo de 768 px, paginação, estados, etiquetas, códigos de moeda, avatar, escala de risco, alertas e notificações flutuantes, estados vazio/erro/sem acesso, esqueletos de carregamento, modais que viram folhas no telemóvel, menus, listas de dados, barra de progresso e **cartão virtual 3D** (frente e verso, proporção ISO ID-1, estados activo/pendente/suspenso/terminado, só 4 últimos dígitos).
+- `icones.ts`: biblioteca de ícones SVG própria (traço único, 24 px). Exportada em `index.ts`. Sem emojis.
+- `catalogo.html` refeito com todos os componentes (só marcadores, sem dados reais).
+
+### Backoffice (`apps/admin`)
+- Estrutura: barra lateral agrupada por áreas (Operação, Clientes e conformidade, Mercado, Administração); cabeçalho com trilho de localização, pesquisa de páginas (Ctrl/Cmd + K) e menu do utilizador com perfil e permissões da sessão; tablet com barra lateral compacta; telemóvel com gaveta lateral e barra de navegação inferior.
+- Páginas redesenhadas: login, visão geral (cotações, caixa, fila KYC, últimas operações, só com dados da API), balcão (passos, compra/venda segmentada, resumo da cotação com contagem decrescente visual, borderô em formato de documento), caixa (sessão, posição por moeda, conferência do fecho com diferença por moeda), clientes e KYC (formulário por secções, dossiê documental), taxas (quadro por moeda com pré-visualização das taxas ao editar), auditoria (filtros, detalhes expansíveis), equipa e acessos.
+- Nova vista **Operações** (`#operacoes`), só de leitura, com o endpoint já existente `GET /api/v1/operacoes` e a permissão já existente `operacoes:consultar`: filtros, paginação e detalhe de cada operação. Não foi criada nenhuma acção nova (o estorno continua sem interface).
+- Diálogo de confirmação da marca em vez do `confirm()` do navegador (terminar sessão, desactivar utilizador). Tecla Escape fecha modais; foco vai para o primeiro campo.
+- Valores formatados à maneira angolana (`1 000 000,00 Kz`, `US$ 150,00`) com `@nzaidi/dominio`, sem vírgula flutuante. A pré-visualização do balcão deixou de usar `parseFloat` e passou a decimal exacto (o servidor continua a decidir).
+- Texto vindo da API passa a ser escapado antes de entrar no HTML (`ui/formatar.ts › esc`).
+- Testes: `test/formatar.test.ts` (4 testes).
+
+### Corrigido
+- **Caixa: submissões duplicadas.** Os ouvintes dos formulários de movimento e de fecho eram ligados de novo a cada actualização da vista; depois do primeiro movimento, um segundo envio era feito em duplicado. Passam a ser ligados uma só vez e a ler o caixa em vigor.
+- Erros de rede no balcão já não deixam a página em "a carregar" para sempre: mostram estado de erro com "Tentar novamente".
+
+### Por fazer (não existe código para redesenhar)
+- `apps/cliente` e `apps/parceiros` só têm README; o módulo de cartões não tem código nem rotas. Ver `docs/15-decisoes-pendentes.md` (D-30).
+
 ## [Não publicado] — Renovação visual do website e do backoffice (ramo `feat/acesso-paineis-gestao-usuarios`)
 Só apresentação. Não altera a API, o modelo de dados, as regras financeiras, a autenticação nem as permissões.
 

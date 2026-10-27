@@ -44,7 +44,9 @@ Nada aqui foi decidido. Cada item deve ser fechado pelo dono do projeto e passad
 | D-26 | Acesso ao servidor por SSH: a chave enviada por chat em 25/10/2026 deve ser considerada **comprometida** e revogada no cPanel. Criar uma chave nova, só no computador do dono do projeto | Publicação no servidor |
 | D-27 | Compatibilidade do alojamento: o cPanel partilhado da AngoWeb tem PostgreSQL e aplicações Node.js (Setup Node.js App)? A arquitetura proposta (ADR 0001 e 0003) precisa dos dois. Alternativas: plano VPS, ou outro alojamento para a API e base de dados mantendo o site no cPanel | Fase 1 (base de dados) |
 | D-28 | Servidor fora de Angola (IP de centro de dados estrangeiro): validar com o advogado à luz da lei de proteção de dados (liga com D-04) | Produção |
-| D-29 | Tipografia: Montserrat (títulos) e Inter (texto) propostas por semelhança com o logótipo. Confirmar ou indicar a fonte oficial da marca | Fase 2 |
+| D-29 | Tipografia: Montserrat (títulos) e Inter (texto) propostas por semelhança com o logótipo. Confirmar ou indicar a fonte oficial da marca. Nota (27/10/2026): o Design System v2 usa Inter também nos títulos da interface e reserva Montserrat para a marca; continua Proposta | Fase 2 |
+| D-30 | **Portais do cliente e dos parceiros e módulo de cartões sem código.** O pedido de redesign de 27/10/2026 incluía os três portais e a gestão de cartões, mas `apps/cliente` e `apps/parceiros` só têm README, e `cartoes` não tem rotas nem dados. Não foram criados para não inventar funcionalidades nem dados (a área dos parceiros é Proposta e Condicionada; os cartões dependem de D-10). O Design System v2 já inclui o necessário (incluindo o cartão virtual 3D). Decidir quando se constrói cada portal | Área do cliente, área dos parceiros, cartões |
+| D-31 | `packages/*/tsconfig.tsbuildinfo` estão no Git. Num clone novo, `tsc -b` julga os pacotes compilados e falha com "Cannot find module '@nzaidi/dominio'" até se apagarem esses ficheiros. Proposta: retirá-los do Git e acrescentá-los ao `.gitignore` | Integração contínua |
 
 ## C. Lacunas
 - Estudo de mercado, concorrência e volumes esperados: não tratados.
