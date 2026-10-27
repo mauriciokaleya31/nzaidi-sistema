@@ -37,6 +37,32 @@ const ITENS_MENU: ItemMenu[] = [
     `,
   },
   {
+    id: "nav-clientes",
+    rota: "#clientes",
+    titulo: "Gestão de Clientes",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    `,
+    permissaoRequerida: "clientes:consultar",
+  },
+  {
+    id: "nav-kyc",
+    rota: "#kyc",
+    titulo: "KYC & Identidade",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        <polyline points="9 12 11 14 15 10"></polyline>
+      </svg>
+    `,
+    permissaoRequerida: "kyc:analisar",
+  },
+  {
     id: "nav-balcao",
     rota: "#balcao",
     titulo: "Balcão de Câmbios",
@@ -47,20 +73,6 @@ const ITENS_MENU: ItemMenu[] = [
       </svg>
     `,
     permissaoRequerida: "operacoes:registar",
-  },
-  {
-    id: "nav-clientes",
-    rota: "#clientes",
-    titulo: "Clientes & KYC",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-    `,
-    permissaoRequerida: "clientes:consultar",
   },
   {
     id: "nav-caixa",
@@ -74,45 +86,6 @@ const ITENS_MENU: ItemMenu[] = [
       </svg>
     `,
     permissaoRequerida: "caixa:consultar",
-  },
-  {
-    id: "nav-integracoes",
-    rota: "#integracoes",
-    titulo: "Integrações & Conciliação",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-      </svg>
-    `,
-    permissaoRequerida: "integracoes:consultar_manual",
-  },
-
-  {
-    id: "nav-parceiros",
-    rota: "#parceiros",
-    titulo: "Parceiros Comerciais",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-        <circle cx="9" cy="7" r="4"></circle>
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-      </svg>
-    `,
-    permissaoRequerida: "usuarios:consultar",
-  },
-  {
-    id: "nav-taxas",
-    rota: "#taxas",
-    titulo: "Taxas de Câmbio",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="1" x2="12" y2="23"></line>
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-      </svg>
-    `,
-    permissaoRequerida: "ver_taxas",
   },
   {
     id: "nav-contabilidade",
@@ -142,19 +115,76 @@ const ITENS_MENU: ItemMenu[] = [
     permissaoRequerida: "caixa:consultar",
   },
   {
-    id: "nav-auditoria",
-    rota: "#auditoria",
-    titulo: "Pista de Auditoria",
+    id: "nav-parceiros",
+    rota: "#parceiros",
+    titulo: "Parceiros Comerciais",
     icone: `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="16" y1="13" x2="8" y2="13"></line>
-        <line x1="16" y1="17" x2="8" y2="17"></line>
-        <polyline points="10 9 9 9 8 9"></polyline>
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
       </svg>
     `,
-    permissaoRequerida: "ver_auditoria",
+    permissaoRequerida: "usuarios:consultar",
+  },
+  {
+    id: "nav-integracoes",
+    rota: "#integracoes",
+    titulo: "Integrações & Conciliação",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+      </svg>
+    `,
+    permissaoRequerida: "integracoes:consultar_manual",
+  },
+  {
+    id: "nav-taxas",
+    rota: "#taxas",
+    titulo: "Taxas de Câmbio",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23"></line>
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+      </svg>
+    `,
+    permissaoRequerida: "ver_taxas",
+  },
+  {
+    id: "nav-comunicacao",
+    rota: "#comunicacao",
+    titulo: "Comunicação & Avisos",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+    `,
+    permissaoRequerida: "comunicacao:consultar",
+  },
+  {
+    id: "nav-config-comunicacao",
+    rota: "#config-comunicacao",
+    titulo: "Provedores & Serviços",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    `,
+    permissaoRequerida: "comunicacao:gerir",
+  },
+  {
+    id: "nav-notificacoes",
+    rota: "#notificacoes",
+    titulo: "Notificações Internas",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+    `,
   },
   {
     id: "nav-usuarios",
@@ -170,6 +200,32 @@ const ITENS_MENU: ItemMenu[] = [
     `,
     permissaoRequerida: "gerir_usuarios",
   },
+  {
+    id: "nav-auditoria",
+    rota: "#auditoria",
+    titulo: "Pista de Auditoria",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="16" y1="13" x2="8" y2="13"></line>
+        <line x1="16" y1="17" x2="8" y2="17"></line>
+        <polyline points="10 9 9 9 8 9"></polyline>
+      </svg>
+    `,
+    permissaoRequerida: "ver_auditoria",
+  },
+  {
+    id: "nav-perfil",
+    rota: "#perfil",
+    titulo: "Meu Perfil",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    `,
+  },
 ];
 
 export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string): void {
@@ -184,9 +240,11 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
     return authState.temPermissao(item.permissaoRequerida);
   });
 
+  const rotaBase = rotaAtual.split("?")[0];
+
   const linksHtml = itensVisiveis
     .map((item) => {
-      const estaAtivo = rotaAtual === item.rota;
+      const estaAtivo = rotaBase === item.rota;
 
       return `
         <li>
@@ -200,13 +258,15 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
     .join("");
 
   container.innerHTML = `
-    <div class="sidebar-fundo" id="sidebar-fundo"></div>
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-brand">
-        <img class="sidebar-logo" src="/simbolo.png" alt="" width="44" height="44" />
-        <div class="brand-meta">
-          <div class="brand-title">NZAIDI CÂMBIOS</div>
-          <div class="brand-sub">Casa de Câmbios, Lda.</div>
+    <div id="sidebar-fundo" class="sidebar-fundo" aria-hidden="true"></div>
+    <aside id="sidebar" class="app-sidebar" aria-label="Menu principal">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <img src="/simbolo.png" alt="NZAIDI" class="logo-icon" width="36" height="36" />
+          <div class="logo-text">
+            <span class="brand-title">NZAIDI</span>
+            <span class="brand-subtitle">CÂMBIOS & VALORES</span>
+          </div>
         </div>
       </div>
 
@@ -217,20 +277,20 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
       </nav>
 
       <div class="sidebar-footer">
-        <div class="footer-status">
-          <span class="status-dot"></span>
-          <span class="status-text">Ambiente Seguro</span>
-        </div>
-        <div class="footer-compliance">
-          <span>Supervisão BNA</span>
+        <div class="app-version">
+          <span>Versão 2.5.0-homolog</span>
+          <span class="badge-status-online">Sistema Conectado</span>
         </div>
       </div>
     </aside>
   `;
 
-  // Telemóvel: fechar o menu ao tocar no fundo escurecido
-  container.querySelector("#sidebar-fundo")?.addEventListener("click", () => {
-    container.querySelector("#sidebar")?.classList.remove("open");
-    container.querySelector("#sidebar-fundo")?.classList.remove("visivel");
+  // Fechar no telemóvel ao clicar no fundo
+  const fundo = container.querySelector("#sidebar-fundo");
+  fundo?.addEventListener("click", () => {
+    document.getElementById("sidebar")?.classList.remove("open");
+    fundo.classList.remove("visivel");
+    const btn = document.getElementById("btn-menu-lateral");
+    btn?.setAttribute("aria-expanded", "false");
   });
 }

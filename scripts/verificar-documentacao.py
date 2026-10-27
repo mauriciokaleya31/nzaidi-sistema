@@ -58,7 +58,7 @@ padroes = {
     "Palavra-passe atribuída": re.compile(r"(?i)\b(?:password|senha|secret|segredo)\s*[:=]\s*[\"']?[A-Za-z0-9!@#$%^&*]{8,}"),
 }
 for pasta, dirs, ficheiros in os.walk(RAIZ):
-    dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "dist")]
+    dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "dist", "dist-ts")]
     for nome in ficheiros:
         if nome.lower().endswith((".pdf", ".png", ".jpg", ".webp", ".zip")):
             continue

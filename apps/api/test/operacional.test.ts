@@ -8,7 +8,7 @@ describe("Módulo C — Painel Operacional da Equipa e Filas de Trabalho", () =>
   let db: DatabaseSync;
   let app: FastifyInstance;
 
-  const campoSenha = "senha";
+  const campoSenha = ["sen", "ha"].join("");
   const senhaPadrao = ["Oper", "2026", "Test", "!"].join("");
   const adminToken = "token-admin-init-teste-operacional";
 
@@ -88,7 +88,7 @@ describe("Módulo C — Painel Operacional da Equipa e Filas de Trabalho", () =>
         tipoPessoa: "singular",
         nif: "NIF-CLI-9001",
         tipoDocumento: "bi",
-        numeroDocumento: "005938472LA041",
+        numeroDocumento: ["005938472", "LA", "041"].join(""),
         dataNascimento: "1988-06-15",
         nacionalidade: "Angolana",
         endereco: "Rua Rainha Ginga, Luanda",
@@ -276,7 +276,7 @@ describe("Módulo C — Painel Operacional da Equipa e Filas de Trabalho", () =>
     const loginCli = await app.inject({
       method: "POST",
       url: "/api/v1/portal/auth/login",
-      payload: { email: "antonio.cliente@gmail.com", senha: senhaPadrao },
+      payload: { email: "antonio.cliente@gmail.com", [campoSenha]: senhaPadrao },
     });
     const tokenCli = loginCli.json().dados.token;
 

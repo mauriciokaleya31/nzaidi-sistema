@@ -116,6 +116,8 @@ export interface UsuarioSessao {
   email: string;
   funcao: FuncaoUsuario;
   permissoes: string[];
+  impersonadoPor?: string | null;
+  impersonadoNome?: string | null;
 }
 
 export interface UsuarioItem {
@@ -124,6 +126,10 @@ export interface UsuarioItem {
   email: string;
   funcao: FuncaoUsuario;
   ativo: boolean;
+  telefone?: string | null;
+  avatarUrl?: string | null;
+  bloqueadoEm?: string | null;
+  bloqueadoMotivo?: string | null;
   criadoEm: string;
   atualizadoEm: string;
   ultimoLoginEm?: string | null;
@@ -545,16 +551,15 @@ export class AdminApiClient {
   }
 
   public async impersonarCliente(
-    clienteId: string
-  ): Promise<{ sucesso: boolean; dados?: { cliente: ClienteItem; token: string; redirectUrl: string }; erro?: string }> {
+    clienteId: string,
+    motivo: string = "Acesso de suporte administrativo"
+  ): Promise<{ sucesso: boolean; dados?: any; urlRedirecionamento?: string; redirectUrl?: string; token?: string; erro?: string; mensagem?: string }> {
     try {
-      const res = await this.requisitar<{
-        sucesso: boolean;
-        dados: { cliente: ClienteItem; token: string; redirectUrl: string };
-      }>("/api/v1/portal/admin/impersonar/" + clienteId, {
+      const res = await this.requisitar<any>(`/api/v1/clientes/${clienteId}/impersonar`, {
         method: "POST",
+        body: JSON.stringify({ motivo }),
       });
-      return { sucesso: true, dados: res.dados };
+      return { sucesso: true, dados: res, urlRedirecionamento: res.urlRedirecionamento, redirectUrl: res.urlRedirecionamento, token: res.token };
     } catch (err: any) {
       return { sucesso: false, erro: err.message || "Falha ao personificar conta de cliente." };
     }
@@ -1016,6 +1021,222 @@ export class AdminApiClient {
     return res.dados;
   }
 
+
+  public async encerrarImpersonacao(): Promise<void> {
+    await this.requisitar('/api/v1/auth/encerrar-impersonacao', { method: 'POST' });
+  }
+
+  public async impersonarUsuario(id: string, motivo: string): Promise<any> {
+    const res = await this.requisitar<any>(`/api/v1/usuarios/${id}/impersonar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+    return res;
+  }
+
+  public async bloquearUsuario(id: string, motivo: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}/bloquear`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  public async desbloquearUsuario(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}/desbloquear`, { method: 'POST' });
+  }
+
+  public async terminarSessoesUsuario(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}/terminar-sessoes`, { method: 'POST' });
+  }
+
+  public async obterDetalhesUsuario(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/usuarios/${id}`);
+    return res.dados;
+  }
+
+  public async atualizarUsuario(id: string, payload: any): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async obterPerfilProprio(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/usuarios/me');
+    return res.dados;
+  }
+
+  public async atualizarPerfilProprio(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/usuarios/me', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async alterarSenhaPropria(payload: any): Promise<void> {
+    await this.requisitar('/api/v1/usuarios/me/senha', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async listarSessoesProprias(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/usuarios/me/sessoes');
+    return res.dados;
+  }
+
+  public async revogarSessaoPropria(sessaoId: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/me/sessoes/${sessaoId}`, { method: 'DELETE' });
+  }
+
+  public async obterDetalhesCliente(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/clientes/${id}/detalhes`);
+    return res.dados;
+  }
+
+  public async atualizarCliente(id: string, payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/clientes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async bloquearCliente(id: string, motivo: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/bloquear`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  public async desbloquearCliente(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/desbloquear`, { method: 'POST' });
+  }
+
+  public async terminarSessoesCliente(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/terminar-sessoes`, { method: 'POST' });
+  }
+
+
+
+  public async solicitarDocumentosKyc(id: string, mensagem: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/kyc/solicitar-documentos`, {
+      method: 'POST',
+      body: JSON.stringify({ mensagem }),
+    });
+  }
+
+  public async obterEstatisticasKyc(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/kyc/estatisticas');
+    return res.dados;
+  }
+
+  public async obterDashboardExecutivo(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/dashboard/executivo');
+    return res.dados;
+  }
+
+  public async listarNotificacoes(apenasNaoLidas?: boolean, categoria?: string): Promise<{ itens: any[]; totalNaoLidas: number }> {
+    const params = new URLSearchParams();
+    if (apenasNaoLidas) params.set('apenasNaoLidas', 'true');
+    if (categoria) params.set('categoria', categoria);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[]; totalNaoLidas: number }>(`/api/v1/notificacoes?${params.toString()}`);
+    return { itens: res.dados, totalNaoLidas: res.totalNaoLidas };
+  }
+
+  public async marcarNotificacaoLida(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/notificacoes/${id}/lida`, { method: 'PATCH' });
+  }
+
+  public async marcarTodasNotificacoesLidas(): Promise<void> {
+    await this.requisitar('/api/v1/notificacoes/marcar-todas-lidas', { method: 'POST' });
+  }
+
+  public async listarAnuncios(destino?: string, estado?: string): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (destino) params.set('destino', destino);
+    if (estado) params.set('estado', estado);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/comunicacao/anuncios?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async criarAnuncio(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/comunicacao/anuncios', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async atualizarAnuncio(id: string, payload: any): Promise<void> {
+    await this.requisitar(`/api/v1/comunicacao/anuncios/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async removerAnuncio(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/comunicacao/anuncios/${id}`, { method: 'DELETE' });
+  }
+
+  public async listarDicas(categoria?: string): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (categoria) params.set('categoria', categoria);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/comunicacao/dicas?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async criarDica(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/comunicacao/dicas', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async removerDica(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/comunicacao/dicas/${id}`, { method: 'DELETE' });
+  }
+
+  public async listarCampanhas(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/comunicacao/campanhas');
+    return res.dados;
+  }
+
+  public async criarCampanha(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/comunicacao/campanhas', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async dispararCampanha(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; mensagem: string; dados: any }>(`/api/v1/comunicacao/campanhas/${id}/disparar`, {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async obterProvedoresComunicacao(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/comunicacao/provedores');
+    return res.dados;
+  }
+
+  public async salvarProvedorComunicacao(payload: any): Promise<void> {
+    await this.requisitar('/api/v1/comunicacao/provedores', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async testarProvedorComunicacao(tipo: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/comunicacao/provedores/${tipo}/testar`, {
+      method: 'POST',
+    });
+    return res.dados;
+  }
 }
 
 export const api = new AdminApiClient();

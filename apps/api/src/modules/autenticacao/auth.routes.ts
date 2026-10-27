@@ -39,110 +39,112 @@ export function registrarRotasAuth(
       },
     },
     async (request, reply) => {
-    const dados = LoginSchema.parse(request.body);
-    const ip = request.ip;
-    const userAgent = request.headers["user-agent"] ?? null;
+      const dados = LoginSchema.parse(request.body);
+      const ip = request.ip;
+      const userAgent = request.headers["user-agent"] ?? null;
 
-    const usuario = usersRepo.buscarPorEmail(dados.email);
+      const usuario = usersRepo.buscarPorEmail(dados.email);
 
-    // Proteção contra enumeração: mesmo tempo de resposta simulado
-    if (!usuario) {
-      // Hash dummy para mitigar timing attack
-      await verificarSenha("dummy-password", "$scrypt$16384$8$1$0000$0000");
-      auditoriaRepo.registar({
-        acao: "LOGIN_FALHADO",
-        recurso: "auth",
-        detalhes: { motivo: "Utilizador não encontrado", emailTentativa: dados.email },
-        ip,
-        userAgent,
-      });
+      // Proteção contra enumeração: mesmo tempo de resposta simulado
+      if (!usuario) {
+        await verificarSenha("dummy-password", "$scrypt$16384$8$1$0000$0000");
+        auditoriaRepo.registar({
+          acao: "LOGIN_FALHADO",
+          recurso: "auth",
+          detalhes: { motivo: "Utilizador não encontrado", emailTentativa: dados.email },
+          ip,
+          userAgent,
+        });
 
-      return reply.status(401).send({
-        sucesso: false,
-        codigo: "CREDENCIAS_INVALIDAS",
-        erro: "Email ou palavra-passe incorretos.",
-      });
-    }
+        return reply.status(401).send({
+          sucesso: false,
+          codigo: "CREDENCIAS_INVALIDAS",
+          erro: "Email ou palavra-passe incorretos.",
+        });
+      }
 
-    if (!usuario.ativo) {
+      if (!usuario.ativo) {
+        auditoriaRepo.registar({
+          autorId: usuario.id,
+          autorNome: usuario.nome,
+          acao: "LOGIN_BLOQUEADO",
+          recurso: "auth",
+          detalhes: { motivo: "Conta desativada" },
+          ip,
+          userAgent,
+        });
+
+        return reply.status(403).send({
+          sucesso: false,
+          codigo: "CONTA_DESATIVADA",
+          erro: "Esta conta de utilizador encontra-se desativada. Contacte a gestão.",
+        });
+      }
+
+      const senhaCorreta = await verificarSenha(dados.senha, usuario.senhaHash);
+      if (!senhaCorreta) {
+        auditoriaRepo.registar({
+          autorId: usuario.id,
+          autorNome: usuario.nome,
+          acao: "LOGIN_FALHADO",
+          recurso: "auth",
+          detalhes: { motivo: "Palavra-passe incorreta" },
+          ip,
+          userAgent,
+        });
+
+        return reply.status(401).send({
+          sucesso: false,
+          codigo: "CREDENCIAS_INVALIDAS",
+          erro: "Email ou palavra-passe incorretos.",
+        });
+      }
+
+      // Criar Sessão Segura
+      const sessao = sessionsRepo.criarSessao(usuario.id, sessionTtlHoras, ip, userAgent);
+      usersRepo.atualizarUltimoLogin(usuario.id);
+
       auditoriaRepo.registar({
         autorId: usuario.id,
         autorNome: usuario.nome,
-        acao: "LOGIN_BLOQUEADO",
+        autorFuncao: usuario.funcao,
+        acao: "LOGIN_SUCESSO",
         recurso: "auth",
-        detalhes: { motivo: "Conta desativada" },
+        recursoId: sessao.id,
         ip,
         userAgent,
       });
 
-      return reply.status(403).send({
-        sucesso: false,
-        codigo: "CONTA_DESATIVADA",
-        erro: "Esta conta de utilizador encontra-se desativada. Contacte a gestão.",
+      const ehProducao = process.env["NODE_ENV"] === "production";
+
+      reply.setCookie("nzaidi_sessao", sessao.id, {
+        path: "/",
+        httpOnly: true,
+        secure: ehProducao,
+        sameSite: "lax",
+        maxAge: sessionTtlHoras * 3600,
+        signed: false,
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação realizada com sucesso.",
+        usuario: {
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          funcao: usuario.funcao,
+          impersonadoPor: sessao.impersonadoPor ?? null,
+          impersonadoNome: sessao.impersonadoNome ?? null,
+          permissoes: MATRIZ_PERMISSOES[usuario.funcao],
+        },
+        sessao: {
+          token: sessao.id,
+          expiraEm: sessao.expiraEm,
+        },
       });
     }
-
-    const senhaCorreta = await verificarSenha(dados.senha, usuario.senhaHash);
-    if (!senhaCorreta) {
-      auditoriaRepo.registar({
-        autorId: usuario.id,
-        autorNome: usuario.nome,
-        acao: "LOGIN_FALHADO",
-        recurso: "auth",
-        detalhes: { motivo: "Palavra-passe incorreta" },
-        ip,
-        userAgent,
-      });
-
-      return reply.status(401).send({
-        sucesso: false,
-        codigo: "CREDENCIAS_INVALIDAS",
-        erro: "Email ou palavra-passe incorretos.",
-      });
-    }
-
-    // Criar Sessão Segura
-    const sessao = sessionsRepo.criarSessao(usuario.id, sessionTtlHoras, ip, userAgent);
-    usersRepo.atualizarUltimoLogin(usuario.id);
-
-    auditoriaRepo.registar({
-      autorId: usuario.id,
-      autorNome: usuario.nome,
-      autorFuncao: usuario.funcao,
-      acao: "LOGIN_SUCESSO",
-      recurso: "auth",
-      recursoId: sessao.id,
-      ip,
-      userAgent,
-    });
-
-    const ehProducao = process.env["NODE_ENV"] === "production";
-
-    reply.setCookie("nzaidi_sessao", sessao.id, {
-      path: "/",
-      httpOnly: true,
-      secure: ehProducao,
-      sameSite: "lax",
-      maxAge: sessionTtlHoras * 3600,
-      signed: false,
-    });
-
-    return reply.status(200).send({
-      sucesso: true,
-      mensagem: "Autenticação realizada com sucesso.",
-      usuario: {
-        id: usuario.id,
-        nome: usuario.nome,
-        email: usuario.email,
-        funcao: usuario.funcao,
-        permissoes: MATRIZ_PERMISSOES[usuario.funcao],
-      },
-      sessao: {
-        token: sessao.id,
-        expiraEm: sessao.expiraEm,
-      },
-    });
-  });
+  );
 
   // 2. Logout
   app.post("/api/v1/auth/logout", { preHandler: [exigirAutenticacao] }, async (request, reply) => {
@@ -179,14 +181,47 @@ export function registrarRotasAuth(
         nome: usuario.nome,
         email: usuario.email,
         funcao: usuario.funcao,
+        impersonadoPor: usuario.impersonadoPor ?? null,
+        impersonadoNome: usuario.impersonadoNome ?? null,
         permissoes: MATRIZ_PERMISSOES[usuario.funcao],
       },
     });
   });
 
+  // 3.1 Encerrar Sessão de Suporte / Impersonação
+  app.post("/api/v1/auth/encerrar-impersonacao", { preHandler: [exigirAutenticacao] }, async (request, reply) => {
+    const usuario = request.usuario!;
+    if (!usuario.impersonadoPor) {
+      return reply.status(400).send({
+        sucesso: false,
+        erro: "A sessão atual não é uma sessão de suporte.",
+      });
+    }
+
+    sessionsRepo.revogarSessao(usuario.sessaoId);
+
+    auditoriaRepo.registar({
+      autorId: usuario.id,
+      autorNome: usuario.nome,
+      autorFuncao: usuario.funcao,
+      acao: "IMPERSONACAO_ENCERRADA",
+      recurso: "sessoes",
+      recursoId: usuario.sessaoId,
+      detalhes: { impersonadoPor: usuario.impersonadoPor, impersonadoNome: usuario.impersonadoNome },
+      ip: request.ip,
+      userAgent: request.headers["user-agent"] ?? null,
+    });
+
+    reply.clearCookie("nzaidi_sessao", { path: "/" });
+
+    return reply.send({
+      sucesso: true,
+      mensagem: "Sessão de suporte encerrada com sucesso.",
+    });
+  });
+
   // 4. Criação Segura do Primeiro Administrador (Bootstrap inicial)
   app.post("/api/v1/auth/primeiro-admin", async (request, reply) => {
-    // Se já existirem utilizadores, este endpoint fica permanentemente bloqueado
     const total = usersRepo.totalUsuarios();
     if (total > 0) {
       return reply.status(403).send({
@@ -218,7 +253,7 @@ export function registrarRotasAuth(
       nome: dados.nome,
       email: dados.email,
       senhaHash: hash,
-      funcao: "gestao", // Função administrativa máxima
+      funcao: "gestao",
     });
 
     auditoriaRepo.registar({

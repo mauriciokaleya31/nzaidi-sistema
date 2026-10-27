@@ -30,11 +30,20 @@ export interface Cliente {
   nif: string;
   nacionalidade: string;
   telefone: string;
-  email?: string | null;
+  email?: string | null | undefined;
   morada: string;
   estado: EstadoCliente;
   estadoKyc: EstadoKyc;
   nivelRisco: NivelRisco;
+  dataNascimento?: string | null | undefined;
+  documentoEmissao?: string | null | undefined;
+  documentoValidade?: string | null | undefined;
+  profissao?: string | null | undefined;
+  entidadeEmpregadora?: string | null | undefined;
+  finalidadeConta?: string | null | undefined;
+  paisResidencia?: string | null | undefined;
+  pep?: boolean | number | undefined;
+  avatarUrl?: string | null | undefined;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -90,9 +99,38 @@ export const CriarClienteInputSchema = z.object({
   telefone: z.string().min(7, "Número de telefone inválido"),
   email: z.string().email("Correio electrónico inválido").optional().nullable(),
   morada: z.string().min(5, "Morada deve ser informada"),
+  dataNascimento: z.string().optional().nullable(),
+  documentoEmissao: z.string().optional().nullable(),
+  documentoValidade: z.string().optional().nullable(),
+  profissao: z.string().optional().nullable(),
+  entidadeEmpregadora: z.string().optional().nullable(),
+  finalidadeConta: z.string().optional().nullable(),
+  paisResidencia: z.string().optional().nullable(),
+  pep: z.boolean().optional().default(false),
+  avatarUrl: z.string().optional().nullable(),
 });
 
 export type CriarClienteInput = z.infer<typeof CriarClienteInputSchema>;
+
+export const AtualizarClienteInputSchema = z.object({
+  nome: z.string().min(3).optional(),
+  telefone: z.string().min(7).optional(),
+  email: z.string().email().optional().nullable(),
+  morada: z.string().min(5).optional(),
+  dataNascimento: z.string().optional().nullable(),
+  documentoEmissao: z.string().optional().nullable(),
+  documentoValidade: z.string().optional().nullable(),
+  profissao: z.string().optional().nullable(),
+  entidadeEmpregadora: z.string().optional().nullable(),
+  finalidadeConta: z.string().optional().nullable(),
+  paisResidencia: z.string().optional().nullable(),
+  pep: z.boolean().optional(),
+  avatarUrl: z.string().optional().nullable(),
+  estado: EstadoClienteSchema.optional(),
+  nivelRisco: NivelRiscoSchema.optional(),
+});
+
+export type AtualizarClienteInput = z.infer<typeof AtualizarClienteInputSchema>;
 
 export const DecisaoKycInputSchema = z.object({
   estadoNovo: EstadoKycSchema,

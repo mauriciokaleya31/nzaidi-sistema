@@ -44,7 +44,12 @@ import { registrarRotasOperacional } from "./modules/operacional/operacional.rou
 import { ContabilidadeRepository } from "./modules/contabilidade/contabilidade.repository.js";
 import { ContabilidadeService } from "./modules/contabilidade/contabilidade.service.js";
 import { registrarRotasContabilidade } from "./modules/contabilidade/contabilidade.routes.js";
-
+import { NotificacoesRepository } from "./modules/notificacoes/notificacoes.repository.js";
+import { registrarRotasNotificacoes } from "./modules/notificacoes/notificacoes.routes.js";
+import { ComunicacaoRepository } from "./modules/comunicacao/comunicacao.repository.js";
+import { ComunicacaoService } from "./modules/comunicacao/comunicacao.service.js";
+import { registrarRotasComunicacao } from "./modules/comunicacao/comunicacao.routes.js";
+import { registrarRotasDashboardExecutivo } from "./modules/operacional/dashboard-executivo.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -128,7 +133,7 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   // 5. Registo de Módulos e Rotas
   registrarRotasHealth(app, db);
   registrarRotasAuth(app, usersRepo, sessionsRepo, auditoriaRepo, env.ADMIN_INIT_TOKEN, env.SESSION_TTL_HOURS);
-  registrarRotasUsuarios(app, usersRepo, auditoriaRepo);
+  registrarRotasUsuarios(app, usersRepo, sessionsRepo, auditoriaRepo);
   registrarRotasTaxas(app, taxasService, auditoriaRepo);
   registrarRotasAuditoria(app, auditoriaRepo);
   registrarRotasClientes(app, clientesService, documentosService);
@@ -161,6 +166,15 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   );
   registrarRotasOperacional(app, operacionalService);
   registrarRotasContabilidade(app, contabilidadeService, contabilidadeRepo);
+
+  const notificacoesRepo = new NotificacoesRepository(db);
+  registrarRotasNotificacoes(app, notificacoesRepo);
+
+  const comunicacaoRepo = new ComunicacaoRepository(db);
+  const comunicacaoService = new ComunicacaoService(comunicacaoRepo, auditoriaRepo);
+  registrarRotasComunicacao(app, comunicacaoService);
+
+  registrarRotasDashboardExecutivo(app, db);
 
   return app;
 }

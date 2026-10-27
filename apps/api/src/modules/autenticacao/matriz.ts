@@ -28,7 +28,9 @@ export type Permissao =
   | "usuarios:consultar"
   | "usuarios:gerir"
   | "integracoes:liquidar_manual"
-  | "integracoes:consultar_manual";
+  | "integracoes:consultar_manual"
+  | "comunicacao:consultar"
+  | "comunicacao:gerir";
 
 /**
  * Matriz de permissões estritas por função (docs/07, §2).
@@ -104,6 +106,8 @@ export const MATRIZ_PERMISSOES: Record<FuncaoUsuario, readonly Permissao[]> = {
     "usuarios:gerir",
     "integracoes:consultar_manual",
     "integracoes:liquidar_manual",
+    "comunicacao:consultar",
+    "comunicacao:gerir",
   ],
 };
 

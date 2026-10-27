@@ -496,7 +496,132 @@ export function inicializarSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_taxas_hist_moeda ON taxas_historico(moeda);
     CREATE INDEX IF NOT EXISTS idx_taxas_hist_criado ON taxas_historico(criado_em);
 
+    -- =========================================================================
+    -- Expansão Backoffice: Notificações, Comunicação, Impersonação e Configs
+    -- =========================================================================
+
+    CREATE TABLE IF NOT EXISTS impersonacoes_auditoria (
+      id TEXT PRIMARY KEY,
+      admin_id TEXT NOT NULL,
+      admin_nome TEXT NOT NULL,
+      alvo_tipo TEXT NOT NULL CHECK(alvo_tipo IN ('usuario', 'cliente', 'parceiro')),
+      alvo_id TEXT NOT NULL,
+      alvo_nome TEXT NOT NULL,
+      motivo TEXT NOT NULL,
+      iniciado_em TEXT NOT NULL,
+      terminado_em TEXT,
+      ip TEXT,
+      user_agent TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_impersonacoes_admin ON impersonacoes_auditoria(admin_id);
+    CREATE INDEX IF NOT EXISTS idx_impersonacoes_alvo ON impersonacoes_auditoria(alvo_id);
+
+    CREATE TABLE IF NOT EXISTS notificacoes_sistema (
+      id TEXT PRIMARY KEY,
+      destinatario_tipo TEXT NOT NULL CHECK(destinatario_tipo IN ('admin_geral', 'usuario', 'cliente', 'parceiro')),
+      destinatario_id TEXT,
+      categoria TEXT NOT NULL CHECK(categoria IN ('kyc', 'cambio', 'remessa', 'caixa', 'seguranca', 'sistema', 'comunicacao')),
+      titulo TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      link_acao TEXT,
+      lida INTEGER NOT NULL DEFAULT 0,
+      lida_em TEXT,
+      prioridade TEXT NOT NULL CHECK(prioridade IN ('baixa', 'normal', 'alta', 'critica')) DEFAULT 'normal',
+      criado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_notificacoes_dest ON notificacoes_sistema(destinatario_tipo, destinatario_id);
+    CREATE INDEX IF NOT EXISTS idx_notificacoes_lida ON notificacoes_sistema(lida);
+
+    CREATE TABLE IF NOT EXISTS anuncios_comunicacao (
+      id TEXT PRIMARY KEY,
+      titulo TEXT NOT NULL,
+      conteudo TEXT NOT NULL,
+      imagem_url TEXT,
+      destino TEXT NOT NULL CHECK(destino IN ('website', 'portal_cliente', 'portal_parceiro', 'todos')),
+      publico_alvo TEXT NOT NULL DEFAULT 'todos',
+      estado TEXT NOT NULL CHECK(estado IN ('rascunho', 'agendado', 'publicado', 'arquivado', 'desativado')) DEFAULT 'publicado',
+      inicio_em TEXT,
+      fim_em TEXT,
+      criado_por_id TEXT NOT NULL,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_anuncios_destino ON anuncios_comunicacao(destino);
+    CREATE INDEX IF NOT EXISTS idx_anuncios_estado ON anuncios_comunicacao(estado);
+
+    CREATE TABLE IF NOT EXISTS dicas_informativas (
+      id TEXT PRIMARY KEY,
+      titulo TEXT NOT NULL,
+      conteudo TEXT NOT NULL,
+      categoria TEXT NOT NULL CHECK(categoria IN ('cambio', 'remessas', 'seguranca', 'educacao_financeira', 'geral')),
+      estado TEXT NOT NULL CHECK(estado IN ('rascunho', 'publicado', 'arquivado')) DEFAULT 'publicado',
+      ordem INTEGER NOT NULL DEFAULT 0,
+      criado_por_id TEXT NOT NULL,
+      criado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_dicas_categoria ON dicas_informativas(categoria);
+    CREATE INDEX IF NOT EXISTS idx_dicas_estado ON dicas_informativas(estado);
+
+    CREATE TABLE IF NOT EXISTS campanhas_email (
+      id TEXT PRIMARY KEY,
+      assunto TEXT NOT NULL,
+      modelo_html TEXT NOT NULL,
+      segmento_alvo TEXT NOT NULL CHECK(segmento_alvo IN ('todos', 'kyc_aprovado', 'kyc_pendente', 'empresas', 'parceiros')),
+      estado TEXT NOT NULL CHECK(estado IN ('rascunho', 'agendada', 'enviada', 'cancelada')) DEFAULT 'rascunho',
+      total_destinatarios INTEGER NOT NULL DEFAULT 0,
+      total_enviados INTEGER NOT NULL DEFAULT 0,
+      total_erros INTEGER NOT NULL DEFAULT 0,
+      agendada_para TEXT,
+      enviada_em TEXT,
+      criado_por_id TEXT NOT NULL,
+      criado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_campanhas_estado ON campanhas_email(estado);
+
+    CREATE TABLE IF NOT EXISTS servicos_comunicacao_config (
+      id TEXT PRIMARY KEY,
+      tipo TEXT NOT NULL CHECK(tipo IN ('email', 'sms', 'whatsapp', 'webhook')),
+      fornecedor TEXT NOT NULL,
+      endpoint TEXT,
+      credenciais_json TEXT NOT NULL,
+      parametros_json TEXT,
+      ambiente TEXT NOT NULL CHECK(ambiente IN ('teste', 'producao')) DEFAULT 'teste',
+      ativo INTEGER NOT NULL DEFAULT 0,
+      ultimo_teste_em TEXT,
+      ultimo_teste_status TEXT,
+      ultimo_teste_erro TEXT,
+      atualizado_em TEXT NOT NULL,
+      atualizado_por_id TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_servicos_tipo ON servicos_comunicacao_config(tipo);
   `);
+
+  // Migrações seguras de colunas adicionais para tabelas existentes
+  const migrarColuna = (tabela: string, coluna: string, tipo: string) => {
+    try {
+      db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${coluna} ${tipo};`);
+    } catch {
+      // Ignora se a coluna já existir
+    }
+  };
+
+  migrarColuna("usuarios", "telefone", "TEXT");
+  migrarColuna("usuarios", "avatar_url", "TEXT");
+  migrarColuna("usuarios", "bloqueado_em", "TEXT");
+  migrarColuna("usuarios", "bloqueado_motivo", "TEXT");
+
+  migrarColuna("sessoes", "impersonado_por", "TEXT");
+  migrarColuna("sessoes", "impersonado_nome", "TEXT");
+
+  migrarColuna("clientes", "data_nascimento", "TEXT");
+  migrarColuna("clientes", "documento_emissao", "TEXT");
+  migrarColuna("clientes", "documento_validade", "TEXT");
+  migrarColuna("clientes", "profissao", "TEXT");
+  migrarColuna("clientes", "entidade_empregadora", "TEXT");
+  migrarColuna("clientes", "finalidade_conta", "TEXT");
+  migrarColuna("clientes", "pais_residencia", "TEXT DEFAULT 'AO'");
+  migrarColuna("clientes", "pep", "INTEGER DEFAULT 0");
+  migrarColuna("clientes", "avatar_url", "TEXT");
 }
 
 export function comTransacao<T>(db: DatabaseSync, acao: () => T): T {

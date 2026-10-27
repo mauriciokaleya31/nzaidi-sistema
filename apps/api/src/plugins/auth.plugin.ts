@@ -9,6 +9,8 @@ export interface UsuarioAutenticado {
   email: string;
   funcao: FuncaoUsuario;
   sessaoId: string;
+  impersonadoPor?: string | null | undefined;
+  impersonadoNome?: string | null | undefined;
 }
 
 declare module "fastify" {
@@ -41,6 +43,8 @@ export function criarMiddlewareAutenticacao(
       email: usuario.email,
       funcao: usuario.funcao,
       sessaoId: sessao.id,
+      impersonadoPor: sessao.impersonadoPor ?? null,
+      impersonadoNome: sessao.impersonadoNome ?? null,
     };
   };
 }

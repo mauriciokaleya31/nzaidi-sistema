@@ -7,15 +7,19 @@ import { renderizarDashboard } from "./views/dashboard.view.js";
 import { renderizarTaxas } from "./views/taxas.view.js";
 import { renderizarAuditoria } from "./views/auditoria.view.js";
 import { renderizarClientes } from "./views/clientes.view.js";
+import { renderizarKyc } from "./views/kyc.view.js";
 import { renderizarCaixa } from "./views/caixa.view.js";
 import { renderizarBalcao } from "./views/balcao.view.js";
 import { renderizarUsuarios } from "./views/usuarios.view.js";
+import { renderizarPerfil } from "./views/perfil.view.js";
 import { renderizarIntegracoes } from "./views/integracoes.view.js";
 import { renderizarParceiros } from "./views/parceiros.view.js";
 import { renderizarOperacional } from "./views/operacional.view.js";
 import { renderizarContabilidade } from "./views/contabilidade.view.js";
 import { renderizarRelatorios } from "./views/relatorios.view.js";
-
+import { renderizarComunicacao } from "./views/comunicacao.view.js";
+import { renderizarConfigComunicacao } from "./views/config-comunicacao.view.js";
+import { renderizarNotificacoes } from "./views/notificacoes.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -83,6 +87,7 @@ async function renderizarAplicacao(): Promise<void> {
       case "#relatorios":
         renderizarRelatorios(viewContainer);
         break;
+
       case "#operacional":
         await renderizarOperacional(viewContainer);
         break;
@@ -103,6 +108,16 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado para consulta de clientes.</div>
+          `;
+        }
+        break;
+
+      case "#kyc":
+        if (authState.temPermissao("kyc:analisar") || authState.temPermissao("clientes:consultar")) {
+          await renderizarKyc(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado à verificação de identidade e KYC.</div>
           `;
         }
         break;
@@ -135,6 +150,34 @@ async function renderizarAplicacao(): Promise<void> {
             <div class="alert-box alert-error">Acesso não autorizado à Gestão de Parceiros Comerciais.</div>
           `;
         }
+        break;
+
+      case "#comunicacao":
+        if (authState.temPermissao("comunicacao:consultar") || authState.temPermissao("gerir_usuarios")) {
+          await renderizarComunicacao(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado à Gestão de Comunicação.</div>
+          `;
+        }
+        break;
+
+      case "#config-comunicacao":
+        if (authState.temPermissao("comunicacao:gerir") || authState.temPermissao("gerir_usuarios")) {
+          await renderizarConfigComunicacao(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado às Configurações de Provedores.</div>
+          `;
+        }
+        break;
+
+      case "#notificacoes":
+        await renderizarNotificacoes(viewContainer);
+        break;
+
+      case "#perfil":
+        await renderizarPerfil(viewContainer);
         break;
 
       case "#taxas":
