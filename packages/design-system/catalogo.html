@@ -13,16 +13,23 @@
     <link rel="stylesheet" href="src/tokens.css" />
     <link rel="stylesheet" href="src/componentes.css" />
     <style>
-      header { background: var(--cor-superficie); border-bottom: 1px solid var(--cor-borda-suave); }
-      header .nz-contentor { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4); min-height: 72px; }
+      header { background: var(--cor-superficie); border-bottom: 1px solid var(--cor-borda); position: sticky; top: 0; z-index: 5; }
+      header .nz-contentor { display: flex; align-items: center; justify-content: space-between; gap: var(--esp-4); min-height: 64px; }
       .marca { display: flex; align-items: center; gap: var(--esp-3); text-decoration: none; }
-      .marca img { width: 44px; height: 44px; border-radius: 50%; }
-      .marca strong { font-family: var(--fonte-titulos); color: var(--cor-primaria); letter-spacing: var(--espacamento-letras-marca); font-size: var(--texto-xl); }
+      .marca img { width: 36px; height: 36px; border-radius: 50%; }
+      .marca strong { font-family: var(--fonte-marca); color: var(--cor-primaria); letter-spacing: var(--espacamento-letras-marca); }
       main { padding-block: var(--esp-10); display: grid; gap: var(--esp-10); }
-      .grelha { display: grid; gap: var(--esp-4); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-      .amostra { height: 64px; border-radius: var(--raio-md); border: 1px solid var(--cor-borda-suave); }
-      .linha { display: flex; flex-wrap: wrap; gap: var(--esp-3); align-items: center; }
+      section { display: grid; gap: var(--esp-4); }
       section > h2 { font-size: var(--texto-xl); }
+      section > p { color: var(--cor-texto-discreto); max-width: 72ch; }
+      .grelha { display: grid; gap: var(--esp-4); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+      .amostra { height: 56px; border-radius: var(--raio-md); border: 1px solid var(--cor-borda); }
+      .amostra + p { font-size: var(--texto-sm); margin-top: var(--esp-1); }
+      .linha { display: flex; flex-wrap: wrap; gap: var(--esp-3); align-items: center; }
+      .tipo > * + * { margin-top: var(--esp-2); }
+      .cartoes { display: grid; gap: var(--esp-8); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+      .cartoes figure { margin: 0; display: grid; gap: var(--esp-3); justify-items: start; }
+      .cartoes figcaption { font-size: var(--texto-sm); color: var(--cor-texto-discreto); }
     </style>
   </head>
   <body>
@@ -34,70 +41,191 @@
     </header>
     <main class="nz-contentor">
       <section>
-        <p class="nz-filete">Casa de Câmbios</p>
-        <h1>Sistema de design NZAIDI</h1>
-        <p>Catálogo de referência: cores, tipografia e componentes partilhados por todas as áreas.</p>
+        <p class="nz-filete">Sistema de design · versão 2</p>
+        <h1>Livro-Razão: linguagem visual NZAIDI</h1>
+        <p>Referência de cores, tipografia e componentes partilhados pelo backoffice, pela área do cliente e pela área dos parceiros. Os exemplos abaixo usam marcadores (—, ••••), nunca dados reais.</p>
       </section>
 
       <section>
         <h2>Cores da marca</h2>
+        <p>Azul-marinho e branco dominam. O dourado é um fio de destaque (navegação activa, filetes, chip do cartão), nunca uma superfície nem um estado.</p>
         <div class="grelha">
           <div><div class="amostra" style="background: var(--nz-azul-800)"></div><p>Azul corporativo · #052D62</p></div>
-          <div><div class="amostra" style="background: var(--nz-azul-claro-200)"></div><p>Azul-claro · #C9DBF2</p></div>
-          <div><div class="amostra" style="background: var(--nz-branco)"></div><p>Branco · #FFFFFF</p></div>
-          <div><div class="amostra" style="background: var(--nz-preto)"></div><p>Preto · #0B0F17</p></div>
-          <div><div class="amostra" style="background: var(--nz-castanho-600)"></div><p>Castanho · #94671D</p></div>
+          <div><div class="amostra" style="background: var(--cor-nav-fundo)"></div><p>Navegação · #04203F</p></div>
+          <div><div class="amostra" style="background: var(--nz-azul-claro-100)"></div><p>Azul-claro · #E6EEF9</p></div>
+          <div><div class="amostra" style="background: var(--nz-ardosia-50)"></div><p>Tela · #F5F7FA</p></div>
+          <div><div class="amostra" style="background: var(--nz-ardosia-950)"></div><p>Texto · #0B1220</p></div>
           <div><div class="amostra" style="background: var(--nz-dourado-500)"></div><p>Dourado · #CC9638</p></div>
         </div>
       </section>
 
       <section>
+        <h2>Cores funcionais</h2>
+        <div class="linha">
+          <span class="nz-estado nz-estado--sucesso">Aprovado · activo · confirmada</span>
+          <span class="nz-estado nz-estado--aviso">Pendente · demonstração</span>
+          <span class="nz-estado nz-estado--pendente">Em análise · a aguardar decisão</span>
+          <span class="nz-estado nz-estado--info">Informação · actualização pedida</span>
+          <span class="nz-estado nz-estado--erro">Rejeitado · bloqueado · estornada</span>
+          <span class="nz-estado nz-estado--neutro">Fechado · terminado · inactivo</span>
+        </div>
+        <div class="linha">
+          <span class="nz-moeda nz-moeda--aoa">AOA</span><span class="nz-moeda">USD</span><span class="nz-moeda nz-moeda--eur">EUR</span>
+          <span class="nz-risco nz-risco--baixo"><span class="nz-risco__barras"><i></i><i></i><i></i></span>Baixo</span>
+          <span class="nz-risco nz-risco--medio"><span class="nz-risco__barras"><i></i><i></i><i></i></span>Médio</span>
+          <span class="nz-risco nz-risco--alto"><span class="nz-risco__barras"><i></i><i></i><i></i></span>Alto</span>
+          <span class="nz-valor nz-valor--entrada">+— Kz</span><span class="nz-valor nz-valor--saida">−— Kz</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Tipografia</h2>
+        <p>Inter em toda a interface, com algarismos tabulares nos valores. Montserrat só no logótipo e na marca. Escala: 11 · 12 · 13 · 14 · 16 · 18 · 22 · 28 · 36 px.</p>
+        <div class="nz-painel nz-painel__corpo tipo">
+          <div style="font-size: var(--texto-2xl); font-weight: var(--peso-titulo)">Título de página · 22 px</div>
+          <div style="font-size: var(--texto-lg); font-weight: var(--peso-forte)">Título de painel · 16 px</div>
+          <div>Texto da interface · 14 px. Descrições curtas, em português de Angola.</div>
+          <div class="nz-rotulo">Rótulo de secção · 11 px</div>
+          <div class="nz-kpi__valor nz-valor">— Kz</div>
+          <div class="nz-mono">REF-0000-0000 · referências e códigos</div>
+        </div>
+      </section>
+
+      <section>
         <h2>Indicadores</h2>
-        <div class="grelha">
-          <div class="nz-cartao nz-indicador"><div class="nz-indicador__rotulo">Operações hoje</div><div class="nz-indicador__valor">0</div></div>
-          <div class="nz-cartao nz-indicador"><div class="nz-indicador__rotulo">Casos em revisão</div><div class="nz-indicador__valor">0</div></div>
-          <div class="nz-cartao nz-indicador"><div class="nz-indicador__rotulo">Reporte BNA</div><div class="nz-indicador__valor"><span class="nz-estado nz-estado--pendente">Por gerar</span></div></div>
+        <div class="nz-kpis">
+          <div class="nz-kpi"><div class="nz-kpi__topo"><span class="nz-kpi__rotulo">Operações de hoje</span></div><div class="nz-kpi__valor nz-valor">—</div><span class="nz-kpi__detalhe">Sem dados neste exemplo</span></div>
+          <div class="nz-kpi"><div class="nz-kpi__topo"><span class="nz-kpi__rotulo">Fila KYC</span><span class="nz-estado nz-estado--aviso">Pendente</span></div><div class="nz-kpi__valor nz-valor">—<small>clientes</small></div></div>
+          <div class="nz-kpi"><div class="nz-kpi__topo"><span class="nz-kpi__rotulo">Reporte BNA</span><span class="nz-estado nz-estado--pendente">Por gerar</span></div><div class="nz-kpi__valor nz-valor">—</div></div>
         </div>
       </section>
 
       <section>
-        <h2>Tabela de câmbio</h2>
+        <h2>Tabela financeira</h2>
+        <p>Abaixo de 768 px, <code>.nz-tabela--cartoes</code> transforma cada linha num cartão; cada célula leva <code>data-label</code> e a principal <code>data-principal</code>.</p>
         <p class="nz-aviso-demo">Dados de demonstração. Não são taxas oficiais da NZAIDI.</p>
-        <div class="nz-tabela-envoltorio">
-          <table class="nz-tabela">
-            <thead><tr><th>Moeda</th><th class="nz-valor">Referência</th><th class="nz-valor">Compra</th><th class="nz-valor">Venda</th></tr></thead>
-            <tbody>
-              <tr><td>USD · Dólar</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td></tr>
-              <tr><td>EUR · Euro</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td><td class="nz-valor">— Kz</td></tr>
-            </tbody>
-          </table>
+        <div class="nz-painel">
+          <div class="nz-tabela-envoltorio">
+            <table class="nz-tabela nz-tabela--cartoes">
+              <thead><tr><th>Moeda</th><th class="nz-tabela__direita">Referência</th><th class="nz-tabela__direita">Compra</th><th class="nz-tabela__direita">Venda</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td data-principal><span class="nz-moeda">USD</span></td><td data-label="Referência" class="nz-valor">— Kz</td><td data-label="Compra" class="nz-valor">— Kz</td><td data-label="Venda" class="nz-valor">— Kz</td><td data-label="Estado"><span class="nz-estado nz-estado--aviso">Demonstração</span></td></tr>
+                <tr><td data-principal><span class="nz-moeda nz-moeda--eur">EUR</span></td><td data-label="Referência" class="nz-valor">— Kz</td><td data-label="Compra" class="nz-valor">— Kz</td><td data-label="Venda" class="nz-valor">— Kz</td><td data-label="Estado"><span class="nz-estado nz-estado--sucesso">Oficial</span></td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       <section>
-        <h2>Botões e estados</h2>
+        <h2>Botões</h2>
         <div class="linha">
           <button class="nz-botao nz-botao--primario" type="button">Confirmar operação</button>
           <button class="nz-botao nz-botao--secundario" type="button">Simular</button>
+          <button class="nz-botao nz-botao--fantasma" type="button">Ver detalhe</button>
+          <button class="nz-botao nz-botao--perigo-contorno" type="button">Fechar caixa</button>
           <button class="nz-botao nz-botao--perigo" type="button">Bloquear</button>
+          <button class="nz-botao nz-botao--primario" type="button" aria-busy="true">A gravar</button>
           <button class="nz-botao nz-botao--primario" type="button" disabled>Indisponível</button>
-        </div>
-        <div class="linha" style="margin-top: var(--esp-4)">
-          <span class="nz-estado nz-estado--sucesso">Concluída</span>
-          <span class="nz-estado nz-estado--pendente">Em revisão</span>
-          <span class="nz-estado nz-estado--aviso">À espera de pagamento</span>
-          <span class="nz-estado nz-estado--erro">Bloqueada</span>
-          <span class="nz-estado nz-estado--info">Cotação válida 90 s</span>
         </div>
       </section>
 
       <section>
         <h2>Formulário</h2>
-        <form class="nz-cartao" style="display: grid; gap: var(--esp-4); max-width: 420px" onsubmit="return false">
-          <div class="nz-campo"><label for="valor">Valor a trocar</label><input class="nz-entrada" id="valor" inputmode="decimal" placeholder="0,00" /><span class="nz-campo__ajuda">Em kwanzas (Kz)</span></div>
-          <div class="nz-campo"><label for="moeda">Moeda</label><select class="nz-seletor" id="moeda"><option>USD</option><option>EUR</option></select></div>
+        <form class="nz-painel nz-painel__corpo nz-formulario" style="max-width: 560px" onsubmit="return false">
+          <div class="nz-campo">
+            <span class="nz-campo__rotulo">Tipo de operação</span>
+            <div class="nz-segmentado nz-segmentado--bloco" role="radiogroup" aria-label="Tipo de operação">
+              <button type="button" class="nz-segmentado__opcao" role="radio" aria-checked="true">Compra</button>
+              <button type="button" class="nz-segmentado__opcao" role="radio" aria-checked="false">Venda</button>
+            </div>
+          </div>
+          <div class="nz-grelha-campos">
+            <div class="nz-campo"><label class="nz-campo__rotulo" for="valor">Montante<span class="nz-campo__obrigatorio">*</span></label><div class="nz-entrada-grupo"><input class="nz-entrada nz-entrada--numero" id="valor" inputmode="decimal" placeholder="0.00" /><span class="nz-entrada-grupo__sufixo">USD</span></div><span class="nz-campo__ajuda">Use ponto decimal.</span></div>
+            <div class="nz-campo"><label class="nz-campo__rotulo" for="moeda">Moeda</label><select class="nz-seletor" id="moeda"><option>USD</option><option>EUR</option></select></div>
+            <div class="nz-campo nz-campo--inteiro"><label class="nz-campo__rotulo" for="erro">Campo com erro</label><input class="nz-entrada" id="erro" aria-invalid="true" value="12,3,4" /><span class="nz-campo__erro">Montante inválido.</span></div>
+          </div>
+          <div class="nz-alerta nz-alerta--erro">Mensagem de erro devolvida pelo servidor.</div>
           <button class="nz-botao nz-botao--primario" type="submit">Pedir cotação</button>
         </form>
+      </section>
+
+      <section>
+        <h2>Alertas e estados de página</h2>
+        <div class="nz-alerta nz-alerta--info">Informação contextual.</div>
+        <div class="nz-alerta nz-alerta--sucesso">Acção concluída.</div>
+        <div class="nz-alerta nz-alerta--aviso">Atenção antes de continuar.</div>
+        <div class="grelha">
+          <div class="nz-painel"><div class="nz-esqueleto"><div class="nz-esqueleto__linha"></div><div class="nz-esqueleto__linha"></div><div class="nz-esqueleto__linha"></div></div></div>
+          <div class="nz-painel"><div class="nz-vazio"><span class="nz-vazio__icone"><svg class="nz-icone" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/></svg></span><p class="nz-vazio__titulo">Sem dados</p><p class="nz-vazio__texto">Estado vazio.</p></div></div>
+          <div class="nz-painel"><div class="nz-vazio nz-vazio--erro"><span class="nz-vazio__icone"><svg class="nz-icone" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg></span><p class="nz-vazio__titulo">Erro</p><p class="nz-vazio__texto">Serviço indisponível.</p></div></div>
+          <div class="nz-painel"><div class="nz-vazio nz-vazio--aviso"><span class="nz-vazio__icone"><svg class="nz-icone" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><p class="nz-vazio__titulo">Sem acesso</p><p class="nz-vazio__texto">Perfil sem autorização.</p></div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Cartão virtual (apresentação 3D)</h2>
+        <p>Proporção ISO ID-1 (85,6 × 54 mm). Toque ou clique para ver o verso. Só os 4 últimos dígitos podem ser mostrados; número completo, CVV e validade nunca passam pela interface. Componente reservado ao módulo de cartões, que depende da decisão D-10 (Wise).</p>
+        <div class="cartoes">
+          <figure>
+            <div class="nz-cartao-virtual nz-cartao-virtual--ativo">
+              <button type="button" class="nz-cartao-virtual__palco" aria-pressed="false" aria-label="Cartão de exemplo activo, terminado em ••••. Mostrar verso">
+                <span class="nz-cartao-virtual__face nz-cartao-virtual__frente">
+                  <span class="nz-cartao-virtual__linha"><span class="nz-cartao-virtual__marca">NZAIDI</span><span class="nz-cartao-virtual__moeda">USD</span></span>
+                  <span class="nz-cartao-virtual__chip"></span>
+                  <span class="nz-cartao-virtual__digitos">•••• •••• •••• ••••</span>
+                  <span class="nz-cartao-virtual__linha"><span><span class="nz-cartao-virtual__rotulo">Titular</span><span class="nz-cartao-virtual__titular">Exemplo</span></span><span class="nz-cartao-virtual__rotulo">Virtual</span></span>
+                </span>
+                <span class="nz-cartao-virtual__face nz-cartao-virtual__verso">
+                  <span class="nz-cartao-virtual__tarja"></span>
+                  <span class="nz-cartao-virtual__aviso">Os dados completos do cartão só são mostrados na aplicação do emissor, após confirmação de identidade.</span>
+                </span>
+              </button>
+            </div>
+            <figcaption><span class="nz-estado nz-estado--sucesso">Activo</span></figcaption>
+          </figure>
+          <figure>
+            <div class="nz-cartao-virtual nz-cartao-virtual--pendente">
+              <button type="button" class="nz-cartao-virtual__palco" aria-pressed="false" aria-label="Cartão de exemplo pendente">
+                <span class="nz-cartao-virtual__face nz-cartao-virtual__frente">
+                  <span class="nz-cartao-virtual__linha"><span class="nz-cartao-virtual__marca">NZAIDI</span><span class="nz-cartao-virtual__moeda">EUR</span></span>
+                  <span class="nz-cartao-virtual__chip"></span>
+                  <span class="nz-cartao-virtual__digitos">•••• •••• •••• ••••</span>
+                  <span class="nz-cartao-virtual__linha"><span class="nz-cartao-virtual__rotulo">Em emissão</span></span>
+                </span>
+                <span class="nz-cartao-virtual__face nz-cartao-virtual__verso"><span class="nz-cartao-virtual__tarja"></span></span>
+              </button>
+            </div>
+            <figcaption><span class="nz-estado nz-estado--pendente">Pendente</span></figcaption>
+          </figure>
+          <figure>
+            <div class="nz-cartao-virtual nz-cartao-virtual--suspenso">
+              <button type="button" class="nz-cartao-virtual__palco" aria-pressed="false" aria-label="Cartão de exemplo suspenso">
+                <span class="nz-cartao-virtual__face nz-cartao-virtual__frente">
+                  <span class="nz-cartao-virtual__linha"><span class="nz-cartao-virtual__marca">NZAIDI</span><span class="nz-cartao-virtual__moeda">USD</span></span>
+                  <span class="nz-cartao-virtual__chip"></span>
+                  <span class="nz-cartao-virtual__digitos">•••• ••••</span>
+                  <span class="nz-cartao-virtual__linha"><span class="nz-cartao-virtual__rotulo">Suspenso</span></span>
+                </span>
+                <span class="nz-cartao-virtual__face nz-cartao-virtual__verso"><span class="nz-cartao-virtual__tarja"></span></span>
+              </button>
+            </div>
+            <figcaption><span class="nz-estado nz-estado--aviso">Suspenso</span></figcaption>
+          </figure>
+          <figure>
+            <div class="nz-cartao-virtual nz-cartao-virtual--terminado">
+              <div class="nz-cartao-virtual__palco" aria-label="Cartão de exemplo terminado">
+                <span class="nz-cartao-virtual__face nz-cartao-virtual__frente">
+                  <span class="nz-cartao-virtual__linha"><span class="nz-cartao-virtual__marca">NZAIDI</span><span class="nz-cartao-virtual__moeda">USD</span></span>
+                  <span class="nz-cartao-virtual__chip"></span>
+                  <span class="nz-cartao-virtual__digitos">•••• ••••</span>
+                  <span class="nz-cartao-virtual__linha"><span class="nz-cartao-virtual__rotulo">Terminado</span></span>
+                </span>
+              </div>
+            </div>
+            <figcaption><span class="nz-estado nz-estado--neutro">Terminado</span></figcaption>
+          </figure>
+        </div>
       </section>
     </main>
     <script>
@@ -106,6 +234,15 @@
         const escuro = r.dataset.tema === "escuro" || (!r.dataset.tema && matchMedia("(prefers-color-scheme: dark)").matches);
         r.dataset.tema = escuro ? "claro" : "escuro";
       });
+      document.querySelectorAll("button.nz-cartao-virtual__palco").forEach((b) =>
+        b.addEventListener("click", () => b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")))
+      );
+      document.querySelectorAll(".nz-segmentado").forEach((g) =>
+        g.addEventListener("click", (e) => {
+          const o = e.target.closest(".nz-segmentado__opcao");
+          if (o) g.querySelectorAll(".nz-segmentado__opcao").forEach((x) => x.setAttribute("aria-checked", String(x === o)));
+        })
+      );
     </script>
   </body>
 </html>

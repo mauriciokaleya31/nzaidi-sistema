@@ -29,3 +29,5 @@ export const marca = {
 } as const;
 
 export type CorDaMarca = keyof typeof marca.cores;
+
+export { icone, NOMES_ICONES, type NomeIcone } from "./icones.js";

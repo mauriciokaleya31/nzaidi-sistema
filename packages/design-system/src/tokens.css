@@ -1,86 +1,148 @@
 /*
- * NZAIDI — tokens de design.
- * Fonte única de cores, tipografia, espaçamentos e componentes base para
- * site público, área do cliente, administração e área dos parceiros.
- * Cores extraídas do logótipo oficial (assets/logotipo-completo.png).
+ * NZAIDI: tokens de design (versão 2, "Livro-Razão").
+ * Fonte única de cores, tipografia, espaçamentos, formas, profundidade e movimento
+ * para o backoffice, a área do cliente e a área dos parceiros.
+ * Cores da marca extraídas do logótipo oficial (assets/logotipo-completo.png).
  *
- * Hierarquia: azul e branco dominam; preto para texto; azul-claro para fundos
- * suaves; dourado e castanho só em pormenores (indicadores, filetes, destaques).
+ * Princípios:
+ *  1. Azul-marinho e branco dominam. O dourado é um fio, nunca uma superfície.
+ *  2. Os estados têm cores próprias e nunca usam o dourado.
+ *  3. Bordas finas em vez de sombras. Sombras só para o que flutua (menus, modais).
+ *  4. Números sempre com algarismos tabulares, alinhados à direita.
  */
 
 :root {
-  /* --- Paleta da marca (valores fixos) --- */
+  /* ---------------------------------------------------------------- Marca */
+  --nz-azul-950: #021530;
   --nz-azul-900: #031d42;
   --nz-azul-800: #052d62; /* azul corporativo do logótipo */
   --nz-azul-700: #0c3f82;
   --nz-azul-600: #1a56a6;
+  --nz-azul-500: #2f6dc2;
   --nz-azul-claro-400: #6f9fd8;
   --nz-azul-claro-200: #c9dbf2;
   --nz-azul-claro-100: #e6eef9;
   --nz-azul-claro-50: #f3f7fc;
   --nz-dourado-500: #cc9638; /* dourado do logótipo */
   --nz-dourado-300: #eac172;
-  --nz-castanho-600: #94671d; /* sombra do dourado no logótipo */
+  --nz-castanho-600: #94671d;
   --nz-castanho-800: #5e4012;
   --nz-preto: #0b0f17;
   --nz-branco: #ffffff;
-  --nz-cinza-700: #3d4554;
-  --nz-cinza-500: #6b7385;
-  --nz-cinza-300: #c4c9d4;
-  --nz-cinza-100: #eef0f4;
 
-  /* --- Papéis semânticos (modo claro) --- */
-  --cor-fundo: var(--nz-branco);
-  --cor-fundo-suave: var(--nz-azul-claro-50);
-  --cor-superficie: var(--nz-branco);
-  --cor-superficie-elevada: var(--nz-branco);
-  --cor-borda: var(--nz-cinza-300);
-  --cor-borda-suave: var(--nz-cinza-100);
-  --cor-texto: var(--nz-preto);
-  --cor-texto-secundario: var(--nz-cinza-700);
-  --cor-texto-discreto: var(--nz-cinza-500);
+  /* Neutros "ardósia" (ligeiramente azulados, para conviver com o marinho) */
+  --nz-ardosia-950: #0b1220;
+  --nz-ardosia-900: #121a2a;
+  --nz-ardosia-800: #1f2a3d;
+  --nz-ardosia-700: #344158;
+  --nz-ardosia-600: #4a5770;
+  --nz-ardosia-500: #66728a;
+  --nz-ardosia-400: #8e98ad;
+  --nz-ardosia-300: #c3cad7;
+  --nz-ardosia-200: #dde2ea;
+  --nz-ardosia-150: #e6eaf0;
+  --nz-ardosia-100: #eef1f5;
+  --nz-ardosia-50: #f5f7fa;
+
+  /* Compatibilidade com a versão 1 */
+  --nz-cinza-700: var(--nz-ardosia-700);
+  --nz-cinza-500: var(--nz-ardosia-500);
+  --nz-cinza-300: var(--nz-ardosia-300);
+  --nz-cinza-100: var(--nz-ardosia-100);
+
+  /* ------------------------------------------------- Papéis (modo claro) */
+  --cor-fundo: var(--nz-ardosia-50); /* tela da aplicação */
+  --cor-fundo-suave: var(--nz-ardosia-100);
+  --cor-superficie: var(--nz-branco); /* painéis, tabelas */
+  --cor-superficie-elevada: var(--nz-branco); /* menus, modais */
+  --cor-superficie-realce: var(--nz-azul-claro-50); /* linha seleccionada, cabeçalho de grupo */
+  --cor-borda: var(--nz-ardosia-200);
+  --cor-borda-forte: var(--nz-ardosia-300);
+  --cor-borda-suave: var(--nz-ardosia-150);
+  --cor-texto: var(--nz-ardosia-950);
+  --cor-texto-secundario: var(--nz-ardosia-700);
+  --cor-texto-discreto: var(--nz-ardosia-500);
+  --cor-texto-desactivado: var(--nz-ardosia-400);
   --cor-texto-inverso: var(--nz-branco);
   --cor-primaria: var(--nz-azul-800);
   --cor-primaria-hover: var(--nz-azul-700);
+  --cor-primaria-activa: var(--nz-azul-900);
   --cor-primaria-suave: var(--nz-azul-claro-100);
+  --cor-ligacao: var(--nz-azul-600);
   --cor-destaque: var(--nz-dourado-500);
   --cor-destaque-texto: var(--nz-castanho-600);
-  --cor-foco: var(--nz-azul-600);
+  --cor-foco: var(--nz-azul-500);
 
-  /* Estados (nunca usar dourado como estado) */
-  --cor-sucesso: #13734b;
-  --cor-sucesso-suave: #e3f4ec;
-  --cor-aviso: #8a5a00;
-  --cor-aviso-suave: #fdf3dc;
+  /* Navegação institucional (barra lateral) */
+  --cor-nav-fundo: #04203f;
+  --cor-nav-fundo-2: #062a52;
+  --cor-nav-texto: #c5d3e6;
+  --cor-nav-texto-forte: #ffffff;
+  --cor-nav-hover: rgb(255 255 255 / 0.06);
+  --cor-nav-activo: rgb(255 255 255 / 0.1);
+  --cor-nav-borda: rgb(255 255 255 / 0.08);
+  --cor-nav-rotulo: #7f95b4;
+
+  /* ------------------------------------------- Estados (nunca o dourado) */
+  --cor-sucesso: #0f7a4f;
+  --cor-sucesso-suave: #e4f4ec;
+  --cor-sucesso-borda: #a9dcc2;
+  --cor-aviso: #8f5300;
+  --cor-aviso-suave: #fdf3dd;
+  --cor-aviso-borda: #f0d29a;
   --cor-erro: #b42318;
-  --cor-erro-suave: #fdeceb;
+  --cor-erro-suave: #fdecea;
+  --cor-erro-borda: #f5b9b2;
   --cor-info: var(--nz-azul-600);
   --cor-info-suave: var(--nz-azul-claro-100);
-  /* Pendente / em revisão: distinto de sucesso e de erro */
-  --cor-pendente: #5b4bb7;
-  --cor-pendente-suave: #eeebfb;
+  --cor-info-borda: #b9cfee;
+  --cor-pendente: #5640b0; /* em revisão, a aguardar decisão */
+  --cor-pendente-suave: #efecfb;
+  --cor-pendente-borda: #cdc5f1;
+  --cor-neutro: var(--nz-ardosia-600); /* terminado, inactivo, encerrado */
+  --cor-neutro-suave: var(--nz-ardosia-100);
+  --cor-neutro-borda: var(--nz-ardosia-300);
 
-  /* --- Tipografia --- */
-  --fonte-titulos: "Montserrat", "Segoe UI", system-ui, sans-serif;
+  /* Fluxos de dinheiro */
+  --cor-entrada: var(--cor-sucesso);
+  --cor-saida: var(--cor-erro);
+
+  /* Visualização de dados (ordem fixa por série) */
+  --cor-dados-1: var(--nz-azul-800);
+  --cor-dados-2: #3a86c8;
+  --cor-dados-3: #8fb6e3;
+  --cor-dados-4: var(--nz-dourado-500);
+  --cor-dados-grelha: var(--nz-ardosia-150);
+
+  /* ----------------------------------------------------------- Tipografia */
+  --fonte-marca: "Montserrat", "Segoe UI", system-ui, sans-serif; /* só a marca */
+  --fonte-titulos: "Inter", "Segoe UI", system-ui, sans-serif;
   --fonte-texto: "Inter", "Segoe UI", system-ui, sans-serif;
-  /* Valores monetários: algarismos tabulares para alinhar colunas */
   --fonte-numeros: "Inter", "Segoe UI", system-ui, sans-serif;
-  --texto-xs: 0.75rem;
-  --texto-sm: 0.875rem;
-  --texto-md: 1rem;
-  --texto-lg: 1.125rem;
-  --texto-xl: 1.375rem;
-  --texto-2xl: 1.75rem;
-  --texto-3xl: 2.25rem;
+  --fonte-mono: "JetBrains Mono", "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+
+  --texto-2xs: 0.6875rem; /* 11 px: rótulos em maiúsculas */
+  --texto-xs: 0.75rem; /* 12 px */
+  --texto-sm: 0.8125rem; /* 13 px: tabelas e ajuda */
+  --texto-md: 0.875rem; /* 14 px: corpo da interface */
+  --texto-lg: 1rem; /* 16 px */
+  --texto-xl: 1.125rem; /* 18 px: título de painel */
+  --texto-2xl: 1.375rem; /* 22 px: título de página */
+  --texto-3xl: 1.75rem; /* 28 px: valor principal */
+  --texto-4xl: 2.25rem; /* 36 px: valor de destaque */
   --peso-normal: 400;
   --peso-medio: 500;
   --peso-forte: 600;
-  --peso-titulo: 700;
-  --altura-linha: 1.55;
+  --peso-titulo: 650;
+  --altura-linha: 1.5;
+  --altura-linha-titulo: 1.25;
   --espacamento-letras-marca: 0.18em;
+  --espacamento-rotulo: 0.06em;
 
-  /* --- Espaçamentos (escala de 4 px) --- */
+  /* ------------------------------------------- Espaçamentos (base 4 px) */
+  --esp-0-5: 0.125rem;
   --esp-1: 0.25rem;
+  --esp-1-5: 0.375rem;
   --esp-2: 0.5rem;
   --esp-3: 0.75rem;
   --esp-4: 1rem;
@@ -91,23 +153,44 @@
   --esp-12: 3rem;
   --esp-16: 4rem;
 
-  /* --- Formas e profundidade --- */
-  --raio-sm: 4px;
+  /* ------------------------------------------------- Formas e profundidade */
+  --raio-xs: 4px;
+  --raio-sm: 6px; /* controlos */
   --raio-md: 8px;
-  --raio-lg: 12px;
+  --raio-lg: 10px; /* painéis */
+  --raio-xl: 14px; /* modais, cartões de pagamento */
   --raio-total: 999px;
-  --sombra-1: 0 1px 2px rgb(5 45 98 / 0.08);
-  --sombra-2: 0 4px 16px rgb(5 45 98 / 0.1);
-  --sombra-3: 0 12px 32px rgb(5 45 98 / 0.14);
+  --sombra-1: 0 1px 2px rgb(11 18 32 / 0.05);
+  --sombra-2: 0 4px 12px -2px rgb(11 18 32 / 0.1), 0 2px 4px -2px rgb(11 18 32 / 0.06);
+  --sombra-3: 0 16px 40px -8px rgb(11 18 32 / 0.22), 0 4px 10px -4px rgb(11 18 32 / 0.1);
+  --anel-foco: 0 0 0 3px rgb(47 109 194 / 0.28);
 
-  /* --- Layout --- */
-  --largura-conteudo: 1200px;
+  /* --------------------------------------------------------------- Layout */
+  --largura-conteudo: 1320px;
+  --largura-leitura: 720px;
   --margem-lateral: 16px;
-  --altura-controlo: 44px; /* alvo de toque mínimo */
+  --altura-controlo: 40px;
+  --altura-controlo-sm: 32px;
+  --altura-toque: 44px; /* alvo de toque mínimo em ecrãs tácteis */
+  --largura-nav: 248px;
+  --largura-nav-compacta: 72px;
+  --altura-cabecalho: 60px;
+  --altura-nav-inferior: 64px;
+  /* Pontos de quebra (referência; CSS não aceita variáveis em media queries):
+     telemóvel < 768 px · tablet 768–1099 px · computador ≥ 1100 px · largo ≥ 1440 px */
 
-  /* --- Movimento --- */
+  /* ------------------------------------------------------------- Camadas */
+  --camada-cabecalho: 30;
+  --camada-nav: 40;
+  --camada-menu: 50;
+  --camada-modal: 60;
+  --camada-aviso: 70;
+
+  /* ------------------------------------------------------------ Movimento */
   --duracao-rapida: 120ms;
   --duracao-media: 200ms;
+  --duracao-lenta: 600ms;
+  --curva-padrao: cubic-bezier(0.2, 0, 0, 1);
 
   color-scheme: light;
 }
@@ -118,28 +201,43 @@
     --cor-fundo-suave: #0c1626;
     --cor-superficie: #0f1b2e;
     --cor-superficie-elevada: #15243b;
+    --cor-superficie-realce: #132a4a;
     --cor-borda: #26364f;
+    --cor-borda-forte: #34486a;
     --cor-borda-suave: #1b2a40;
     --cor-texto: #eef2f8;
     --cor-texto-secundario: #b8c2d3;
     --cor-texto-discreto: #8592a8;
+    --cor-texto-desactivado: #5d6a80;
     --cor-texto-inverso: var(--nz-preto);
     --cor-primaria: #6f9fd8;
     --cor-primaria-hover: #8db4e3;
+    --cor-primaria-activa: #a9c7ec;
     --cor-primaria-suave: #132a4a;
+    --cor-ligacao: #8db4e3;
     --cor-destaque: var(--nz-dourado-300);
     --cor-destaque-texto: var(--nz-dourado-300);
     --cor-foco: #8db4e3;
     --cor-sucesso: #4cc38a;
     --cor-sucesso-suave: #0f2a1f;
+    --cor-sucesso-borda: #1d5a3d;
     --cor-aviso: #f0b849;
     --cor-aviso-suave: #2e2410;
+    --cor-aviso-borda: #5c4614;
     --cor-erro: #f2766b;
     --cor-erro-suave: #33140f;
+    --cor-erro-borda: #6b2a22;
     --cor-info: #8db4e3;
     --cor-info-suave: #132a4a;
+    --cor-info-borda: #27497a;
     --cor-pendente: #a99cf0;
     --cor-pendente-suave: #221d40;
+    --cor-pendente-borda: #3e3577;
+    --cor-neutro: #a3adbf;
+    --cor-neutro-suave: #18233a;
+    --cor-neutro-borda: #34486a;
+    --cor-dados-1: #8db4e3;
+    --cor-dados-grelha: #1b2a40;
     color-scheme: dark;
   }
 }
@@ -149,27 +247,42 @@
   --cor-fundo-suave: #0c1626;
   --cor-superficie: #0f1b2e;
   --cor-superficie-elevada: #15243b;
+  --cor-superficie-realce: #132a4a;
   --cor-borda: #26364f;
+  --cor-borda-forte: #34486a;
   --cor-borda-suave: #1b2a40;
   --cor-texto: #eef2f8;
   --cor-texto-secundario: #b8c2d3;
   --cor-texto-discreto: #8592a8;
+  --cor-texto-desactivado: #5d6a80;
   --cor-texto-inverso: var(--nz-preto);
   --cor-primaria: #6f9fd8;
   --cor-primaria-hover: #8db4e3;
+  --cor-primaria-activa: #a9c7ec;
   --cor-primaria-suave: #132a4a;
+  --cor-ligacao: #8db4e3;
   --cor-destaque: var(--nz-dourado-300);
   --cor-destaque-texto: var(--nz-dourado-300);
   --cor-foco: #8db4e3;
   --cor-sucesso: #4cc38a;
   --cor-sucesso-suave: #0f2a1f;
+  --cor-sucesso-borda: #1d5a3d;
   --cor-aviso: #f0b849;
   --cor-aviso-suave: #2e2410;
+  --cor-aviso-borda: #5c4614;
   --cor-erro: #f2766b;
   --cor-erro-suave: #33140f;
+  --cor-erro-borda: #6b2a22;
   --cor-info: #8db4e3;
   --cor-info-suave: #132a4a;
+  --cor-info-borda: #27497a;
   --cor-pendente: #a99cf0;
   --cor-pendente-suave: #221d40;
+  --cor-pendente-borda: #3e3577;
+  --cor-neutro: #a3adbf;
+  --cor-neutro-suave: #18233a;
+  --cor-neutro-borda: #34486a;
+  --cor-dados-1: #8db4e3;
+  --cor-dados-grelha: #1b2a40;
   color-scheme: dark;
 }
