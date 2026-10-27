@@ -28,7 +28,17 @@ export function registrarRotasAuth(
   sessionTtlHoras: number
 ): void {
   // 1. Login
-  app.post("/api/v1/auth/login", async (request, reply) => {
+  app.post(
+    "/api/v1/auth/login",
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
     const dados = LoginSchema.parse(request.body);
     const ip = request.ip;
     const userAgent = request.headers["user-agent"] ?? null;

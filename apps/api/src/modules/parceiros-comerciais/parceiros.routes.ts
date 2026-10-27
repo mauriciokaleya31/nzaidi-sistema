@@ -74,7 +74,17 @@ export function registrarRotasParceiros(
   // AUTENTICAÇÃO DO PARCEIRO
   // ==========================================
 
-  app.post("/api/v1/parceiro/auth/login", async (request, reply) => {
+  app.post(
+    "/api/v1/parceiro/auth/login",
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
     const dados = LoginParceiroSchema.parse(request.body);
     const ip = request.ip;
     const userAgent = request.headers["user-agent"];

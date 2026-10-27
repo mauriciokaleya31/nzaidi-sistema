@@ -56,17 +56,31 @@ export function registrarRotasPortalCliente(
   }
 
   // 1. Registo de Novo Cliente
-  app.post("/api/v1/portal/auth/registo", async (request, reply) => {
+  app.post(
+    "/api/v1/portal/auth/registo",
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
     const dados = RegistoClienteSchema.parse(request.body);
     const ip = request.ip;
     const userAgent = request.headers["user-agent"];
 
     const resultado = await portalService.registarCliente(dados, ip, userAgent);
 
+    const isSecure = process.env.NODE_ENV === "production" ||
+      request.protocol === "https" ||
+      request.headers["x-forwarded-proto"] === "https";
+
     reply.setCookie(COOKIE_NOME, resultado.token, {
       path: "/",
       httpOnly: true,
-      secure: false,
+      secure: isSecure,
       sameSite: "lax",
       maxAge: 24 * 3600,
     });
@@ -82,17 +96,31 @@ export function registrarRotasPortalCliente(
   });
 
   // 2. Login de Cliente
-  app.post("/api/v1/portal/auth/login", async (request, reply) => {
+  app.post(
+    "/api/v1/portal/auth/login",
+    {
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: "1 minute",
+        },
+      },
+    },
+    async (request, reply) => {
     const dados = LoginClienteSchema.parse(request.body);
     const ip = request.ip;
     const userAgent = request.headers["user-agent"];
 
     const resultado = await portalService.loginCliente(dados, ip, userAgent);
 
+    const isSecure = process.env.NODE_ENV === "production" ||
+      request.protocol === "https" ||
+      request.headers["x-forwarded-proto"] === "https";
+
     reply.setCookie(COOKIE_NOME, resultado.token, {
       path: "/",
       httpOnly: true,
-      secure: false,
+      secure: isSecure,
       sameSite: "lax",
       maxAge: 24 * 3600,
     });

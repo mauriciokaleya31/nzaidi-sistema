@@ -160,8 +160,10 @@ export class PortalClienteRepository {
   public buscarSessaoAtiva(rawToken: string, agora = new Date()): SessaoCliente | null {
     const tokenHash = this.hashToken(rawToken);
     const stmt = this.db.prepare(`
-      SELECT * FROM sessoes_clientes 
-      WHERE token_hash = ? AND expira_em > ?
+      SELECT s.* 
+      FROM sessoes_clientes s
+      JOIN clientes c ON c.id = s.cliente_id
+      WHERE s.token_hash = ? AND s.expira_em > ? AND c.estado != 'bloqueado'
     `);
     const row = stmt.get(tokenHash, agora.toISOString()) as SessaoRow | undefined;
     if (!row) return null;
