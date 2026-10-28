@@ -35,8 +35,8 @@ const SalvarConfigServicoSchema = z.object({
   tipo: z.enum(["email", "sms", "whatsapp", "webhook"]),
   fornecedor: z.string().min(2),
   endpoint: z.string().optional().nullable(),
-  credenciais: z.record(z.any()),
-  parametros: z.record(z.any()).optional().nullable(),
+  credenciais: z.record(z.string(), z.any()),
+  parametros: z.record(z.string(), z.any()).optional().nullable(),
   ambiente: z.enum(["teste", "producao"]).default("teste"),
   ativo: z.boolean().default(true),
 });

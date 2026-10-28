@@ -74,7 +74,7 @@ export function registrarRotasBna(app: FastifyInstance, bnaService: BnaService):
     async (req, reply) => {
       const parseResult = GerarReporteInputSchema.safeParse(req.body);
       if (!parseResult.success) {
-        throw new ErroValidacao(parseResult.error.errors[0]?.message ?? "Dados inválidos");
+        throw new ErroValidacao(parseResult.error.issues[0]?.message ?? "Dados inválidos");
       }
 
       const { dataReferencia, tipoMapa } = parseResult.data;
@@ -113,7 +113,7 @@ export function registrarRotasBna(app: FastifyInstance, bnaService: BnaService):
       const { id } = req.params as { id: string };
       const parseResult = RegistarSubmissaoInputSchema.safeParse(req.body);
       if (!parseResult.success) {
-        throw new ErroValidacao(parseResult.error.errors[0]?.message ?? "Dados inválidos");
+        throw new ErroValidacao(parseResult.error.issues[0]?.message ?? "Dados inválidos");
       }
 
       const operador = {

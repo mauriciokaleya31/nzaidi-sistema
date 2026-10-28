@@ -6,7 +6,7 @@ import { exigirPermissao } from "../../plugins/auth.plugin.js";
 
 const ParamMoedaSchema = z.object({
   moeda: z.enum(["USD", "EUR"], {
-    errorMap: () => ({ message: "Apenas as moedas 'USD' e 'EUR' são suportadas no momento." }),
+    message: "Apenas as moedas 'USD' e 'EUR' são suportadas no momento.",
   }),
 });
 

@@ -13,7 +13,7 @@ const CriarUsuarioSchema = z.object({
   email: z.string().email("Endereço de email inválido"),
   senha: z.string().min(10, "A palavra-passe deve ter no mínimo 10 caracteres"),
   funcao: z.enum(FUNCOES, {
-    errorMap: () => ({ message: "Função inválida. Opções: atendente, compliance, tesouraria, gestao" }),
+    message: "Função inválida. Opções: atendente, compliance, tesouraria, gestao",
   }),
   telefone: z.string().optional().nullable(),
   avatarUrl: z.string().optional().nullable(),

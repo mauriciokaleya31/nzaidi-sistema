@@ -48,7 +48,7 @@ export function registrarRotasRemessas(app: FastifyInstance, remessasService: Re
     async (req, reply) => {
       const parseResult = CriarRemessaInputSchema.safeParse(req.body);
       if (!parseResult.success) {
-        throw new ErroValidacao(parseResult.error.errors[0]?.message ?? "Dados da remessa inválidos");
+        throw new ErroValidacao(parseResult.error.issues[0]?.message ?? "Dados da remessa inválidos");
       }
 
       const operador = {
@@ -75,7 +75,7 @@ export function registrarRotasRemessas(app: FastifyInstance, remessasService: Re
       const { id } = req.params as { id: string };
       const parseResult = CancelarRemessaInputSchema.safeParse(req.body);
       if (!parseResult.success) {
-        throw new ErroValidacao(parseResult.error.errors[0]?.message ?? "Motivo de cancelamento inválido");
+        throw new ErroValidacao(parseResult.error.issues[0]?.message ?? "Motivo de cancelamento inválido");
       }
 
       const operador = {
