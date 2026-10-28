@@ -22,6 +22,7 @@ import { renderizarConfigComunicacao } from "./views/config-comunicacao.view.js"
 import { renderizarNotificacoes } from "./views/notificacoes.view.js";
 import { renderizarPagamentosView } from "./views/pagamentos.view.js";
 import { renderCartoesView } from "./views/cartoes.view.js";
+import { renderizarOperacoes } from "./views/operacoes.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -150,6 +151,20 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado ao módulo NZAIDI Cartões.</div>
+          `;
+        }
+        break;
+
+      case "#operacoes":
+        if (
+          authState.temPermissao("operacoes:consultar") ||
+          authState.temPermissao("operacoes:registar") ||
+          authState.temPermissao("caixa:consultar")
+        ) {
+          await renderizarOperacoes(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado ao Diário de Operações Cambiais.</div>
           `;
         }
         break;

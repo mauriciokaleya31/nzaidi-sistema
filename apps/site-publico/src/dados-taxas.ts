@@ -71,7 +71,7 @@ export function obterTabelaTaxas(
     USD: {
       moeda: "USD",
       nome: "Dólar Americano",
-      bandeira: "🇺🇸",
+      bandeira: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M4 14h12M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12a7.9 7.9 0 0 0 7.8 8 7.7 7.7 0 0 0 5.2-2"></path></svg>`,
       simbolo: "US$",
       parametro: parametros.USD,
       taxas: usdTaxas,
@@ -82,7 +82,7 @@ export function obterTabelaTaxas(
     EUR: {
       moeda: "EUR",
       nome: "Euro",
-      bandeira: "🇪🇺",
+      bandeira: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M4 14h12M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12a7.9 7.9 0 0 0 7.8 8 7.7 7.7 0 0 0 5.2-2"></path></svg>`,
       simbolo: "€",
       parametro: parametros.EUR,
       taxas: eurTaxas,

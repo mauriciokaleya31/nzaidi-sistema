@@ -1821,3 +1821,127 @@ img {
     overflow: visible;
   }
 }
+
+
+/* ==========================================================================
+   MODERN DESIGN SYSTEM EXTENSIONS — NZAIDI
+   Visual Fintech Banking Grade (Consistente, Rigoroso, Elegante)
+   ========================================================================== */
+
+/* Botão Dourado Institucional */
+.btn-gold,
+.btn-dourado {
+  background: linear-gradient(135deg, var(--nz-dourado-400) 0%, var(--nz-dourado-500) 50%, var(--nz-dourado-600) 100%);
+  color: #0b0f17;
+  font-weight: 700;
+  border-color: rgba(94, 64, 18, 0.25);
+  box-shadow: 0 4px 14px -2px rgba(204, 150, 56, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.btn-gold:hover:not(:disabled),
+.btn-dourado:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--nz-dourado-300) 0%, var(--nz-dourado-400) 50%, var(--nz-dourado-500) 100%);
+  box-shadow: 0 8px 20px -4px rgba(204, 150, 56, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+/* Refinamento das Tabelas de Dados */
+.data-table th {
+  letter-spacing: 0.08em;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  font-weight: 700;
+  border-bottom: 2px solid var(--border-forte);
+}
+.data-table td {
+  padding: 1rem 1.25rem;
+}
+.data-table tr {
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+.data-table tbody tr:hover td {
+  background-color: #f1f6fd !important;
+}
+
+/* Indicadores de Status com Pulso e Brilho */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.status-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Pulso animado para estados em processamento */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.95); }
+}
+.status-pulsing {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+/* Refinamento dos Cards do Dashboard */
+.card {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card:hover {
+  border-color: #cbd5e1;
+}
+
+/* Barra de Impersonação Aprimorada */
+.banner-impersonacao {
+  background: linear-gradient(90deg, #78350f 0%, #92400e 50%, #b45309 100%);
+  color: #fff;
+  border-bottom: 1px solid rgba(253, 230, 138, 0.4);
+  box-shadow: 0 4px 12px rgba(120, 53, 15, 0.25);
+  font-size: 0.85rem;
+}
+.banner-impersonacao-conteudo {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0.65rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.banner-icone {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  color: #fef08a;
+}
+.btn-encerrar-impersonacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #78350f;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-encerrar-impersonacao:hover {
+  background: #fef3c7;
+  transform: translateY(-1px);
+}
+.btn-encerrar-impersonacao svg {
+  width: 14px;
+  height: 14px;
+}
