@@ -299,13 +299,13 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
 
   container.innerHTML = `
     <div id="sidebar-fundo" class="sidebar-fundo" aria-hidden="true"></div>
-    <aside id="sidebar" class="app-sidebar" aria-label="Menu principal">
+    <aside id="sidebar" class="sidebar app-sidebar" aria-label="Menu principal">
       <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <img src="/simbolo.png" alt="NZAIDI" class="logo-icon" width="36" height="36" />
-          <div class="logo-text">
+        <div class="sidebar-brand">
+          <img src="/simbolo.png" alt="NZAIDI" class="sidebar-logo" width="40" height="40" />
+          <div class="brand-meta">
             <span class="brand-title">NZAIDI</span>
-            <span class="brand-subtitle">CÂMBIOS & VALORES</span>
+            <span class="brand-sub">CÂMBIOS & VALORES</span>
           </div>
         </div>
       </div>
@@ -319,8 +319,8 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
       <div class="sidebar-footer">
         <div class="app-version">
           <span>Versão 2.5.0-homolog</span>
-          <span class="badge-status-online">Sistema Conectado</span>
         </div>
+        <div class="badge-status-online">Sistema Conectado</div>
       </div>
     </aside>
   `;

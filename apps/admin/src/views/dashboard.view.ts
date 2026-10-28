@@ -51,7 +51,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
 
     <!-- 1. CARTÕES DE SALDOS MULTIMOEDA DA TESOURARIA -->
     <div class="dashboard-grid mb-4" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
-      <div class="card card-tesouraria card-aoa" style="border-left: 4px solid #cc9638;">
+      <div class="card card-tesouraria card-aoa">
         <div class="card-header" style="padding-bottom: 4px;">
           <h3 class="card-title" style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
             <span>Tesouraria Nacional (AOA)</span>
@@ -67,7 +67,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
         </div>
       </div>
 
-      <div class="card card-tesouraria card-usd" style="border-left: 4px solid #10b981;">
+      <div class="card card-tesouraria card-usd">
         <div class="card-header" style="padding-bottom: 4px;">
           <h3 class="card-title" style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
             <span>Divisas Estrangeiras (USD)</span>
@@ -82,7 +82,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
         </div>
       </div>
 
-      <div class="card card-tesouraria card-eur" style="border-left: 4px solid #3b82f6;">
+      <div class="card card-tesouraria card-eur">
         <div class="card-header" style="padding-bottom: 4px;">
           <h3 class="card-title" style="font-size: 13px; text-transform: uppercase; color: var(--text-muted); display: flex; align-items: center; justify-content: space-between;">
             <span>Divisas Estrangeiras (EUR)</span>
@@ -100,7 +100,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
 
     <!-- 2. CARTÕES DE ATENÇÃO IMEDIATA (PENDÊNCIAS AGREGADAS) -->
     <div class="dashboard-grid mb-4">
-      <div class="card" style="cursor: pointer; border-left: 3px solid #f59e0b;" onclick="window.location.hash='#kyc'">
+      <div class="card card-clicavel" style="cursor: pointer;" onclick="window.location.hash='#kyc'">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Dossiês KYC Pendentes</span>
           <span class="badge badge-warning" id="pend-kyc-badge">...</span>
@@ -111,7 +111,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
         </div>
       </div>
 
-      <div class="card" style="cursor: pointer; border-left: 3px solid #3b82f6;" onclick="window.location.hash='#operacional?tipo=pedido_cambio'">
+      <div class="card card-clicavel" style="cursor: pointer;" onclick="window.location.hash='#operacional?tipo=pedido_cambio'">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Câmbios por Liquidar</span>
           <span class="badge badge-info" id="pend-cambio-badge">...</span>
@@ -122,7 +122,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
         </div>
       </div>
 
-      <div class="card" style="cursor: pointer; border-left: 3px solid #8b5cf6;" onclick="window.location.hash='#operacional?tipo=pedido_remessa'">
+      <div class="card card-clicavel" style="cursor: pointer;" onclick="window.location.hash='#operacional?tipo=pedido_remessa'">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Remessas em Aberto</span>
           <span class="badge badge-warning" id="pend-remessa-badge">...</span>
@@ -133,7 +133,7 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
         </div>
       </div>
 
-      <div class="card" style="cursor: pointer; border-left: 3px solid #ef4444;" onclick="window.location.hash='#caixa'">
+      <div class="card card-clicavel" style="cursor: pointer;" onclick="window.location.hash='#caixa'">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Sessões de Balcão</span>
           <span class="badge badge-success" id="pend-caixa-badge">Ativo</span>

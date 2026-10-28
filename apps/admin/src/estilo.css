@@ -1945,3 +1945,209 @@ img {
   width: 14px;
   height: 14px;
 }
+
+
+/* OVERRIDE PRIORITÁRIO DA SIDEBAR */
+#sidebar-container {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  max-width: var(--sidebar-w);
+  flex-shrink: 0;
+  background-color: #031d42;
+  z-index: 50;
+}
+
+.sidebar,
+.app-sidebar,
+#sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  max-width: var(--sidebar-w);
+  background:
+    radial-gradient(80% 30% at 0% 0%, rgba(43, 108, 196, 0.25), transparent 70%),
+    linear-gradient(180deg, #031d42 0%, #021530 100%) !important;
+  color: #ffffff !important;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(204, 150, 56, 0.2);
+  box-shadow: 4px 0 24px rgba(2, 21, 48, 0.25);
+  z-index: 60;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-header {
+  padding: 1.25rem 1.15rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(2, 21, 48, 0.4);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  padding: 2px;
+  box-shadow: 0 0 0 2px #cc9638, 0 4px 10px rgba(0, 0, 0, 0.3);
+  flex: none;
+  object-fit: contain;
+}
+
+.brand-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.brand-title {
+  font-family: var(--font-family-title);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.16em;
+  line-height: 1.15;
+}
+
+.brand-sub {
+  font-size: 0.65rem;
+  color: #eac172;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-top: 3px;
+}
+
+.sidebar-nav {
+  padding: 0.85rem 0.65rem;
+  flex-grow: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 219, 242, 0.25) transparent;
+}
+
+.sidebar-nav::before {
+  content: "Menu Principal";
+  display: block;
+  padding: 0.5rem 0.85rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.68rem 0.85rem;
+  margin: 3px 0;
+  border-radius: var(--radius-md);
+  color: #e2e8f0 !important;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  transform: translateX(3px);
+}
+
+.nav-item:hover .nav-icon {
+  color: #eac172;
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(204, 150, 56, 0.28) 0%, rgba(204, 150, 56, 0.06) 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-left: 3px solid #cc9638;
+  padding-left: calc(0.85rem - 3px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.nav-item.active .nav-icon {
+  color: #eac172 !important;
+}
+
+.nav-icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  flex: none;
+}
+
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-footer {
+  padding: 1rem 1.15rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(2, 21, 48, 0.45);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.app-version {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.badge-status-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #34d399;
+  font-weight: 600;
+  font-size: 0.72rem;
+}
+
+.badge-status-online::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+/* ==========================================================================
+   CARTÕES LIMPOS DE ESTATÍSTICA (SEM BORDAS LATERAIS FEIAS)
+   ========================================================================== */
+.card-tesouraria,
+.card-clicavel,
+.card {
+  border-left: 1px solid var(--border-suave) !important;
+}
+
+.card-clicavel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(5, 45, 98, 0.1) !important;
+  border-color: #cbd5e1 !important;
+}
