@@ -10,6 +10,8 @@ import { renderizarClientes } from "./views/clientes.view.js";
 import { renderizarCaixa } from "./views/caixa.view.js";
 import { renderizarBalcao } from "./views/balcao.view.js";
 import { renderizarUsuarios } from "./views/usuarios.view.js";
+import { renderizarBna } from "./views/bna.view.js";
+import { renderizarRemessas } from "./views/remessas.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -76,6 +78,26 @@ async function renderizarAplicacao(): Promise<void> {
         } else {
           viewContainer.innerHTML = `
             <div class="alert-box alert-error">Acesso não autorizado ao Balcão Operacional de Câmbios.</div>
+          `;
+        }
+        break;
+
+      case "#remessas":
+        if (authState.temPermissao("operacoes:consultar") || authState.temPermissao("ver_operacoes")) {
+          await renderizarRemessas(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado ao módulo de Remessas Internacionais.</div>
+          `;
+        }
+        break;
+
+      case "#bna":
+        if (authState.temPermissao("gerar_reportes_bna") || authState.temPermissao("gerir_usuarios")) {
+          await renderizarBna(viewContainer);
+        } else {
+          viewContainer.innerHTML = `
+            <div class="alert-box alert-error">Acesso não autorizado aos Reportes Regulamentares do BNA.</div>
           `;
         }
         break;

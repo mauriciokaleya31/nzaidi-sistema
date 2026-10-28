@@ -12,10 +12,12 @@ export type EstadoOperacao = z.infer<typeof EstadoOperacaoSchema>;
 export interface OperacaoCambio {
   id: string;
   numeroOperacao: string;
-  chaveIdempotencia?: string | null;
+  chaveIdempotencia?: string | null | undefined;
   clienteId: string;
   caixaId: string;
   tipo: TipoOperacao;
+  tipoOperacaoBna?: "cambio" | "remessa" | undefined;
+  sentidoBna?: "compra" | "venda" | undefined;
   moedaDivisa: MoedaDivisa;
   montanteDivisa: string;
   taxaAplicada: string;
@@ -27,9 +29,9 @@ export interface OperacaoCambio {
   operadorId: string;
   operadorNome: string;
   criadoEm: string;
-  motivoEstorno?: string | null;
-  estornadoEm?: string | null;
-  estornadoPorId?: string | null;
+  motivoEstorno?: string | null | undefined;
+  estornadoEm?: string | null | undefined;
+  estornadoPorId?: string | null | undefined;
 }
 
 export interface Bordero {
@@ -47,6 +49,10 @@ export interface Bordero {
   operadorNome: string;
   emitidoEm: string;
   hashVerificacao: string;
+  estado?: "emitido" | "anulado" | undefined;
+  motivoAnulacao?: string | null | undefined;
+  anuladoEm?: string | null | undefined;
+  anuladoPorId?: string | null | undefined;
 }
 
 export const CriarOperacaoInputSchema = z.object({

@@ -35,6 +35,18 @@ const ITENS_MENU: ItemMenu[] = [
     permissaoRequerida: "operacoes:registar",
   },
   {
+    id: "nav-remessas",
+    rota: "#remessas",
+    titulo: "Remessas",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    `,
+    permissaoRequerida: "operacoes:consultar",
+  },
+  {
     id: "nav-clientes",
     rota: "#clientes",
     titulo: "Clientes & KYC",
@@ -72,6 +84,18 @@ const ITENS_MENU: ItemMenu[] = [
       </svg>
     `,
     permissaoRequerida: "ver_taxas",
+  },
+  {
+    id: "nav-bna",
+    rota: "#bna",
+    titulo: "Reportes BNA",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+    `,
+    permissaoRequerida: "gerar_reportes_bna",
   },
   {
     id: "nav-auditoria",

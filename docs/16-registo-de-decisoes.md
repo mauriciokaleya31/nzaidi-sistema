@@ -25,8 +25,11 @@ Só entram aqui decisões do dono do projeto, recuperadas do histórico. Cada li
 | R-19 | Identidade visual: logótipo oficial (N com padrão geométrico dourado em círculo, "NZAIDI · Casa de Câmbios · Confiança, Segurança, Agilidade"). Cores: azul corporativo (principal), azul-claro, branco, preto, castanho e dourado (só pormenores) | Dono do projeto, 25/10/2026 (prompt oficial e logótipo) |
 | R-20 | O dono do projeto autoriza avançar sem esperar aprovação tarefa a tarefa em tudo o que não dependa de decisões comerciais, credenciais, contratos ou autorizações | Dono do projeto, 25/10/2026 (prompt oficial, §3) |
 | R-21 | Os limites de 5 milhões Kz (revisão) e 25 milhões Kz (bloqueio) são **parâmetros propostos**, não regras definitivas (C-01 continua aberta) | Dono do projeto, 25/10/2026 (prompt oficial, §4.D.5) |
+| R-22 | Stack técnica confirmada: TypeScript, Fastify e SQLite piloto (ADR 0005). Laravel/PHP expressamente descartado. Migração para base de dados dedicada obrigatória antes de dados reais | Dono do projeto, 25/10/2026 |
+| R-23 | Borderôs: numeração sequencial atómica atribuída na mesma transação que grava o borderô, com tabela de contador (nunca autoincremento). Borderô anulado mantém o seu número | Dono do projeto, 25/10/2026 |
+| R-24 | Reportes BNA: rotina às 18:30 (Africa/Luanda), geração de dias em atraso no arranque e alerta na Visão Geral se às 18:35 o reporte não existir | Dono do projeto, 25/10/2026 |
+| R-25 | Formatos oficiais Suptech e SSIF configuráveis por tabela; pendente validação final de layout com o BNA | Dono do projeto, 25/10/2026 |
 
 ## O que **não** é decisão
-- Pilha tecnológica (TypeScript, React, base de dados relacional): foi usada nas versões anteriores, mas está como **Proposta** nos ADR.
 - Alojamento (proposta anterior de domínio e site em fornecedor angolano e servidor noutro país): **Proposta**.
 - Qualquer funcionalidade marcada como Proposta nos documentos 05, 06, 07 e 08.

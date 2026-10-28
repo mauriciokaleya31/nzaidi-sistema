@@ -9,17 +9,17 @@ Este documento estabelece o guia oficial de requisitos, configuração de infrae
 ## 2. Requisitos de Infraestrutura
 
 ### 2.1 Servidor e Sistema Operativo
-- **Ambiente Recomendado**: Servidor Linux (Ubuntu 24.04 LTS, Debian 12 ou CloudLinux OS v8+ com cPanel e suporte a Node.js 22+ via CloudLinux Node Selector / Passenger).
-- **Processador**: 2 vCPUs dedicadas (mínimo).
+- **Ambiente**: alojamento: cPanel partilhado.
+- **Processador**: 2 vCPUs (mínimo).
 - **Memória RAM**: 4 GB (mínimo) para suportar os serviços de API, Node.js e rotinas de backup.
-- **Armazenamento**: Disco NVMe com pelo menos 40 GB livres, particionado com permissões estritas para a pasta de uploads (`storage/documentos_kyc/`).
-- **Segurança de Rede**: Firewall configurado permitindo apenas portas 80 (HTTP com redirecionamento forçado para HTTPS), 443 (HTTPS) e porta SSH restrita por chaves RSA/ED25519 com autenticação por password desativada.
+- **Armazenamento**: Disco rápido particionado com permissões estritas para a pasta de uploads (`storage/documentos_kyc/`).
+- **Acesso Remoto**: SSH por chave.
 
 ### 2.2 Requisitos de Software
 - **Node.js**: Versão 22.x LTS (suporte nativo a `node:sqlite` e ESM).
 - **NPM**: Versão 10.x+.
 - **Python**: Versão 3.10+ (para execução do script de cópia de segurança e verificação de integridade `scripts/backup.py`).
-- **Servidor Web / Reverse Proxy**: Nginx 1.24+ ou Apache 2.4 com `mod_proxy` e certificados SSL emitidos via Let's Encrypt / Certbot.
+- **Servidor Web / Reverse Proxy**: Nginx ou Apache com certificados SSL emitidos.
 
 ---
 
@@ -29,9 +29,9 @@ A plataforma está organizada em três componentes complementares:
 
 | Domínio / Subdomínio | Aplicação | Tecnologia | Destino / Entrega |
 | :--- | :--- | :--- | :--- |
-| `https://nzaidi.ao` | Website Institucional & Simulador | HTML5 / Vite / TS | `public_html` (Ficheiros estáticos distribuídos com cache HTTP público) |
-| `https://app.nzaidi.ao` | Backoffice & Painel Administrativo | SPA / Vite / TS | `subdomains/app` (SPA com rewrite de rotas para `index.html`) |
-| `https://api.nzaidi.ao` | API Central e Regras de Negócio | Fastify / TS / Node 22 | Processo local (porta 3000) protegido por Reverse Proxy com proxy_pass |
+| `https://nzaidi.ao` | Website Institucional & Simulador | HTML5 / Vite / TS | Diretório do website público (Ficheiros estáticos distribuídos com cache HTTP público) |
+| `https://app.nzaidi.ao` | Backoffice & Painel Administrativo | SPA / Vite / TS | Subdomínio de gestão (SPA com rewrite de rotas para `index.html`) |
+| `https://api.nzaidi.ao` | API Central e Regras de Negócio | Fastify / TS / Node 22 | Processo local protegido por Reverse Proxy com proxy_pass |
 
 ---
 
@@ -56,8 +56,8 @@ ADMIN_INIT_TOKEN=token_seguro_temporario_utilizado_apenas_para_criar_o_primeiro_
 CORS_ORIGIN=https://nzaidi.ao,https://app.nzaidi.ao
 
 # Armazenamento e Base de Dados
-DATABASE_PATH=/var/www/nzaidi/data/nzaidi.sqlite
-STORAGE_KYC_PATH=/var/www/nzaidi/storage/documentos_kyc
+DATABASE_PATH=./data/nzaidi.sqlite
+STORAGE_KYC_PATH=./storage/documentos_kyc
 ```
 
 > [!CAUTION]
@@ -67,11 +67,11 @@ STORAGE_KYC_PATH=/var/www/nzaidi/storage/documentos_kyc
 
 ## 5. Procedimento de Implantação Passo a Passo
 
-### Etapa 1: Preparação do Servidor e Código
+### Etapa 1: Preparação do Código
 ```bash
 # Clonar o repositório oficial
-git clone https://github.com/mauriciokaleya31/nzaidi-sistema.git /var/www/nzaidi
-cd /var/www/nzaidi
+git clone https://github.com/mauriciokaleya31/nzaidi-sistema.git app
+cd app
 
 # Instalar dependências estritas
 npm ci --omit=dev
@@ -84,14 +84,12 @@ npm run build:api
 
 ### Etapa 2: Estruturação dos Diretórios de Dados e Permissões
 ```bash
-mkdir -p /var/www/nzaidi/data
-mkdir -p /var/www/nzaidi/storage/documentos_kyc
-mkdir -p /var/www/nzaidi/backups
+mkdir -p data
+mkdir -p storage/documentos_kyc
+mkdir -p backups
 
-# Atribuir posse ao utilizador da aplicação
-chown -R nzaidi:nzaidi /var/www/nzaidi
-chmod 700 /var/www/nzaidi/data
-chmod 700 /var/www/nzaidi/storage/documentos_kyc
+chmod 700 data
+chmod 700 storage/documentos_kyc
 ```
 
 ### Etapa 3: Gestão de Processos com PM2 / Systemd
@@ -116,15 +114,15 @@ pm2 save
 pm2 startup
 ```
 
-### Etapa 4: Configuração do Reverse Proxy (Nginx)
+### Etapa 4: Configuração do Reverse Proxy
 ```nginx
 # API Backend
 server {
     server_name api.nzaidi.ao;
     listen 443 ssl http2;
 
-    ssl_certificate /etc/letsencrypt/live/api.nzaidi.ao/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.nzaidi.ao/privkey.pem;
+    ssl_certificate /caminho/para/certificados/fullchain.pem;
+    ssl_certificate_key /caminho/para/certificados/privkey.pem;
 
     client_max_body_size 10M;
 
@@ -134,7 +132,6 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
@@ -146,17 +143,42 @@ server {
 ## 6. Rotinas de Backup e Recuperação de Desastre (Disaster Recovery)
 
 ### 6.1 Agendamento Diário Automático (Cron)
-Adicionar ao `crontab` do utilizador de sistema (`crontab -e`):
+Adicionar ao agendador de tarefas:
 ```cron
 # Executa cópia de segurança diariamente às 02:00 UTC
-0 2 * * * /usr/bin/python3 /var/www/nzaidi/scripts/backup.py --criar >> /var/log/nzaidi_backup.log 2>&1
+0 2 * * * python3 scripts/backup.py --criar >> logs/nzaidi_backup.log 2>&1
 ```
 
 ### 6.2 Teste Periódico de Restauração
 Mensalmente, a equipa de infraestrutura deve executar o autoteste de recuperação:
 ```bash
-python3 /var/www/nzaidi/scripts/backup.py --testar
+python3 scripts/backup.py --testar
 ```
+
+### 6.3 Agendamento Automático dos Reportes BNA (cPanel / Cron de 15 em 15 minutos)
+
+Conforme a regulamentação cambial do Banco Nacional de Angola (BNA), a casa de câmbios deve apurar o fecho diário de câmbio e de remessas e submeter os respetivos mapas às plataformas Suptech e SSIF até à hora de corte oficial (18:30, horário de Luanda / Africa/Luanda).
+
+No cPanel (menu **Cron Jobs / Tarefas Agendadas**), configure a execução contínua de 15 em 15 minutos ao longo de todo o dia:
+
+- **Minuto**: `*/15`
+- **Hora**: `*`
+- **Dia do Mês**: `*`
+- **Mês**: `*`
+- **Dia da Semana**: `*`
+- **Comando**:
+```bash
+cd /caminho/do/projeto && npm run cron:bna >> storage/logs/cron_bna.log 2>&1
+```
+
+**Comportamento Autónomo da Rotina (`npm run cron:bna`)**:
+1. **Decisão Inteligente por Horário Oficial (Africa/Luanda)**: O fuso horário de Angola é calculado internamente pelo motor da aplicação e independe do fuso do servidor de alojamento.
+2. **Antes das 18:30 de Luanda**: Executa exclusivamente a recuperação de eventuais dias passados com movimentos pendentes. O mapa do dia de hoje **não é gerado** enquanto a sessão de câmbio estiver em curso.
+3. **A partir das 18:30 de Luanda**:
+   - Se o mapa de hoje não existir, procede à sua geração imediata (aplicando **Reporte a Zero** declarativo se não houver operações no dia).
+   - Se o mapa já existir e **não tiver sido submetido**, mas entrarem novas operações concluídas (ex.: às 19:00), a rotina **regenera automaticamente o mapa**, atualiza os volumes e o hash SHA-256 e regista o evento `BNA_REPORTE_REGENERADO` na auditoria.
+   - Se o mapa **já tiver sido submetido** em Suptech ou SSIF, a rotina **nunca o altera**. Caso alguma operação seja introduzida com data posterior à submissão oficial, o sistema dispara um alerta regulatório prioritário na Visão Geral (Dashboard).
+4. **Registo na Pista de Auditoria**: Cada ciclo de execução bem-sucedido é guardado com `autor_id = sistema_cron_bna` e ação `BNA_CRON_ROTINA_EXECUTADA`.
 
 ---
 
@@ -167,7 +189,7 @@ Em caso de deteção de anomalia grave pós-publicação:
 1. **Parar a API**: `pm2 stop nzaidi-api`.
 2. **Restaurar a Base de Dados e Documentos**:
    ```bash
-   python3 scripts/backup.py --restaurar backups/nzaidi_backup_ULTIMO_ESTAVEL.tar.gz --destino /var/www/nzaidi
+   python3 scripts/backup.py --restaurar backups/nzaidi_backup_ULTIMO_ESTAVEL.tar.gz --destino ./
    ```
 3. **Reverter a Versão Git**:
    ```bash

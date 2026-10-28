@@ -1,6 +1,38 @@
 # Registo de alterações
 
 Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
+Regra: quem altera o repositório atualiza este ficheiro e docs/14-estado-atual.md.
+
+## [NZAIDI-BASE-01] — Arranque Seguro em Produção, Rotina BNA Autónoma (15 min) e Proteção Pós-Submissão
+- **Arranque Seguro em Produção**: Implementada validação estrita em `apps/api/src/config/env.ts` e `apps/api/src/app.ts`. Com `NODE_ENV=production`, a API recusa terminantemente arrancar se `COOKIE_SECRET`, `ADMIN_INIT_TOKEN` ou `DATABASE_PATH` não estiverem definidos, se `DATABASE_PATH` for `":memory:"`, ou se `CORS_ORIGIN` contiver `localhost` ou `127.0.0.1`. Eliminados todos os valores por defeito sensíveis do código-fonte. 6 novos testes em `apps/api/test/arranque-seguro.test.ts` cobrem cada cenário de recusa.
+- **Servidor de Produção Configurado e Reiniciado**: Variáveis de produção geradas com alta entropia criptográfica e gravadas em `.env` com permissões `600` no servidor. `index.js` desacoplado para leitura dinâmica sem dados sensíveis hardcoded. API online e operacional em `https://app.nzaidi.ao/api/health`.
+- **Rotina BNA de 15 em 15 minutos (npm run cron:bna)**: A rotina opera no fuso `Africa/Luanda`. Antes das 18:30 não gera mapas de hoje (apenas recupera passados). A partir das 18:30 gera os mapas diários. Se o mapa não foi submetido e surgirem novas operações (ex: às 19:00), regenera-o automaticamente e audita o evento. Depois de submetido, o mapa permanece inviolável e qualquer operação posterior ativa alerta na Visão Geral.
+- **Agendamento no cPanel**: Documentado em `docs/18-plano-implantacao-producao.md` o agendamento de 15 em 15 minutos (`*/15 * * * *`).
+
+## [NZAIDI-BASE-01] — Segurança de Infraestrutura, Consultas Parametrizadas e Rotina Automática BNA 18:30
+- **Higienização de Documentação**: Remoção rigorosa de IPs, nomes de servidores privados, caminhos absolutos do servidor e detalhes de SSH de todos os documentos (`docs/14`, `docs/18`, `CHANGELOG`, `README`). Os detalhes privados foram preservados fora do controlo de versões.
+- **Validação Automática de Documentos**: Atualizado `scripts/verificar-documentacao.py` para bloquear automaticamente ficheiros com IPs públicos, nomes de servidores ou caminhos de alojamento.
+- **Consultas Parametrizadas em `proximoNumeroSequencial`**: Refatoração do SQL para utilizar `db.prepare(...).run/get` com parâmetros vinculados (`?`), eliminando qualquer risco de interpolação e injeção SQL. Adicionado teste automatizado com injeção simulada.
+- **Rotina Automática BNA das 18:30 (Africa/Luanda)**: Criação de `apps/api/src/cron/gerar-reportes-bna.ts` para execução via tarefa agendada do cPanel (`npm run cron:bna`). Recupera dias anteriores com movimento pendente, emite ambos os mapas (câmbio e remessas), gera reporte a zero obrigatório quando sem operações e grava evento consolidado na pista de auditoria. Coberto por teste automatizado com relógio simulado.
+
+## [NZAIDI-BASE-01] — Junção da Base Unificada e Publicação em Produção (ramo eat/base-unificada)
+Unificação integral do trabalho de desenvolvimento regulatório e da renovação visual num ramo consolidado.
+
+### Unificação e Resolução de Conflitos
+- Fusão limpa de eat/melhorias-regulamentares-bna e eat/acesso-paineis-gestao-usuarios.
+- Resolução do conflito em pps/admin/src/views/dashboard.view.ts: preservou-se o novo design bancário profissional, os cartões de atalhos rápidos (com suporte à permissão er_auditoria), os botões de ação e os indicadores regulatórios do BNA (banner de alerta das 18:35 e estado dos mapas diários Suptech & SSIF).
+- Remoção dos ficheiros *.tsbuildinfo do histórico do Git em packages/design-system e packages/dominio, garantindo que o .gitignore os bloqueia definitivamente.
+- Teste em clone limpo: execução direta de 
+pm ci e 
+pm run verificar aprovada sem passos manuais (93 testes unitários e de integração aprovados com 0 falhas).
+
+### Publicação em Produção
+- Publicado nos domínios oficiais https://nzaidi.ao (website multipágina com 10 páginas HTML e .htaccess 404) e https://app.nzaidi.ao (backoffice com novo design bancário).
+- Repositório tornado público no GitHub (https://github.com/mauriciokaleya31/nzaidi-sistema).
+
+# Registo de alterações
+
+Formato: mais recente primeiro. Cada entrada diz o que mudou, porquê, e se alterou alguma decisão registada.
 Regra: quem altera o repositório atualiza este ficheiro e `docs/14-estado-atual.md`.
 
 ## [Não publicado] — Renovação visual do website e do backoffice (ramo `feat/acesso-paineis-gestao-usuarios`)
@@ -158,7 +190,7 @@ Só apresentação. Não altera a API, o modelo de dados, as regras financeiras,
 - `docs/14`, `docs/15` (D-01 fechada; novas D-25 a D-29), `docs/16` (R-18 a R-21), `README.md`.
 
 ### Decisões
-- D-26 e D-27 validadas: acesso SSH configurado com nova chave autorizada; Node.js 22.23.4 e npm 10.9.9 confirmados no servidor cPanel/CloudLinux.
+- D-26 e D-27 validadas: acesso SSH por chave configurado; Node.js 22 e npm confirmados no alojamento cPanel partilhado.
 
 ## [Publicado na `main`] — Etapa 0: auditoria e estrutura
 ### Adicionado

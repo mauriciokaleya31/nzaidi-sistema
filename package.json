@@ -18,6 +18,7 @@
     "build:admin": "npm --workspace=@nzaidi/admin run build",
     "build:api": "npm --workspace=@nzaidi/api run build",
     "iniciar:api": "npm --workspace=@nzaidi/api run start",
+    "cron:bna": "npm --workspace=@nzaidi/api run cron:bna",
     "verificar": "npm run verificar:tipos && npm run testes && npm run verificar:docs"
   },
   "devDependencies": {

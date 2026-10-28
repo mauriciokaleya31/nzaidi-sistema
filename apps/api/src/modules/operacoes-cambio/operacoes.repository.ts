@@ -9,6 +9,8 @@ interface OperacaoRow {
   cliente_id: string;
   caixa_id: string;
   tipo: string;
+  tipo_operacao_bna?: string;
+  sentido_bna?: string;
   moeda_divisa: string;
   montante_divisa: string;
   taxa_aplicada: string;
@@ -40,6 +42,10 @@ interface BorderoRow {
   operador_nome: string;
   emitido_em: string;
   hash_verificacao: string;
+  estado?: string;
+  motivo_anulacao?: string | null;
+  anulado_em?: string | null;
+  anulado_por_id?: string | null;
 }
 
 function mapearOperacao(r: OperacaoRow): OperacaoCambio {
@@ -50,6 +56,8 @@ function mapearOperacao(r: OperacaoRow): OperacaoCambio {
     clienteId: r.cliente_id,
     caixaId: r.caixa_id,
     tipo: r.tipo as TipoOperacao,
+    tipoOperacaoBna: (r.tipo_operacao_bna ?? "cambio") as "cambio" | "remessa",
+    sentidoBna: (r.sentido_bna ?? (r.tipo === "compra" ? "compra" : "venda")) as "compra" | "venda",
     moedaDivisa: r.moeda_divisa as MoedaDivisa,
     montanteDivisa: r.montante_divisa,
     taxaAplicada: r.taxa_aplicada,
@@ -68,7 +76,7 @@ function mapearOperacao(r: OperacaoRow): OperacaoCambio {
 }
 
 function mapearBordero(r: BorderoRow): Bordero {
-  return {
+  const b: Bordero = {
     id: r.id,
     numeroBordero: r.numero_bordero,
     operacaoId: r.operacao_id,
@@ -84,6 +92,11 @@ function mapearBordero(r: BorderoRow): Bordero {
     emitidoEm: r.emitido_em,
     hashVerificacao: r.hash_verificacao,
   };
+  if (r.estado) b.estado = r.estado as "emitido" | "anulado";
+  if (r.motivo_anulacao !== undefined) b.motivoAnulacao = r.motivo_anulacao;
+  if (r.anulado_em !== undefined) b.anuladoEm = r.anulado_em;
+  if (r.anulado_por_id !== undefined) b.anuladoPorId = r.anulado_por_id;
+  return b;
 }
 
 export class OperacoesRepository {
@@ -93,10 +106,10 @@ export class OperacoesRepository {
     const stmt = this.db.prepare(`
       INSERT INTO operacoes_cambio (
         id, numero_operacao, chave_idempotencia, cliente_id, caixa_id,
-        tipo, moeda_divisa, montante_divisa, taxa_aplicada, taxa_referencia_bna,
+        tipo, tipo_operacao_bna, sentido_bna, moeda_divisa, montante_divisa, taxa_aplicada, taxa_referencia_bna,
         margem_aplicada, montante_aoa, fonte_taxa, estado, operador_id,
         operador_nome, criado_em
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -106,6 +119,8 @@ export class OperacoesRepository {
       op.clienteId,
       op.caixaId,
       op.tipo,
+      op.tipoOperacaoBna ?? "cambio",
+      op.sentidoBna ?? (op.tipo === "compra" ? "compra" : "venda"),
       op.moedaDivisa,
       op.montanteDivisa,
       op.taxaAplicada,
@@ -136,7 +151,8 @@ export class OperacoesRepository {
     limite = 50,
     offset = 0,
     clienteId?: string,
-    caixaId?: string
+    caixaId?: string,
+    dataReferencia?: string
   ): { itens: OperacaoCambio[]; total: number } {
     let sqlCount = `SELECT COUNT(*) as total FROM operacoes_cambio WHERE 1=1`;
     let sqlSelect = `SELECT * FROM operacoes_cambio WHERE 1=1`;
@@ -152,6 +168,12 @@ export class OperacoesRepository {
       sqlCount += ` AND caixa_id = ?`;
       sqlSelect += ` AND caixa_id = ?`;
       params.push(caixaId);
+    }
+
+    if (dataReferencia) {
+      sqlCount += ` AND criado_em LIKE ?`;
+      sqlSelect += ` AND criado_em LIKE ?`;
+      params.push(`${dataReferencia}%`);
     }
 
     const countStmt = this.db.prepare(sqlCount);
@@ -186,8 +208,9 @@ export class OperacoesRepository {
       INSERT INTO borderos (
         id, numero_bordero, operacao_id, cliente_nome, cliente_documento,
         cliente_nif, tipo_operacao, moeda_divisa, montante_divisa,
-        taxa_cambio, total_aoa, operador_nome, emitido_em, hash_verificacao
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        taxa_cambio, total_aoa, operador_nome, emitido_em, hash_verificacao,
+        estado, motivo_anulacao, anulado_em, anulado_por_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -204,13 +227,35 @@ export class OperacoesRepository {
       b.totalAoa,
       b.operadorNome,
       b.emitidoEm,
-      b.hashVerificacao
+      b.hashVerificacao,
+      b.estado ?? "emitido",
+      b.motivoAnulacao ?? null,
+      b.anuladoEm ?? null,
+      b.anuladoPorId ?? null
     );
+  }
+
+  public anularBordero(operacaoId: string, motivo: string, agora: string, operadorId: string): void {
+    const stmt = this.db.prepare(`
+      UPDATE borderos SET
+        estado = 'anulado',
+        motivo_anulacao = ?,
+        anulado_em = ?,
+        anulado_por_id = ?
+      WHERE operacao_id = ?
+    `);
+    stmt.run(motivo, agora, operadorId, operacaoId);
   }
 
   public buscarBorderoPorOperacaoId(operacaoId: string): Bordero | null {
     const stmt = this.db.prepare(`SELECT * FROM borderos WHERE operacao_id = ?`);
     const row = stmt.get(operacaoId) as BorderoRow | undefined;
+    return row ? mapearBordero(row) : null;
+  }
+
+  public buscarBorderoPorNumero(numeroBordero: string): Bordero | null {
+    const stmt = this.db.prepare(`SELECT * FROM borderos WHERE numero_bordero = ?`);
+    const row = stmt.get(numeroBordero) as BorderoRow | undefined;
     return row ? mapearBordero(row) : null;
   }
 }

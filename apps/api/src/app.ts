@@ -5,7 +5,7 @@ import fastifyHelmet from "@fastify/helmet";
 import fastifyRateLimit from "@fastify/rate-limit";
 import type { DatabaseSync } from "node:sqlite";
 
-import { obterEnv, type Env } from "./config/env.js";
+import { obterEnv, validarEnvProducao, type Env } from "./config/env.js";
 import { registrarTratamentoErros } from "./plugins/erros.js";
 import { criarMiddlewareAutenticacao } from "./plugins/auth.plugin.js";
 
@@ -20,6 +20,10 @@ import { CaixaRepository } from "./modules/contabilidade-tesouraria/caixa.reposi
 import { CaixaService } from "./modules/contabilidade-tesouraria/caixa.service.js";
 import { OperacoesRepository } from "./modules/operacoes-cambio/operacoes.repository.js";
 import { OperacoesService } from "./modules/operacoes-cambio/operacoes.service.js";
+import { BnaRepository } from "./modules/reportes-bna/bna.repository.js";
+import { BnaService } from "./modules/reportes-bna/bna.service.js";
+import { RemessasRepository } from "./modules/remessas/remessas.repository.js";
+import { RemessasService } from "./modules/remessas/remessas.service.js";
 
 import { registrarRotasHealth } from "./routes/health.routes.js";
 import { registrarRotasAuth } from "./modules/autenticacao/auth.routes.js";
@@ -29,6 +33,8 @@ import { registrarRotasAuditoria } from "./modules/auditoria/auditoria.routes.js
 import { registrarRotasClientes } from "./modules/identidade-kyc/clientes.routes.js";
 import { registrarRotasCaixa } from "./modules/contabilidade-tesouraria/caixa.routes.js";
 import { registrarRotasOperacoes } from "./modules/operacoes-cambio/operacoes.routes.js";
+import { registrarRotasBna } from "./modules/reportes-bna/bna.routes.js";
+import { registrarRotasRemessas } from "./modules/remessas/remessas.routes.js";
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -37,6 +43,7 @@ export interface CriarAppOpcoes {
 
 export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance> {
   const env = opcoes.env ?? obterEnv();
+  validarEnvProducao(env);
   const db = opcoes.db;
   const ehProducao = env.NODE_ENV === "production";
 
@@ -95,6 +102,17 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
     taxasService,
     auditoriaRepo
   );
+  const bnaRepo = new BnaRepository(db);
+  const bnaService = new BnaService(bnaRepo, auditoriaRepo);
+  const remessasRepo = new RemessasRepository(db);
+  const remessasService = new RemessasService(
+    db,
+    remessasRepo,
+    clientesRepo,
+    caixaRepo,
+    taxasService,
+    auditoriaRepo
+  );
 
   // 4. Hook de Autenticação Global (identifica sessão se houver cookie/header)
   const middlewareAuth = criarMiddlewareAutenticacao(usersRepo, sessionsRepo);
@@ -109,6 +127,23 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   registrarRotasClientes(app, clientesService, documentosService);
   registrarRotasCaixa(app, caixaService);
   registrarRotasOperacoes(app, operacoesService);
+
+  // Módulos da Prioridade 1 (Reportes BNA e Remessas Internacionais)
+  registrarRotasBna(app, bnaService);
+  registrarRotasRemessas(app, remessasService);
+
+  // 6. Ao arrancar o servidor, recupera dias passados sem reporte BNA
+  if (env.NODE_ENV !== "test") {
+    try {
+      bnaService.recuperarDiasEmAtraso({
+        id: "sistema",
+        nome: "Sistema Automático NZAIDI",
+        funcao: "gestao",
+      });
+    } catch (e) {
+      app.log.warn({ err: e }, "Aviso na verificação de reportes BNA em atraso");
+    }
+  }
 
   return app;
 }

@@ -10,6 +10,8 @@ export const TipoMovimentoSchema = z.enum([
   "suprimento",
   "sangria",
   "fecho",
+  "remessa_entrada",
+  "remessa_saida",
 ]);
 export type TipoMovimento = z.infer<typeof TipoMovimentoSchema>;
 
