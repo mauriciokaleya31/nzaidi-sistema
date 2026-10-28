@@ -1,8 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-DB_FILE="/mnt/home102/nzaidiao/storage_hml/nzaidi_hml.sqlite"
-BACKUP_DIR="/mnt/home102/nzaidiao/storage_hml/backups"
+DB_FILE="${DATABASE_PATH:-./data/nzaidi.sqlite}"
+BACKUP_DIR="${BACKUP_DIR:-./backups}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="${BACKUP_DIR}/nzaidi_hml_${TIMESTAMP}.sqlite"
 

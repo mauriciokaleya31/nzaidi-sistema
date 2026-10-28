@@ -28,7 +28,7 @@ import {
   ErroNaoEncontrado,
   ErroPermissao,
 } from "../../plugins/erros.js";
-import { comTransacao } from "../../database/database.js";
+import { comTransacao, proximoNumeroSequencial } from "../../database/database.js";
 
 export interface ContextoOperador {
   id: string;
@@ -85,13 +85,13 @@ export class OperacoesService {
       );
     }
 
-    // 4. Validação da Taxa de Câmbio e da Cotação (Regra dos 90 Segundos)
+    // 5. Validação da Taxa de Câmbio e da Cotação (Regra dos 90 Segundos)
     const cotacaoMomento = new Date(dados.cotacaoCriadaEm);
     if (isNaN(cotacaoMomento.getTime())) {
       throw new ErroValidacao("Carimbo de data da cotação inválido.");
     }
 
-    const taxaConfig = this.taxasService.obterTaxaCalculada(dados.moedaDivisa);
+    const taxaConfig = this.taxasService.obterTaxaCalculada(dados.moedaDivisa as "USD" | "EUR");
     const taxasCalculadas: TaxasCalculadas = {
       moeda: dados.moedaDivisa,
       referencia: decimal(taxaConfig.referencia),
@@ -110,7 +110,7 @@ export class OperacoesService {
       );
     }
 
-    // 5. Cálculo Financeiro Rigoroso com @nzaidi/dominio
+    // 6. Cálculo Financeiro Rigoroso com @nzaidi/dominio
     const montanteDivisaDec = decimal(dados.montanteDivisa);
     if (montanteDivisaDec.lessThanOrEqualTo(0)) {
       throw new ErroValidacao("O montante da divisa tem de ser superior a zero.");
@@ -129,7 +129,7 @@ export class OperacoesService {
       margemAplicada = taxaConfig.margemVenda;
     }
 
-    // 6. Verificação de Saldo Suficiente em Caixa
+    // 7. Verificação de Saldo Suficiente em Caixa
     const saldos = this.caixaRepo.calcularSaldos(caixa);
 
     if (dados.tipo === "compra") {
@@ -150,62 +150,65 @@ export class OperacoesService {
       }
     }
 
-    // 7. Persistência Atómica (Operação + Movimentos Caixa + Borderô + Auditoria)
     const agoraIso = agora.toISOString();
-    const dataNum = agoraIso.slice(0, 10).replace(/-/g, "");
-    const timeNum = agoraIso.slice(11, 19).replace(/:/g, "");
-    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-
     const operacaoId = `op_${randomUUID()}`;
-    const numeroOperacao = `OP-${dataNum}-${timeNum}-${randomSuffix}`;
-    const numeroBordero = `BOR-${dataNum}-${timeNum}-${randomSuffix}`;
+    const borderoId = `bor_${randomUUID()}`;
 
-    const operacao: OperacaoCambio = {
-      id: operacaoId,
-      numeroOperacao,
-      chaveIdempotencia: dados.chaveIdempotencia,
-      clienteId: cliente.id,
-      caixaId: caixa.id,
-      tipo: dados.tipo,
-      moedaDivisa: dados.moedaDivisa,
-      montanteDivisa: montanteDivisaDec.toFixed(2),
-      taxaAplicada: taxaAplicadaDecimal.toFixed(4),
-      taxaReferenciaBna: taxasCalculadas.referencia.toFixed(4),
-      margemAplicada,
-      montanteAoa: montanteAoaDec.toFixed(2),
-      fonteTaxa: taxaConfig.fonte,
-      estado: "confirmada",
-      operadorId: operador.id,
-      operadorNome: operador.nome,
-      criadoEm: agoraIso,
-    };
-
-    // Hash de verificação criptográfica SHA-256 para inviolabilidade do borderô
-    const dadosParaHash = `${numeroBordero}|${numeroOperacao}|${cliente.id}|${operacao.tipo}|${operacao.moedaDivisa}|${operacao.montanteDivisa}|${operacao.montanteAoa}|${operacao.taxaAplicada}|${operador.id}|${agoraIso}`;
-    const hashVerificacao = createHash("sha256").update(dadosParaHash).digest("hex");
-
-    const bordero: Bordero = {
-      id: `bor_${randomUUID()}`,
-      numeroBordero,
-      operacaoId,
-      clienteNome: cliente.nome,
-      clienteDocumento: `${cliente.tipoDocumento.toUpperCase()}: ${cliente.numeroDocumento}`,
-      clienteNif: cliente.nif,
-      tipoOperacao: operacao.tipo,
-      moedaDivisa: operacao.moedaDivisa,
-      montanteDivisa: operacao.montanteDivisa,
-      taxaCambio: operacao.taxaAplicada,
-      totalAoa: operacao.montanteAoa,
-      operadorNome: operador.nome,
-      emitidoEm: agoraIso,
-      hashVerificacao,
-    };
-
+    // 8. Persistência Atómica na MESMA transação:
+    // A numeração sequencial atómica é gerada DENTRO da transação para garantir que não há gaps nem descontinuidade
     return comTransacao(this.db, () => {
-      // 7.1 Grava operação
+      const anoAtual = agora.getFullYear();
+      const numeroOperacao = proximoNumeroSequencial(this.db, "operacao", "OP", anoAtual);
+      const numeroBordero = proximoNumeroSequencial(this.db, "bordero", "BOR", anoAtual);
+
+      const operacao: OperacaoCambio = {
+        id: operacaoId,
+        numeroOperacao,
+        chaveIdempotencia: dados.chaveIdempotencia,
+        clienteId: cliente.id,
+        caixaId: caixa.id,
+        tipo: dados.tipo,
+        tipoOperacaoBna: "cambio",
+        sentidoBna: dados.tipo === "compra" ? "compra" : "venda",
+        moedaDivisa: dados.moedaDivisa,
+        montanteDivisa: montanteDivisaDec.toFixed(2),
+        taxaAplicada: taxaAplicadaDecimal.toFixed(4),
+        taxaReferenciaBna: taxasCalculadas.referencia.toFixed(4),
+        margemAplicada,
+        montanteAoa: montanteAoaDec.toFixed(2),
+        fonteTaxa: taxaConfig.fonte,
+        estado: "confirmada",
+        operadorId: operador.id,
+        operadorNome: operador.nome,
+        criadoEm: agoraIso,
+      };
+
+      // Hash de verificação criptográfica SHA-256 para inviolabilidade do borderô
+      const dadosParaHash = `${numeroBordero}|${numeroOperacao}|${cliente.id}|${operacao.tipo}|${operacao.moedaDivisa}|${operacao.montanteDivisa}|${operacao.montanteAoa}|${operacao.taxaAplicada}|${operador.id}|${agoraIso}`;
+      const hashVerificacao = createHash("sha256").update(dadosParaHash).digest("hex");
+
+      const bordero: Bordero = {
+        id: borderoId,
+        numeroBordero,
+        operacaoId,
+        clienteNome: cliente.nome,
+        clienteDocumento: `${cliente.tipoDocumento.toUpperCase()}: ${cliente.numeroDocumento}`,
+        clienteNif: cliente.nif,
+        tipoOperacao: operacao.tipo,
+        moedaDivisa: operacao.moedaDivisa,
+        montanteDivisa: operacao.montanteDivisa,
+        taxaCambio: operacao.taxaAplicada,
+        totalAoa: operacao.montanteAoa,
+        operadorNome: operador.nome,
+        emitidoEm: agoraIso,
+        hashVerificacao,
+        estado: "emitido",
+      };
+
+      // 8.1 Grava operação
       this.operacoesRepo.inserirOperacao(operacao);
 
-      // 7.2 Movimentos de caixa de contrapartida
+      // 8.2 Movimentos de caixa de contrapartida
       if (operacao.tipo === "compra") {
         // Entrada de divisa no caixa (+divisa)
         this.caixaRepo.inserirMovimento({
@@ -233,7 +236,7 @@ export class OperacoesService {
           operadorId: operador.id,
         });
       } else {
-        // Venda: Entrada de Kwanza no caixa (+AOA)
+        // Venda: Entrada de Kwanza (+AOA)
         this.caixaRepo.inserirMovimento({
           id: `mov_${randomUUID()}`,
           caixaId: caixa.id,
@@ -246,7 +249,7 @@ export class OperacoesService {
           operadorId: operador.id,
         });
 
-        // Saída de divisa do caixa (-divisa)
+        // Venda: Saída de divisa (-divisa)
         this.caixaRepo.inserirMovimento({
           id: `mov_${randomUUID()}`,
           caixaId: caixa.id,
@@ -254,33 +257,33 @@ export class OperacoesService {
           moeda: operacao.moedaDivisa,
           montante: new D(operacao.montanteDivisa).negated().toFixed(2),
           operacaoId: operacao.id,
-          descricao: `Entrega de divisa (${operacao.numeroOperacao}) - Saída ${operacao.moedaDivisa}`,
+          descricao: `Entrega de moeda (${operacao.numeroOperacao}) - Saída ${operacao.moedaDivisa}`,
           criadoEm: agoraIso,
           operadorId: operador.id,
         });
       }
 
-      // 7.3 Emissão do borderô
+      // 8.3 Emissão do Borderô
       this.operacoesRepo.inserirBordero(bordero);
 
-      // 7.4 Registo indelével na auditoria
+      // 8.4 Registo de Auditoria
       this.auditoriaRepo.registar({
         autorId: operador.id,
         autorNome: operador.nome,
         autorFuncao: operador.funcao,
-        acao: "OPERACAO_CAMBIO_CONFIRMADA",
+        acao: "OPERACAO_CAMBIO_REGISTADA",
         recurso: "operacoes_cambio",
         recursoId: operacao.id,
         detalhes: {
           numeroOperacao: operacao.numeroOperacao,
           numeroBordero: bordero.numeroBordero,
-          cliente: cliente.nome,
+          clienteId: cliente.id,
           tipo: operacao.tipo,
-          divisa: operacao.moedaDivisa,
+          moeda: operacao.moedaDivisa,
           montanteDivisa: operacao.montanteDivisa,
           montanteAoa: operacao.montanteAoa,
           taxa: operacao.taxaAplicada,
-          caixa: caixa.numeroCaixa,
+          caixaId: caixa.id,
         },
         ip: operador.ip,
       });
@@ -303,22 +306,39 @@ export class OperacoesService {
     });
   }
 
-  public buscarOperacaoPorId(id: string): { operacao: OperacaoCambio; bordero: Bordero | null } {
-    const operacao = this.operacoesRepo.buscarPorId(id);
-    if (!operacao) {
-      throw new ErroNaoEncontrado(`Operação não encontrada: ${id}`);
-    }
-    const bordero = this.operacoesRepo.buscarBorderoPorOperacaoId(id);
-    return { operacao, bordero };
-  }
-
   public listarOperacoes(
     limite = 50,
     offset = 0,
     clienteId?: string,
-    caixaId?: string
+    caixaId?: string,
+    dataReferencia?: string
   ): { itens: OperacaoCambio[]; total: number } {
-    return this.operacoesRepo.listarOperacoes(limite, offset, clienteId, caixaId);
+    return this.operacoesRepo.listarOperacoes(limite, offset, clienteId, caixaId, dataReferencia);
+  }
+
+  public buscarOperacaoPorId(id: string): { operacao: OperacaoCambio; bordero: Bordero | null } {
+    const op = this.operacoesRepo.buscarPorId(id);
+    if (!op) {
+      throw new ErroNaoEncontrado(`Operação não encontrada com ID: ${id}`);
+    }
+    const bor = this.operacoesRepo.buscarBorderoPorOperacaoId(id);
+    return { operacao: op, bordero: bor };
+  }
+
+  public buscarBorderoPorOperacao(operacaoId: string): Bordero {
+    const bordero = this.operacoesRepo.buscarBorderoPorOperacaoId(operacaoId);
+    if (!bordero) {
+      throw new ErroNaoEncontrado(`Borderô não encontrado para a operação ${operacaoId}`);
+    }
+    return bordero;
+  }
+
+  public buscarBorderoPorNumero(numeroBordero: string): Bordero {
+    const bordero = this.operacoesRepo.buscarBorderoPorNumero(numeroBordero);
+    if (!bordero) {
+      throw new ErroNaoEncontrado(`Borderô não encontrado com o número: ${numeroBordero}`);
+    }
+    return bordero;
   }
 
   public estornarOperacao(
@@ -340,6 +360,9 @@ export class OperacoesService {
     return comTransacao(this.db, () => {
       // 1. Marca operação como estornada
       this.operacoesRepo.estornarOperacao(operacaoId, dados.motivo, agora, operador.id);
+
+      // 1.1 Anula formalmente o borderô associado (mantendo seu número histórico para auditoria)
+      this.operacoesRepo.anularBordero(operacaoId, dados.motivo, agora, operador.id);
 
       // 2. Movimentos compensatórios de estorno no caixa
       if (operacao.tipo === "compra") {

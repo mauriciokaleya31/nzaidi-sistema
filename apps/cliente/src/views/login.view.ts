@@ -189,7 +189,7 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
                   </div>
                   <div class="form-group-spacious">
                     <label class="form-label" for="reg-num-doc">Número do Documento</label>
-                    <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Ex.: 004829102LA041" required>
+                    <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Indique o número do documento oficial" required>
                   </div>
                 </div>
 

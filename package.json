@@ -20,10 +20,11 @@
     "build:parceiros": "npm --workspace=@nzaidi/parceiros run build",
     "build:api": "npm --workspace=@nzaidi/api run build",
     "iniciar:api": "npm --workspace=@nzaidi/api run start",
+    "cron:bna": "npm --workspace=@nzaidi/api run cron:bna",
     "verificar": "npm run verificar:tipos && npm run testes && npm run verificar:docs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7"
+    "vitest": "^5.0.5"
   }
 }

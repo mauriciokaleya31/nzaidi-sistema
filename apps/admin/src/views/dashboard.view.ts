@@ -15,6 +15,15 @@ function formatarMoeda(valor: number, moeda: string): string {
   return valor.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + moeda;
 }
 
+interface AlertaBnaData {
+  alerta: boolean;
+  horaLuanda: string;
+  dataHojeLuanda: string;
+  mapaCambioGerado: boolean;
+  mapaRemessaGerado: boolean;
+  mensagem?: string;
+}
+
 export async function renderizarDashboard(container: HTMLElement): Promise<void> {
   const usuario = authState.getUsuario();
   if (!usuario) {
@@ -46,6 +55,22 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
           </svg>
           Fila Operacional
         </a>
+      </div>
+    </div>
+
+    <!-- Container de Alerta Regulatório BNA (disparado se >18:35 Luanda sem reporte) -->
+    <div id="dash-alerta-bna"></div>
+
+    <div class="dashboard-grid mb-4">
+      <!-- Card Estado do Reporte BNA do Dia -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+          <h2 class="card-title">Supervisão BNA — Estado dos Mapas Diários (Suptech & SSIF)</h2>
+          <a href="#bna" class="card-link">Gestão de Reportes →</a>
+        </div>
+        <div class="card-body" id="dash-bna-status-container">
+          <div class="loading-state">A verificar conformidade de reporte com o BNA...</div>
+        </div>
       </div>
     </div>
 
@@ -248,6 +273,60 @@ export async function renderizarDashboard(container: HTMLElement): Promise<void>
       </div>
     </div>
   `;
+
+  // 1. Carregar Alerta e Status do BNA
+  async function carregarAlertaBna(): Promise<void> {
+    const dashAlertaContainer = container.querySelector<HTMLDivElement>("#dash-alerta-bna");
+    const dashBnaStatusContainer = container.querySelector<HTMLDivElement>("#dash-bna-status-container");
+    try {
+      const resBna = await api.get<{ sucesso: boolean; alerta: AlertaBnaData }>("/bna/alerta-hoje");
+      if (resBna.sucesso) {
+        const { alerta, mensagem, dataHojeLuanda, horaLuanda, mapaCambioGerado, mapaRemessaGerado } = resBna.alerta;
+        if (alerta && dashAlertaContainer) {
+          dashAlertaContainer.innerHTML = `
+            <div class="alert-box alert-error" style="margin-bottom: 1.5rem; border: 2px solid #ef4444; background: #fef2f2; padding: 1rem; border-radius: 8px;">
+              <div style="font-size: 1.1rem; font-weight: bold; color: #b91c1c;">⚠️ ALERTA REGULATÓRIO BNA (CORTE DAS 18:30 ULTRAPASSADO)</div>
+              <div style="color: #991b1b; margin-top: 0.25rem;">${mensagem ?? ""}</div>
+              <div style="margin-top: 0.5rem;">
+                <a href="#bna" class="btn btn-primary btn-sm">⚡ Aceder aos Reportes BNA e Gerar Agora</a>
+              </div>
+            </div>
+          `;
+        }
+        if (dashBnaStatusContainer) {
+          dashBnaStatusContainer.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+              <div style="padding: 0.75rem; background: #F8FAFC; border-radius: 6px;">
+                <div class="text-muted" style="font-size: 0.8rem;">Data Referência (Luanda)</div>
+                <div style="font-size: 1.1rem; font-weight: bold; color: #052D62;">${dataHojeLuanda} (${horaLuanda})</div>
+              </div>
+              <div style="padding: 0.75rem; background: #F8FAFC; border-radius: 6px;">
+                <div class="text-muted" style="font-size: 0.8rem;">Mapa Diário de Câmbio</div>
+                <div>${mapaCambioGerado ? '<span class="badge badge-success">✓ Gerado / Pronto</span>' : '<span class="badge badge-warning">Pendente (Geração 18:30)</span>'}</div>
+              </div>
+              <div style="padding: 0.75rem; background: #F8FAFC; border-radius: 6px;">
+                <div class="text-muted" style="font-size: 0.8rem;">Mapa Diário de Remessas</div>
+                <div>${mapaRemessaGerado ? '<span class="badge badge-success">✓ Gerado / Pronto</span>' : '<span class="badge badge-warning">Pendente (Geração 18:30)</span>'}</div>
+              </div>
+              <div style="padding: 0.75rem; background: #F8FAFC; border-radius: 6px;">
+                <div class="text-muted" style="font-size: 0.8rem;">Plataformas de Envio</div>
+                <div style="font-weight: 500; font-size: 0.9rem; color: #1e293b;">Suptech & SSIF (BNA)</div>
+              </div>
+            </div>
+          `;
+        }
+      }
+    } catch {
+      if (dashBnaStatusContainer) {
+        dashBnaStatusContainer.innerHTML = `
+          <div class="text-muted" style="font-size: 0.85rem;">
+            Módulo BNA ativo e pronto para submissão diária. Consulte a área de <a href="#bna">Reportes BNA</a> para gerar ficheiros.
+          </div>
+        `;
+      }
+    }
+  }
+  void carregarAlertaBna();
 
   // Renderizador SVG Dinâmico de Gráfico
   function desenharGraficoSvg(dadosGrafico: { label: string; volumeAoa: number; operacoes: number }[]): void {
