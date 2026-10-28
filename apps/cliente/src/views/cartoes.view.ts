@@ -1,5 +1,13 @@
 import { api } from "../api.js";
 
+function mostrarNotificacaoCartao(mensagem: string, tipo: "sucesso" | "erro" = "sucesso"): void {
+  const toast = document.createElement("div");
+  toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:10000;background:${tipo === "sucesso" ? "#059669" : "#dc2626"};color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 12px 24px rgba(0,0,0,0.2);`;
+  toast.textContent = mensagem;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3500);
+}
+
 export async function renderizarCartoes(container: HTMLElement): Promise<void> {
   container.innerHTML = `
     <div class="cartoes-page" style="max-width: 1040px; margin: 0 auto; padding: 24px 16px;">
@@ -203,9 +211,10 @@ async function carregarEstadoCartoes(container: HTMLElement): Promise<void> {
       container.querySelector("#btn-aderir-servico")?.addEventListener("click", async () => {
         try {
           await api.aderirCartoesPortal();
+          mostrarNotificacaoCartao("Pedido de adesão enviado com sucesso!", "sucesso");
           await carregarEstadoCartoes(container);
         } catch (err: any) {
-          alert(`Erro ao solicitar adesão: ${err.message}`);
+          mostrarNotificacaoCartao(`Erro ao solicitar adesão: ${err.message}`, "erro");
         }
       });
       return;
@@ -463,7 +472,7 @@ async function carregarEstadoCartoes(container: HTMLElement): Promise<void> {
           }
         }, 1000);
       } catch (err: any) {
-        alert(`Não foi possível revelar os dados confidenciais: ${err.message}`);
+        mostrarNotificacaoCartao(`Não foi possível revelar os dados confidenciais: ${err.message}`, "erro");
         btnRevelarCvv.disabled = false;
         btnRevelarCvv.textContent = "Revelar CVV";
       }
@@ -485,13 +494,12 @@ async function carregarEstadoCartoes(container: HTMLElement): Promise<void> {
     // Congelar / Descongelar
     container.querySelector("#btn-congelar-toggle")?.addEventListener("click", async () => {
       const novoEstado = cartaoAtivo.estado === "ativo" ? "congelado" : "ativo";
-      if (confirm(`Pretende ${novoEstado === "congelado" ? "congelar" : "descongelar"} este cartão?`)) {
-        try {
-          await api.alterarEstadoCartaoVisa(cartaoAtivo.id, novoEstado);
-          await carregarEstadoCartoes(container);
-        } catch (err: any) {
-          alert(`Erro ao alterar estado: ${err.message}`);
-        }
+      try {
+        await api.alterarEstadoCartaoVisa(cartaoAtivo.id, novoEstado);
+        mostrarNotificacaoCartao(`Cartão ${novoEstado === "congelado" ? "congelado" : "descongelado"} com sucesso.`, "sucesso");
+        await carregarEstadoCartoes(container);
+      } catch (err: any) {
+        mostrarNotificacaoCartao(`Erro ao alterar estado: ${err.message}`, "erro");
       }
     });
 
@@ -594,10 +602,10 @@ function abrirModalEmissao(container: HTMLElement, statusPortal: any): void {
       const rotulo = (overlay.querySelector("#emissao-rotulo") as HTMLInputElement).value;
       await api.solicitarCartaoVisa(montante, rotulo || undefined);
       overlay.remove();
-      alert("Cartão Visa Virtual emitido com sucesso!");
+      mostrarNotificacaoCartao("Cartão Visa Virtual emitido com sucesso!", "sucesso");
       await carregarEstadoCartoes(container);
     } catch (err: any) {
-      alert(`Falha na emissão: ${err.message}`);
+      mostrarNotificacaoCartao(`Falha na emissão: ${err.message}`, "erro");
       btn.disabled = false;
       btn.textContent = "Confirmar e Emitir Cartão";
     }
@@ -682,10 +690,10 @@ function abrirModalCarregamento(container: HTMLElement, cartao: any, statusPorta
       const montante = parseFloat(inputMontante.value);
       await api.carregarCartaoVisa(cartao.id, montante);
       overlay.remove();
-      alert(`Carregamento de \$${montante} USD concluído com sucesso!`);
+      mostrarNotificacaoCartao(`Carregamento de USD ${montante} concluído com sucesso!`, "sucesso");
       await carregarEstadoCartoes(container);
     } catch (err: any) {
-      alert(`Falha no carregamento: ${err.message}`);
+      mostrarNotificacaoCartao(`Falha no carregamento: ${err.message}`, "erro");
       btn.disabled = false;
       btn.textContent = "Confirmar Carregamento";
     }

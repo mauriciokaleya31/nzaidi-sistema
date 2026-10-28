@@ -1,5 +1,6 @@
 import { api, type ClienteItem } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { mostrarToast } from "../components/modal-dialogo.js";
 
 function escapeHtml(texto: string): string {
   const div = document.createElement("div");
@@ -393,7 +394,7 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
         const motivo = (conteudo.querySelector("#kyc-motivo-texto") as HTMLTextAreaElement).value.trim();
 
         if (motivo.length < 5) {
-          alert("O parecer técnico / motivo da decisão deve ter pelo menos 5 caracteres.");
+          mostrarToast("O parecer técnico / motivo da decisão deve ter pelo menos 5 caracteres.", "aviso");
           return;
         }
 
@@ -408,12 +409,12 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
             });
           }
 
-          alert("Decisão de KYC gravada com sucesso.");
+          mostrarToast("Decisão de KYC gravada com sucesso.", "sucesso");
           modal.style.display = "none";
           void carregarEstatisticas();
           void carregarTabelaKyc();
         } catch (err: any) {
-          alert(`Erro ao gravar decisão: ${err.message}`);
+          mostrarToast(`Erro ao gravar decisão: ${err.message}`, "erro");
         }
       });
     } catch {

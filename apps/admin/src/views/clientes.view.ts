@@ -225,13 +225,26 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
             </span>
           </td>
           <td class="text-muted" style="font-size: 12px;">${new Date(c.criadoEm).toLocaleDateString("pt-AO")}</td>
-          <td style="text-align: right;">
+          <td style="text-align: right; white-space: nowrap;">
+            ${c.estado !== 'bloqueado' ? `
+              <button class="btn btn-sm btn-secondary btn-entrar-rapido-cli" data-id="${c.id}" data-nome="${escapeHtml(c.nome)}" type="button" style="margin-right: 6px;">
+                Entrar na Conta
+              </button>
+            ` : ''}
             <button class="btn btn-sm btn-primary btn-ver-perfil-cli" data-id="${c.id}" type="button">
               Ficha do Cliente &rarr;
             </button>
           </td>
         </tr>
       `).join("");
+
+      tbody.querySelectorAll<HTMLButtonElement>(".btn-entrar-rapido-cli").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          const nome = btn.getAttribute("data-nome") || "Cliente";
+          if (id) await executarImpersonacaoCliente(id, nome);
+        });
+      });
 
       tbody.querySelectorAll<HTMLButtonElement>(".btn-ver-perfil-cli").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -241,6 +254,34 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
       });
     } catch {
       tbody.innerHTML = `<tr><td colspan="7" class="text-danger" style="text-align: center; padding: 24px;">Erro ao carregar clientes.</td></tr>`;
+    }
+  }
+
+  async function executarImpersonacaoCliente(clienteId: string, clienteNome: string): Promise<void> {
+    const ok = await confirmarModal({
+      titulo: "Entrar na Conta do Cliente",
+      subtitulo: `Cliente: ${clienteNome}`,
+      mensagem: `Confirma que deseja aceder ao Portal do Cliente na conta de ${clienteNome}?`,
+      textoConfirmar: "Entrar na Conta",
+      perigo: false,
+    });
+    if (!ok) return;
+
+    try {
+      const res = await api.impersonarCliente(clienteId, "Acesso administrativo de suporte técnico e verificação operacional");
+      if ((res as any).token) {
+        try {
+          localStorage.setItem("nzaidi_cliente_token", (res as any).token);
+        } catch {}
+      }
+      mostrarToast(`A abrir sessão da conta de ${clienteNome}...`, "sucesso");
+      const urlDestino = res.urlRedirecionamento || "/cliente/#/dashboard";
+      const novaAba = window.open(urlDestino, "_blank");
+      if (!novaAba) {
+        window.location.href = urlDestino;
+      }
+    } catch (err: any) {
+      mostrarToast(`Erro ao entrar na conta: ${err.message}`, "erro");
     }
   }
 
@@ -439,28 +480,7 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
 
       // Impersonar Cliente (Acesso de Suporte Auditado)
       conteudo.querySelector("#btn-impersonar-cliente-act")?.addEventListener("click", async () => {
-        const motivo = await solicitarMotivoAcao({
-          titulo: "Assumir Conta em Modo de Suporte",
-          subtitulo: `Cliente: ${cli.nome} (${cli.nif})`,
-          labelMotivo: "Indique o motivo formal de suporte para assumir a conta do cliente:",
-          placeholder: "Ex.: Ticket #1042 - Assistência na submissão de documentos KYC e validação cadastral",
-          textoConfirmar: "Entrar na Conta",
-          perigo: false,
-          minimoCaracteres: 5,
-        });
-
-        if (!motivo) return;
-
-        try {
-          const res = await api.impersonarCliente(cli.id, motivo);
-          if (res.urlRedirecionamento) {
-            window.open(res.urlRedirecionamento, "_blank");
-          } else {
-            mostrarToast("Sessão de suporte gerada com sucesso.", "sucesso");
-          }
-        } catch (err: any) {
-          mostrarToast(`Erro na impersonação: ${err.message}`, "erro");
-        }
+        await executarImpersonacaoCliente(cli.id, cli.nome);
       });
 
       // Bloquear Cliente

@@ -7,6 +7,7 @@ import {
   type ParceiroItem,
 } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { mostrarToast } from "../components/modal-dialogo.js";
 
 export async function renderizarOperacional(container: HTMLElement): Promise<void> {
   const usuario = authState.getUsuario();
@@ -529,14 +530,15 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
 
         try {
           await api.atribuirTarefaOperacional(tipo, id, { responsavelId, prioridade, notas });
+          mostrarToast("Tarefa atribuída com sucesso.", "sucesso");
           fecharModal();
           await carregarFila();
         } catch (err: any) {
-          alert(`Erro ao atribuir tarefa: ${err.message}`);
+          mostrarToast(`Erro ao atribuir tarefa: ${err.message}`, "erro");
         }
       });
     } catch (err: any) {
-      alert(`Falha ao obter detalhes para atribuição: ${err.message}`);
+      mostrarToast(`Falha ao obter detalhes para atribuição: ${err.message}`, "erro");
     }
   }
 
@@ -828,16 +830,17 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
           const notas = (container.querySelector("#modal-cambio-notas") as HTMLTextAreaElement)?.value.trim() || undefined;
 
           if (decisao === "rejeitar" && !motivoRejeicao) {
-            alert("O motivo da rejeição é obrigatório.");
+            mostrarToast("O motivo da rejeição é obrigatório.", "aviso");
             return;
           }
 
           try {
             await api.processarPedidoCambioOperacional(id, { decisao, motivoRejeicao, caixaId, notas });
+            mostrarToast("Pedido de câmbio processado com sucesso.", "sucesso");
             fecharModal();
             await Promise.all([carregarDashboard(), carregarFila()]);
           } catch (err: any) {
-            alert(`Erro ao processar pedido de câmbio: ${err.message}`);
+            mostrarToast(`Erro ao processar pedido de câmbio: ${err.message}`, "erro");
           }
         });
       } else if (tipo === "pedido_remessa") {
@@ -866,20 +869,21 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
           const notas = (container.querySelector("#modal-remessa-notas") as HTMLTextAreaElement)?.value.trim() || undefined;
 
           if (decisao === "atribuir_parceiro" && !parceiroId) {
-            alert("Selecione um parceiro comercial ativo.");
+            mostrarToast("Selecione um parceiro comercial ativo.", "aviso");
             return;
           }
           if (decisao === "rejeitar" && !motivoRejeicao) {
-            alert("O motivo da rejeição é obrigatório.");
+            mostrarToast("O motivo da rejeição é obrigatório.", "aviso");
             return;
           }
 
           try {
             await api.processarPedidoRemessaOperacional(id, { decisao, parceiroId, motivoRejeicao, notas });
+            mostrarToast("Remessa processada com sucesso.", "sucesso");
             fecharModal();
             await Promise.all([carregarDashboard(), carregarFila()]);
           } catch (err: any) {
-            alert(`Erro ao processar remessa: ${err.message}`);
+            mostrarToast(`Erro ao processar remessa: ${err.message}`, "erro");
           }
         });
       } else if (tipo === "kyc_dossie" || tipo === "kyc_documento") {
@@ -904,16 +908,17 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
           const motivoRejeicao = (container.querySelector("#modal-kyc-motivo") as HTMLTextAreaElement)?.value.trim() || undefined;
 
           if (statusValidacao !== "aprovado" && !motivoRejeicao) {
-            alert("A justificação do motivo regulamentar é obrigatória.");
+            mostrarToast("A justificação do motivo regulamentar é obrigatória.", "aviso");
             return;
           }
 
           try {
             await api.decidirDocumentoKycOperacional(id, { statusValidacao, motivoRejeicao });
+            mostrarToast("Decisão sobre documento KYC registada.", "sucesso");
             fecharModal();
             await Promise.all([carregarDashboard(), carregarFila()]);
           } catch (err: any) {
-            alert(`Erro ao validar documento KYC: ${err.message}`);
+            mostrarToast(`Erro ao validar documento KYC: ${err.message}`, "erro");
           }
         });
       } else if (tipo === "liquidacao_manual" && detalhes.operadorId !== usuario?.id) {
@@ -926,20 +931,21 @@ export async function renderizarOperacional(container: HTMLElement): Promise<voi
               await api.aprovarIntegracaoManual(id, notas || undefined);
             } else {
               if (!notas) {
-                alert("O motivo de rejeição é obrigatório.");
+                mostrarToast("O motivo de rejeição é obrigatório.", "aviso");
                 return;
               }
               await api.rejeitarIntegracaoManual(id, notas);
             }
+            mostrarToast("Decisão de liquidação manual registada.", "sucesso");
             fecharModal();
             await Promise.all([carregarDashboard(), carregarFila()]);
           } catch (err: any) {
-            alert(`Erro na decisão de liquidação manual: ${err.message}`);
+            mostrarToast(`Erro na decisão de liquidação manual: ${err.message}`, "erro");
           }
         });
       }
     } catch (err: any) {
-      alert(`Falha ao carregar detalhes: ${err.message}`);
+      mostrarToast(`Falha ao carregar detalhes: ${err.message}`, "erro");
     }
   }
 

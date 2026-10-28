@@ -1,5 +1,6 @@
 import { api, type ParceiroItem } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { confirmarModal, mostrarToast } from "../components/modal-dialogo.js";
 
 export async function renderizarParceiros(container: HTMLElement): Promise<void> {
   const podeGerir = authState.temPermissao("usuarios:gerir");
@@ -209,9 +210,13 @@ export async function renderizarParceiros(container: HTMLElement): Promise<void>
             const id = btn.getAttribute("data-id")!;
             const nome = btn.getAttribute("data-nome")!;
 
-            const confirmar = window.confirm(
-              `Deseja aceder à conta da entidade parceira "${nome}"?\n\nEsta ação administrativa será registada na pista de auditoria.`
-            );
+            const confirmar = await confirmarModal({
+              titulo: "Entrar na Conta do Parceiro",
+              subtitulo: `Entidade Parceira: ${nome}`,
+              mensagem: `Confirma que deseja aceder ao Portal dos Parceiros na conta de "${nome}"?`,
+              textoConfirmar: "Entrar na Conta",
+              perigo: false,
+            });
             if (!confirmar) return;
 
             const btnOriginal = btn.textContent;
@@ -225,12 +230,17 @@ export async function renderizarParceiros(container: HTMLElement): Promise<void>
                   localStorage.setItem("nzaidi_parceiro_token", res.dados.token);
                   localStorage.setItem("nzaidi_parceiro_dados", JSON.stringify(res.dados.parceiro));
                 } catch {}
-                window.open(res.dados.redirectUrl || "/parceiro/#/dashboard", "_blank");
+                mostrarToast(`A abrir Portal dos Parceiros (${nome})...`, "sucesso");
+                const urlParceiro = `/parceiro/?sessao_suporte=${res.dados.token}#dashboard`;
+                const novaAba = window.open(urlParceiro, "_blank");
+                if (!novaAba) {
+                  window.location.href = urlParceiro;
+                }
               } else {
-                alert(res.erro || "Falha ao personificar entidade parceira.");
+                mostrarToast(res.erro || "Falha ao personificar entidade parceira.", "erro");
               }
             } catch (err: any) {
-              alert("Erro ao aceder à conta: " + (err.message || "Erro de ligação."));
+              mostrarToast("Erro ao aceder à conta: " + (err.message || "Erro de ligação."), "erro");
             } finally {
               btn.removeAttribute("disabled");
               btn.textContent = btnOriginal;
@@ -248,17 +258,22 @@ export async function renderizarParceiros(container: HTMLElement): Promise<void>
             const nome = btn.getAttribute("data-nome")!;
             const novoEstado = estadoAtual === "ativo" ? "suspenso" : "ativo";
 
-            const confirmar = window.confirm(
-              `Confirma a alteração de estado do parceiro "${nome}" para "${novoEstado.toUpperCase()}"?`
-            );
+            const confirmar = await confirmarModal({
+              titulo: `${novoEstado === "suspenso" ? "Suspender" : "Ativar"} Parceiro Comercial`,
+              subtitulo: `Entidade: ${nome}`,
+              mensagem: `Confirma a alteração de estado do parceiro "${nome}" para "${novoEstado.toUpperCase()}"?`,
+              textoConfirmar: "Confirmar Alteração",
+              perigo: novoEstado === "suspenso",
+            });
             if (!confirmar) return;
 
             try {
               btn.setAttribute("disabled", "true");
               await api.alterarStatusParceiroAdmin(id, novoEstado);
+              mostrarToast(`Estado do parceiro alterado para ${novoEstado.toUpperCase()}.`, "sucesso");
               await carregarLista();
             } catch (err: any) {
-              alert("Erro ao alterar estado: " + (err.message || "Falha de comunicação."));
+              mostrarToast("Erro ao alterar estado: " + (err.message || "Falha de comunicação."), "erro");
               btn.removeAttribute("disabled");
             }
           });

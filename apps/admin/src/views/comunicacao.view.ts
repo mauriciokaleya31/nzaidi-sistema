@@ -309,8 +309,15 @@ export async function renderizarComunicacao(container: HTMLElement): Promise<voi
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
           if (!id) return;
-          if (confirm("Deseja remover este anúncio?")) {
+          const ok = await confirmarModal({
+            titulo: "Remover Anúncio",
+            mensagem: "Confirma que deseja remover este anúncio ou campanha?",
+            textoConfirmar: "Remover",
+            perigo: true,
+          });
+          if (ok) {
             await api.removerAnuncio(id);
+            mostrarToast("Anúncio removido.", "sucesso");
             void carregarAnuncios();
           }
         });

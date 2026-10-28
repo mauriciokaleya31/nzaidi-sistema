@@ -184,7 +184,12 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
             <td class="text-muted" style="font-size: 12px;">
               ${u.ultimoLoginEm ? new Date(u.ultimoLoginEm).toLocaleDateString("pt-AO", { hour: "2-digit", minute: "2-digit" }) : "Nunca acedeu"}
             </td>
-            <td style="text-align: right;">
+            <td style="text-align: right; white-space: nowrap;">
+              ${!ehProprio && u.ativo ? `
+                <button class="btn btn-sm btn-secondary btn-entrar-rapido-user" data-id="${u.id}" data-nome="${escapeHtml(u.nome)}" type="button" style="margin-right: 6px;">
+                  Entrar na Conta
+                </button>
+              ` : ''}
               <button class="btn btn-sm btn-primary btn-detalhes-user" data-id="${u.id}" type="button">
                 Gerir Ficha &rarr;
               </button>
@@ -192,6 +197,14 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
           </tr>
         `;
       }).join("");
+
+      tbody.querySelectorAll<HTMLButtonElement>(".btn-entrar-rapido-user").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-id");
+          const nome = btn.getAttribute("data-nome") || "Utilizador";
+          if (id) await executarImpersonacaoUsuario(id, nome);
+        });
+      });
 
       tbody.querySelectorAll<HTMLButtonElement>(".btn-detalhes-user").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -201,6 +214,28 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
       });
     } catch {
       tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger" style="padding: 24px;">Erro ao carregar utilizadores.</td></tr>`;
+    }
+  }
+
+  async function executarImpersonacaoUsuario(userId: string, userNome: string): Promise<void> {
+    const ok = await confirmarModal({
+      titulo: "Entrar na Conta de Utilizador",
+      subtitulo: `Membro da Equipa: ${userNome}`,
+      mensagem: `Confirma que deseja assumir a sessão de trabalho de ${userNome}?`,
+      textoConfirmar: "Entrar na Conta",
+      perigo: false,
+    });
+    if (!ok) return;
+
+    try {
+      await api.impersonarUsuario(userId, "Acesso administrativo de suporte técnico e verificação operacional");
+      mostrarToast(`Sessão de suporte iniciada como ${userNome}.`, "sucesso");
+      setTimeout(() => {
+        window.location.hash = "#dashboard";
+        window.location.reload();
+      }, 300);
+    } catch (err: any) {
+      mostrarToast(`Erro ao entrar na conta: ${err.message}`, "erro");
     }
   }
 
@@ -369,25 +404,7 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
 
       // Impersonar (Acesso Auditado de Suporte)
       conteudo.querySelector("#btn-impersonar-user-act")?.addEventListener("click", async () => {
-        const motivo = await solicitarMotivoAcao({
-          titulo: "Assumir Conta de Utilizador",
-          subtitulo: `Membro da equipa: ${u.nome} (${u.email})`,
-          labelMotivo: "Indique o motivo de auditoria ou suporte para assumir a conta:",
-          placeholder: "Ex.: Auditoria de permissões de tesouraria / Suporte técnico à estação de trabalho",
-          textoConfirmar: "Iniciar Modo Suporte",
-          perigo: false,
-          minimoCaracteres: 5,
-        });
-
-        if (!motivo) return;
-
-        try {
-          await api.impersonarUsuario(u.id, motivo);
-          mostrarToast(`Modo de suporte iniciado como ${u.nome}.`, "sucesso");
-          setTimeout(() => window.location.reload(), 400);
-        } catch (err: any) {
-          mostrarToast(`Erro na impersonação: ${err.message}`, "erro");
-        }
+        await executarImpersonacaoUsuario(u.id, u.nome);
       });
 
       // Bloquear

@@ -93,10 +93,8 @@ async function renderizarAplicacao(): Promise<void> {
   `;
 
   document.getElementById("btn-logout")?.addEventListener("click", async () => {
-    if (confirm("Deseja realmente terminar a sua sessão?")) {
-      await authState.logout();
-      window.location.hash = "#login";
-    }
+    await authState.logout();
+    window.location.hash = "#login";
   });
 
   const conteudoContainer = document.getElementById("conteudo-pagina")!;

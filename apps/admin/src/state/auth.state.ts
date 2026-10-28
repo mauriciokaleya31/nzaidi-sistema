@@ -71,8 +71,8 @@ class AuthState {
     try {
       await api.encerrarImpersonacao();
     } finally {
-      this.setUsuario(null);
-      window.location.hash = "#login";
+      window.location.hash = "#dashboard";
+      window.location.reload();
     }
   }
 }

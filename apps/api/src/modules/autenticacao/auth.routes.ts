@@ -212,6 +212,27 @@ export function registrarRotasAuth(
       userAgent: request.headers["user-agent"] ?? null,
     });
 
+    const adminOriginal = usersRepo.buscarPorId(usuario.impersonadoPor);
+    if (adminOriginal && adminOriginal.ativo && !adminOriginal.bloqueadoEm) {
+      const novaSessaoAdmin = sessionsRepo.criarSessao(
+        adminOriginal.id,
+        sessionTtlHoras,
+        request.ip,
+        request.headers["user-agent"] ?? null
+      );
+      reply.setCookie("nzaidi_sessao", novaSessaoAdmin.id, {
+        path: "/",
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env["NODE_ENV"] === "production",
+        maxAge: sessionTtlHoras * 3600,
+      });
+      return reply.send({
+        sucesso: true,
+        mensagem: "Sessão de suporte encerrada. Regressou à sua conta original.",
+      });
+    }
+
     reply.clearCookie("nzaidi_sessao", { path: "/" });
 
     return reply.send({

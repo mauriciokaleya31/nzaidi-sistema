@@ -85,11 +85,28 @@ export interface PerfilResponse {
 class ApiService {
   private tokenKey = "nzaidi_cliente_token";
 
+  constructor() {
+    this.capturarSessaoSuporteUrl();
+  }
+
+  private capturarSessaoSuporteUrl(): void {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tokenSuporte = params.get("sessao_suporte");
+      if (tokenSuporte) {
+        localStorage.setItem(this.tokenKey, tokenSuporte);
+        const hash = window.location.hash || "#/dashboard";
+        window.history.replaceState({}, "", `${window.location.pathname}${hash}`);
+      }
+    } catch {}
+  }
+
   public setToken(token: string): void {
     localStorage.setItem(this.tokenKey, token);
   }
 
   public getToken(): string | null {
+    this.capturarSessaoSuporteUrl();
     return localStorage.getItem(this.tokenKey);
   }
 

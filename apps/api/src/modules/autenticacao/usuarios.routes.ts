@@ -32,7 +32,7 @@ const BloquearUsuarioSchema = z.object({
 });
 
 const ImpersonarUsuarioSchema = z.object({
-  motivo: z.string().min(5, "O motivo da impersonação/acesso de suporte é obrigatório"),
+  motivo: z.string().optional().default("Acesso administrativo de suporte técnico e verificação operacional"),
 });
 
 const AtualizarPerfilProprioSchema = z.object({
@@ -570,7 +570,7 @@ export function registrarRotasUsuarios(
         path: "/",
         httpOnly: true,
         sameSite: "lax",
-        secure: false, // Permitido em dev/homologacao
+        secure: process.env["NODE_ENV"] === "production",
         maxAge: 2 * 3600,
       });
 

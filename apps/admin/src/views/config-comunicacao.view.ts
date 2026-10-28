@@ -1,5 +1,6 @@
 import { api } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { mostrarToast } from "../components/modal-dialogo.js";
 
 function escapeHtml(texto: string): string {
   const div = document.createElement("div");
@@ -174,9 +175,9 @@ export async function renderizarConfigComunicacao(container: HTMLElement): Promi
         ambiente: "producao",
         ativo: true,
       });
-      alert("Definições do canal de Email gravadas com sucesso.");
+      mostrarToast("Definições do canal de Email gravadas com sucesso.", "sucesso");
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      mostrarToast(`Erro: ${err.message}`, "erro");
     }
   });
 
@@ -194,9 +195,9 @@ export async function renderizarConfigComunicacao(container: HTMLElement): Promi
         ambiente: "producao",
         ativo: true,
       });
-      alert("Definições do canal de SMS gravadas com sucesso.");
+      mostrarToast("Definições do canal de SMS gravadas com sucesso.", "sucesso");
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      mostrarToast(`Erro: ${err.message}`, "erro");
     }
   });
 
@@ -215,9 +216,9 @@ export async function renderizarConfigComunicacao(container: HTMLElement): Promi
         ambiente: "producao",
         ativo: true,
       });
-      alert("Definições do canal WhatsApp Business gravadas com sucesso.");
+      mostrarToast("Definições do canal WhatsApp Business gravadas com sucesso.", "sucesso");
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      mostrarToast(`Erro: ${err.message}`, "erro");
     }
   });
 }

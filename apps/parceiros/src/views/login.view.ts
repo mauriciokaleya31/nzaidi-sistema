@@ -78,7 +78,8 @@ export function renderizarLogin(container: HTMLElement): void {
     const emailInput = container.querySelector<HTMLInputElement>("#email");
     const emailValor = emailInput ? emailInput.value.trim() : "";
     if (!emailValor) {
-      alert("Por favor, preencha o seu e-mail corporativo no formulário para solicitar a recuperação.");
+      erroBox.textContent = "Por favor, preencha o seu e-mail corporativo no formulário para solicitar a recuperação.";
+      erroBox.classList.remove("d-none");
       return;
     }
 

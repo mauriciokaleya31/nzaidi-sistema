@@ -1,5 +1,6 @@
 import { api } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { mostrarToast } from "../components/modal-dialogo.js";
 
 export function renderizarContabilidade(container: HTMLElement): void {
   const usuario = authState.getUsuario();
@@ -379,10 +380,10 @@ export function renderizarContabilidade(container: HTMLElement): void {
   container.querySelector("#btn-executar-reconciliacao")?.addEventListener("click", async () => {
     try {
       const res = await api.executarReconciliacaoGeral();
-      alert(`Varredura concluída!\nTotal verificado: ${res.totalVerificadas}\nNovas divergências detetadas: ${res.novasDivergencias}`);
+      mostrarToast(`Varredura concluída: ${res.totalVerificadas} verificadas, ${res.novasDivergencias} novas divergências.`, "sucesso");
       alternarAba("divergencias");
     } catch (e: any) {
-      alert(`Erro na varredura: ${e.message}`);
+      mostrarToast(`Erro na varredura: ${e.message}`, "erro");
     }
   });
 
@@ -406,17 +407,17 @@ export function renderizarContabilidade(container: HTMLElement): void {
     const motivo = (container.querySelector("#estorno-motivo") as HTMLTextAreaElement).value;
 
     if (!motivo || motivo.trim().length < 5) {
-      alert("Por favor informe uma justificação detalhada com pelo menos 5 caracteres.");
+      mostrarToast("Por favor informe uma justificação detalhada com pelo menos 5 caracteres.", "aviso");
       return;
     }
 
     try {
       await api.estornarLancamentoContabil(id, motivo);
-      alert("Estorno contabilístico concluído com sucesso!");
+      mostrarToast("Estorno contabilístico concluído com sucesso!", "sucesso");
       (container.querySelector("#modal-estorno") as HTMLElement).style.display = "none";
       carregarLivroRazao();
     } catch (e: any) {
-      alert(`Erro ao estornar lançamento: ${e.message}`);
+      mostrarToast(`Erro ao estornar lançamento: ${e.message}`, "erro");
     }
   });
 
@@ -431,17 +432,17 @@ export function renderizarContabilidade(container: HTMLElement): void {
     const motivo = (container.querySelector("#resolver-div-motivo") as HTMLTextAreaElement).value;
 
     if (!motivo || motivo.trim().length < 5) {
-      alert("Por favor informe uma justificativa formal.");
+      mostrarToast("Por favor informe uma justificativa formal.", "aviso");
       return;
     }
 
     try {
       await api.resolverDivergencia(id, estado, motivo);
-      alert("Divergência atualizada com sucesso!");
+      mostrarToast("Divergência atualizada com sucesso!", "sucesso");
       (container.querySelector("#modal-resolver-div") as HTMLElement).style.display = "none";
       carregarDivergencias();
     } catch (e: any) {
-      alert(`Erro ao resolver divergência: ${e.message}`);
+      mostrarToast(`Erro ao resolver divergência: ${e.message}`, "erro");
     }
   });
 

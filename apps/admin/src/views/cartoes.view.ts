@@ -428,10 +428,10 @@ export async function renderCartoesView(container: HTMLElement): Promise<void> {
 
     try {
       await api.atualizarComercialCartoes(payload);
-      alert('Parâmetros comerciais atualizados com sucesso!');
+      mostrarToast('Parâmetros comerciais atualizados com sucesso!', "sucesso");
       await carregarTudo();
     } catch (err: any) {
-      alert(`Erro ao guardar parâmetros comerciais: ${err.message}`);
+      mostrarToast(`Erro ao guardar parâmetros comerciais: ${err.message}`, "erro");
     }
   });
 
@@ -457,10 +457,10 @@ export async function renderCartoesView(container: HTMLElement): Promise<void> {
 
     try {
       await api.atualizarConfigCartoes(payload);
-      alert('Configurações de integração atualizadas com sucesso!');
+      mostrarToast('Configurações de integração atualizadas com sucesso!', "sucesso");
       await carregarTudo();
     } catch (err: any) {
-      alert(`Erro ao guardar configurações: ${err.message}`);
+      mostrarToast(`Erro ao guardar configurações: ${err.message}`, "erro");
     }
   });
 
@@ -634,11 +634,11 @@ export async function renderCartoesView(container: HTMLElement): Promise<void> {
           const id = target.getAttribute('data-id')!;
           try {
             await api.sincronizarCartaoAdmin(id);
-            alert('Cartão sincronizado com a StroWallet!');
+            mostrarToast('Cartão sincronizado com a StroWallet!', "sucesso");
             await carregarCartoes();
             await carregarDashboard();
           } catch (err: any) {
-            alert(`Falha na sincronização: ${err.message}`);
+            mostrarToast(`Falha na sincronização: ${err.message}`, "erro");
           }
         });
       });

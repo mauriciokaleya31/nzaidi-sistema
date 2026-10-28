@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes } from "node:crypto";
+import { randomUUID, randomBytes, createHash } from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { ClientesService } from "./clientes.service.js";
@@ -16,7 +16,7 @@ const BloquearClienteSchema = z.object({
 });
 
 const ImpersonarClienteSchema = z.object({
-  motivo: z.string().min(5, "O motivo do acesso de suporte / impersonação é obrigatório"),
+  motivo: z.string().optional().default("Acesso administrativo de suporte técnico e verificação operacional"),
 });
 
 const SolicitarDocumentosSchema = z.object({
@@ -256,15 +256,15 @@ export function registrarRotasClientes(
 
       const db = (service as any).clientesRepo.db;
       const tokenSessao = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(tokenSessao).digest("hex");
+      const sessaoId = "sess_cli_" + randomUUID();
       const agora = new Date().toISOString();
       const expiraEm = new Date(Date.now() + 2 * 3600 * 1000).toISOString();
 
-      try {
-        db.prepare(`
-          INSERT INTO portal_sessoes_cliente (id, cliente_id, criado_em, expira_em, ip, user_agent, impersonado_por)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `).run(tokenSessao, cliente.id, agora, expiraEm, req.ip, req.headers["user-agent"] ?? null, usuarioLogado.nome);
-      } catch {}
+      db.prepare(`
+        INSERT INTO sessoes_clientes (id, cliente_id, token_hash, criado_em, expira_em, ip, user_agent)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(sessaoId, cliente.id, tokenHash, agora, expiraEm, req.ip, req.headers["user-agent"] ?? null);
 
       const impId = randomUUID();
       try {
@@ -274,10 +274,18 @@ export function registrarRotasClientes(
         `).run(impId, usuarioLogado.id, usuarioLogado.nome, cliente.id, cliente.nome, motivo, agora, req.ip, req.headers["user-agent"] ?? null);
       } catch {}
 
+      reply.setCookie("nzaidi_cliente_sessao", tokenSessao, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env["NODE_ENV"] === "production",
+        sameSite: "lax",
+        maxAge: 2 * 3600,
+      });
+
       return reply.send({
         sucesso: true,
         mensagem: `Sessão de suporte gerada para o cliente ${cliente.nome}.`,
-        urlRedirecionamento: `/cliente/?sessao_suporte=${tokenSessao}`,
+        urlRedirecionamento: `/cliente/?sessao_suporte=${tokenSessao}#/dashboard`,
         token: tokenSessao,
         cliente: {
           id: cliente.id,

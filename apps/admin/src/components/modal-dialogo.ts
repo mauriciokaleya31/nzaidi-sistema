@@ -16,6 +16,7 @@ export interface OpcoesMotivoAcao {
 
 export interface OpcoesConfirmacao {
   titulo: string;
+  subtitulo?: string;
   mensagem: string;
   textoConfirmar?: string;
   textoCancelar?: string;
@@ -166,7 +167,8 @@ export function confirmarModal(opcoes: OpcoesConfirmacao): Promise<boolean> {
               </svg>
             </div>
             <div>
-              <h3 style="margin: 0 0 6px; font-size: 1.05rem; font-weight: 700; color: #031d42; font-family: var(--font-family-title, sans-serif);">${opcoes.titulo}</h3>
+              <h3 style="margin: 0 0 4px; font-size: 1.05rem; font-weight: 700; color: #031d42; font-family: var(--font-family-title, sans-serif);">${opcoes.titulo}</h3>
+              ${opcoes.subtitulo ? `<p style="margin: 0 0 6px; font-size: 0.8rem; color: #64748b; font-weight: 600;">${opcoes.subtitulo}</p>` : ''}
               <p style="margin: 0; font-size: 0.88rem; color: #475569; line-height: 1.5;">${opcoes.mensagem}</p>
             </div>
           </div>
@@ -201,7 +203,7 @@ export function confirmarModal(opcoes: OpcoesConfirmacao): Promise<boolean> {
 /**
  * Toast de notificação moderno (substitui window.alert para mensagens operacionais)
  */
-export function mostrarToast(mensagem: string, tipo: "sucesso" | "erro" | "info" = "sucesso", duracaoMs = 4000): void {
+export function mostrarToast(mensagem: string, tipo: "sucesso" | "erro" | "info" | "aviso" = "sucesso", duracaoMs = 4000): void {
   let container = document.getElementById("toast-container-global");
   if (!container) {
     container = document.createElement("div");

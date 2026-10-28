@@ -1,4 +1,4 @@
-import { mostrarToast } from "../components/modal-dialogo.js";
+import { mostrarToast, confirmarModal } from "../components/modal-dialogo.js";
 import { api } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
 
@@ -193,7 +193,13 @@ export async function renderizarPerfil(container: HTMLElement): Promise<void> {
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
           if (!id) return;
-          if (confirm("Deseja revogar esta sessão activa?")) {
+          const ok = await confirmarModal({
+            titulo: "Encerrar Sessão",
+            mensagem: "Confirma que deseja revogar esta sessão ativa?",
+            textoConfirmar: "Encerrar Sessão",
+            perigo: true,
+          });
+          if (ok) {
             await api.revogarSessaoPropria(id);
             mostrarToast("Sessão revogada.", "sucesso");
             void carregarSessoes();

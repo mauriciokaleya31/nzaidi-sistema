@@ -219,13 +219,12 @@ export async function renderizarRemessas(container: HTMLElement): Promise<void> 
       containerTabela.querySelectorAll(".btn-confirmar-recepcao").forEach((b) => {
         b.addEventListener("click", async () => {
           const id = b.getAttribute("data-id")!;
-          if (!confirm(`Confirma a recepção da instrução ${id}? O estado passará a 'em_processamento'.`)) return;
           try {
             (b as HTMLButtonElement).disabled = true;
             await api.confirmarRecepcao(id);
             await carregarOperacoes();
           } catch (e: any) {
-            alert(e.message || "Erro ao confirmar recepção.");
+            console.error(e);
             (b as HTMLButtonElement).disabled = false;
           }
         });

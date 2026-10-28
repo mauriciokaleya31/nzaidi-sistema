@@ -1,5 +1,6 @@
 import { api } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { confirmarModal, mostrarToast } from "../components/modal-dialogo.js";
 
 function escapeHtml(str: string | null | undefined): string {
   if (!str) return "";
@@ -290,13 +291,19 @@ export function renderizarPagamentosView(container: HTMLElement): void {
       tbody.querySelectorAll<HTMLButtonElement>(".btn-confirmar-pag").forEach((b) => {
         b.addEventListener("click", async () => {
           const id = b.getAttribute("data-id")!;
-          if (!confirm("Confirma que o montante correspondente foi efetivamente creditado no extrato bancário oficial?")) return;
+          const ok = await confirmarModal({
+            titulo: "Confirmar Pagamento",
+            mensagem: "Confirma que o montante correspondente foi efetivamente creditado no extrato bancário oficial?",
+            textoConfirmar: "Confirmar Crédito",
+            perigo: false,
+          });
+          if (!ok) return;
           try {
             await api.confirmarPagamentoManual(id, "Validado no extrato bancário pelo operador.");
-            alert("Pagamento confirmado com sucesso!");
+            mostrarToast("Pagamento confirmado com sucesso!", "sucesso");
             void carregarPendentes();
           } catch (err: any) {
-            alert(`Erro ao confirmar: ${err.message}`);
+            mostrarToast(`Erro ao confirmar: ${err.message}`, "erro");
           }
         });
       });
@@ -504,11 +511,11 @@ export function renderizarPagamentosView(container: HTMLElement): void {
 
       try {
         await api.atualizarMetodoPagamentoAdmin(m.id, payload);
-        alert("Configuração do método gravada com sucesso.");
+        mostrarToast("Configuração do método gravada com sucesso.", "sucesso");
         modalMetodo.style.display = "none";
         void carregarMetodos();
       } catch (err: any) {
-        alert(`Erro ao salvar: ${err.message}`);
+        mostrarToast(`Erro ao salvar: ${err.message}`, "erro");
       }
     });
   }
@@ -533,17 +540,17 @@ export function renderizarPagamentosView(container: HTMLElement): void {
   container.querySelector("#btn-confirmar-rejeicao")?.addEventListener("click", async () => {
     const motivo = (container.querySelector("#motivo-rejeicao-pagamento") as HTMLTextAreaElement).value.trim();
     if (motivo.length < 5) {
-      alert("O motivo de rejeição deve ter no mínimo 5 caracteres.");
+      mostrarToast("O motivo de rejeição deve ter no mínimo 5 caracteres.", "aviso");
       return;
     }
 
     try {
       await api.rejeitarPagamentoManual(idTransacaoParaRejeitar, motivo);
-      alert("Pagamento rejeitado com sucesso.");
+      mostrarToast("Pagamento rejeitado com sucesso.", "sucesso");
       modalRejeitar.style.display = "none";
       void carregarPendentes();
     } catch (err: any) {
-      alert(`Erro ao rejeitar: ${err.message}`);
+      mostrarToast(`Erro ao rejeitar: ${err.message}`, "erro");
     }
   });
 
