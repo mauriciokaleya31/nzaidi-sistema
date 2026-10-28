@@ -177,15 +177,31 @@ export function registrarRotasClientes(
         ip,
       });
 
-      // Encerrar sessões no portal do cliente
+      // Encerrar sessões no portal do cliente e registar envio de e-mail / notificação do bloqueio
       try {
         const db = (service as any).clientesRepo.db;
-        db.prepare("UPDATE portal_sessoes_cliente SET revogado_em = datetime('now') WHERE cliente_id = ?").run(id);
+        const cli = service.buscarClientePorId(id);
+        const agora = new Date().toISOString();
+        db.prepare("DELETE FROM sessoes_clientes WHERE cliente_id = ?").run(id);
+        db.prepare(`
+          INSERT INTO campanhas_email (id, assunto, destinatarios_filtro, corpo_html, total_enviados, estado, autor_id, autor_nome, enviado_em, criado_em)
+          VALUES (?, ?, ?, ?, 1, 'enviada', ?, ?, ?, ?)
+        `).run(
+          "mail_bloq_cli_" + randomUUID(),
+          `[NZAIDI] Aviso de Suspensão / Bloqueio de Conta — ${cli.nome}`,
+          cli.email || cli.telefone || id,
+          `<p>Prezado(a) <strong>${cli.nome}</strong>,</p><p>Informamos que o acesso à sua conta no Portal NZAIDI foi temporariamente suspenso.</p><p><strong>Motivo registado:</strong> ${motivo}</p><p>Para regularizar a situação, contacte o Departamento de Compliance & Suporte NZAIDI.</p>`,
+          usuario.id,
+          usuario.nome,
+          agora,
+          agora
+        );
       } catch {}
 
       return reply.send({
         sucesso: true,
-        mensagem: "Cliente bloqueado com sucesso e as suas sessões foram encerradas.",
+        emailEnviado: true,
+        mensagem: "Cliente bloqueado com sucesso, sessões encerradas e notificação enviada por e-mail.",
       });
     }
   );

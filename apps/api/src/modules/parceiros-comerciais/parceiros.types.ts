@@ -200,6 +200,17 @@ export const EditarParceiroSchema = z.object({
 
 export const AlterarStatusParceiroSchema = z.object({
   estado: z.enum(ESTADOS_PARCEIRO),
+  motivo: z.string().optional(),
+});
+
+export const RegistoParceiroPortalSchema = z.object({
+  nomeEntidade: z.string().min(3, "O nome da entidade parceira é obrigatório."),
+  codigoSugerido: z.string().min(2).optional(),
+  tipo: z.enum(TIPOS_PARCEIRO).default("remessas"),
+  canaisSuportados: z.array(z.string()).default(["transferencia_bancaria", "sepa"]),
+  nomeResponsavel: z.string().min(3, "O nome do responsável é obrigatório."),
+  emailCorporativo: z.string().email("E-mail corporativo inválido."),
+  senha: z.string().min(8, "A palavra-passe deve ter pelo menos 8 caracteres."),
 });
 
 export const AtribuirRemessaParceiroSchema = z.object({

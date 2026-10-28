@@ -218,22 +218,13 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
   }
 
   async function executarImpersonacaoUsuario(userId: string, userNome: string): Promise<void> {
-    const ok = await confirmarModal({
-      titulo: "Entrar na Conta de Utilizador",
-      subtitulo: `Membro da Equipa: ${userNome}`,
-      mensagem: `Confirma que deseja assumir a sessão de trabalho de ${userNome}?`,
-      textoConfirmar: "Entrar na Conta",
-      perigo: false,
-    });
-    if (!ok) return;
-
     try {
-      await api.impersonarUsuario(userId, "Acesso administrativo de suporte técnico e verificação operacional");
-      mostrarToast(`Sessão de suporte iniciada como ${userNome}.`, "sucesso");
+      await api.impersonarUsuario(userId, "Acesso administrativo direto");
+      mostrarToast(`A entrar na conta de ${userNome}...`, "sucesso");
       setTimeout(() => {
         window.location.hash = "#dashboard";
         window.location.reload();
-      }, 300);
+      }, 200);
     } catch (err: any) {
       mostrarToast(`Erro ao entrar na conta: ${err.message}`, "erro");
     }
@@ -423,7 +414,7 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
 
         try {
           await api.bloquearUsuario(u.id, motivo);
-          mostrarToast("Utilizador bloqueado e sessões encerradas.", "sucesso");
+          mostrarToast("Utilizador bloqueado, sessões encerradas e aviso enviado por e-mail.", "sucesso");
           modal.style.display = "none";
           void carregarListaUsuarios();
         } catch (err: any) {

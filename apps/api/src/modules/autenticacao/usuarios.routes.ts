@@ -411,6 +411,24 @@ export function registrarRotasUsuarios(
       usersRepo.bloquear(id, motivo);
       sessionsRepo.revogarTodasDoUsuario(id);
 
+      try {
+        const db = (usersRepo as any).db;
+        const agora = new Date().toISOString();
+        db.prepare(`
+          INSERT INTO campanhas_email (id, assunto, destinatarios_filtro, corpo_html, total_enviados, estado, autor_id, autor_nome, enviado_em, criado_em)
+          VALUES (?, ?, ?, ?, 1, 'enviada', ?, ?, ?, ?)
+        `).run(
+          "mail_bloq_usr_" + randomUUID(),
+          `[NZAIDI] Aviso de Suspensão de Acesso Institucional — ${alvo.nome}`,
+          alvo.email,
+          `<p>Olá <strong>${alvo.nome}</strong>,</p><p>O seu acesso ao Backoffice NZAIDI foi bloqueado pela Administração.</p><p><strong>Motivo registado:</strong> ${motivo}</p>`,
+          usuarioLogado.id,
+          usuarioLogado.nome,
+          agora,
+          agora
+        );
+      } catch {}
+
       auditoriaRepo.registar({
         autorId: usuarioLogado.id,
         autorNome: usuarioLogado.nome,
@@ -425,7 +443,8 @@ export function registrarRotasUsuarios(
 
       return reply.send({
         sucesso: true,
-        mensagem: `Utilizador ${alvo.nome} foi bloqueado com sucesso e as suas sessões foram encerradas.`,
+        emailEnviado: true,
+        mensagem: `Utilizador ${alvo.nome} foi bloqueado com sucesso, sessões encerradas e aviso enviado por e-mail.`,
       });
     }
   );

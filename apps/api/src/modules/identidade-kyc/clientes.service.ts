@@ -119,7 +119,7 @@ export class ClientesService {
 
   public bloquearCliente(id: string, motivo: string, operador: ContextoOperador): void {
     const cliente = this.buscarClientePorId(id);
-    this.clientesRepo.bloquear(id);
+    this.clientesRepo.bloquear(id, motivo);
 
     this.auditoriaRepo.registar({
       autorId: operador.id,

@@ -136,7 +136,16 @@ export class PortalClienteService {
     }
 
     if (cliente.estado === "bloqueado") {
-      throw new ErroAutenticacao("A sua conta encontra-se temporariamente suspensa por motivos de segurança.");
+      let motivoBloqueio = "Suspensão preventiva de segurança e conformidade regulamentar (BNA).";
+      try {
+        const rowCli = this.db.prepare("SELECT bloqueado_motivo FROM clientes WHERE id = ?").get(cliente.id) as { bloqueado_motivo?: string | null } | undefined;
+        if (rowCli?.bloqueado_motivo) {
+          motivoBloqueio = rowCli.bloqueado_motivo;
+        }
+      } catch {}
+      throw new ErroAutenticacao(
+        `CONTA SUSPENSA / BLOQUEADA: O acesso à sua conta encontra-se suspenso. Motivo registado: "${motivoBloqueio}". Contacte o Suporte NZAIDI para regularização.`
+      );
     }
 
     // Gerar Sessão (24 Horas)

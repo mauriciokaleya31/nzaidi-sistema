@@ -1,6 +1,6 @@
 import { api, type ParceiroItem } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
-import { confirmarModal, mostrarToast } from "../components/modal-dialogo.js";
+import { confirmarModal, mostrarToast, solicitarMotivoAcao } from "../components/modal-dialogo.js";
 
 export async function renderizarParceiros(container: HTMLElement): Promise<void> {
   const podeGerir = authState.temPermissao("usuarios:gerir");
@@ -203,21 +203,12 @@ export async function renderizarParceiros(container: HTMLElement): Promise<void>
         </table>
       `;
 
-      // Listeners de Impersonação do Parceiro
+      // Listeners de Impersonação do Parceiro (Entrada Direta sem pedir motivo)
       if (podeImpersonar) {
         containerTabela.querySelectorAll(".btn-entrar-parceiro").forEach((btn) => {
           btn.addEventListener("click", async () => {
             const id = btn.getAttribute("data-id")!;
             const nome = btn.getAttribute("data-nome")!;
-
-            const confirmar = await confirmarModal({
-              titulo: "Entrar na Conta do Parceiro",
-              subtitulo: `Entidade Parceira: ${nome}`,
-              mensagem: `Confirma que deseja aceder ao Portal dos Parceiros na conta de "${nome}"?`,
-              textoConfirmar: "Entrar na Conta",
-              perigo: false,
-            });
-            if (!confirmar) return;
 
             const btnOriginal = btn.textContent;
             try {
@@ -258,19 +249,43 @@ export async function renderizarParceiros(container: HTMLElement): Promise<void>
             const nome = btn.getAttribute("data-nome")!;
             const novoEstado = estadoAtual === "ativo" ? "suspenso" : "ativo";
 
-            const confirmar = await confirmarModal({
-              titulo: `${novoEstado === "suspenso" ? "Suspender" : "Ativar"} Parceiro Comercial`,
-              subtitulo: `Entidade: ${nome}`,
-              mensagem: `Confirma a alteração de estado do parceiro "${nome}" para "${novoEstado.toUpperCase()}"?`,
-              textoConfirmar: "Confirmar Alteração",
-              perigo: novoEstado === "suspenso",
-            });
-            if (!confirmar) return;
+            let motivoSuspensao: string | undefined;
+            if (novoEstado === "suspenso") {
+              const m = await solicitarMotivoAcao({
+                titulo: "Suspender Conta de Parceiro Comercial",
+                subtitulo: `Entidade Parceira: ${nome}`,
+                motivosPredefinidos: [
+                  "Incumprimento de SLA de liquidação internacional de remessas",
+                  "Divergência financeira detetada na reconciliação de instruções",
+                  "Suspensão preventiva de Compliance e Auditoria BNA",
+                  "Manutenção técnica ou revisão contratual da linha de correspondência",
+                  "Outro motivo específico (detalhar abaixo)",
+                ],
+                textoConfirmar: "Confirmar Suspensão",
+                perigo: true,
+              });
+              if (!m) return;
+              motivoSuspensao = m;
+            } else {
+              const confirmar = await confirmarModal({
+                titulo: "Reativar Parceiro Comercial",
+                subtitulo: `Entidade: ${nome}`,
+                mensagem: `Confirma a reativação operacional do parceiro "${nome}"?`,
+                textoConfirmar: "Reativar Parceiro",
+                perigo: false,
+              });
+              if (!confirmar) return;
+            }
 
             try {
               btn.setAttribute("disabled", "true");
-              await api.alterarStatusParceiroAdmin(id, novoEstado);
-              mostrarToast(`Estado do parceiro alterado para ${novoEstado.toUpperCase()}.`, "sucesso");
+              await api.alterarStatusParceiroAdmin(id, novoEstado, motivoSuspensao);
+              mostrarToast(
+                novoEstado === "suspenso"
+                  ? `Parceiro suspenso e notificação enviada por e-mail à entidade.`
+                  : `Parceiro reativado com sucesso.`,
+                "sucesso"
+              );
               await carregarLista();
             } catch (err: any) {
               mostrarToast("Erro ao alterar estado: " + (err.message || "Falha de comunicação."), "erro");

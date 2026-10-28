@@ -726,12 +726,12 @@ export class AdminApiClient {
     return res.dados;
   }
 
-  public async alterarStatusParceiroAdmin(id: string, estado: "ativo" | "suspenso" | "inativo"): Promise<ParceiroItem> {
+  public async alterarStatusParceiroAdmin(id: string, estado: "ativo" | "suspenso" | "inativo", motivo?: string): Promise<ParceiroItem> {
     const res = await this.requisitar<{ sucesso: boolean; dados: ParceiroItem }>(
       "/api/v1/admin/parceiros/" + id + "/status",
       {
         method: "PATCH",
-        body: JSON.stringify({ estado }),
+        body: JSON.stringify({ estado, motivo }),
       }
     );
     return res.dados;

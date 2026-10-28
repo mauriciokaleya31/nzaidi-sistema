@@ -4,6 +4,7 @@ import type { ParceirosService } from "./parceiros.service.js";
 import type { ParceirosRepository } from "./parceiros.repository.js";
 import {
   LoginParceiroSchema,
+  RegistoParceiroPortalSchema,
   RecuperarSenhaParceiroSchema,
   ConfirmarRecepcaoSchema,
   LiquidarOperacaoSchema,
@@ -100,6 +101,31 @@ export function registrarRotasParceiros(
     });
 
     return reply.send({
+      sucesso: true,
+      dados: {
+        usuario: resultado.usuario,
+        parceiro: resultado.parceiro,
+        token: resultado.token,
+      },
+    });
+  });
+
+  app.post("/api/v1/parceiro/auth/registo", async (request, reply) => {
+    const dados = RegistoParceiroPortalSchema.parse(request.body);
+    const ip = request.ip;
+    const userAgent = request.headers["user-agent"];
+
+    const resultado = await parceirosService.registarParceiroPortal(dados, ip, userAgent);
+
+    reply.setCookie(COOKIE_PARCEIRO, resultado.token, {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 86400,
+    });
+
+    return reply.status(201).send({
       sucesso: true,
       dados: {
         usuario: resultado.usuario,
@@ -441,7 +467,8 @@ export function registrarRotasParceiros(
         id,
         dados.estado,
         operador,
-        request.ip
+        request.ip,
+        dados.motivo
       );
 
       return reply.send({

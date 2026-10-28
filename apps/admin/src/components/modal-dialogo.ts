@@ -12,6 +12,7 @@ export interface OpcoesMotivoAcao {
   textoCancelar?: string;
   perigo?: boolean;
   minimoCaracteres?: number;
+  motivosPredefinidos?: string[];
 }
 
 export interface OpcoesConfirmacao {
@@ -54,9 +55,18 @@ export function solicitarMotivoAcao(opcoes: OpcoesMotivoAcao): Promise<string | 
     const minChars = opcoes.minimoCaracteres ?? 5;
     const isPerigo = opcoes.perigo ?? false;
     const corBotao = isPerigo ? "btn-danger" : "btn-primary";
+    const listaMotivos = opcoes.motivosPredefinidos ?? [
+      "Suspeita de fraude ou movimentação financeira atípica (Compliance BNA)",
+      "Documentação KYC expirada, ilegível ou pendente de atualização obrigatória",
+      "Divergência cadastral ou inconsistência de titularidade (NIF / BI / Passaporte)",
+      "Violação dos Termos de Utilização e Política de Prevenção ao Branqueamento de Capitais",
+      "Suspensão administrativa preventiva / Revisão de segurança da conta",
+      "Pedido formal do titular ou encerramento temporário de acesso",
+      "Outro motivo específico (detalhar abaixo)",
+    ];
 
     backdrop.innerHTML = `
-      <div class="modal-box" style="max-width: 520px; width: 100%; background: #ffffff; border-radius: 14px; box-shadow: 0 25px 50px -12px rgba(2, 21, 48, 0.4); border: 1px solid rgba(204, 150, 56, 0.25); overflow: hidden; animation: subir 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div class="modal-box" style="max-width: 560px; width: 100%; background: #ffffff; border-radius: 14px; box-shadow: 0 25px 50px -12px rgba(2, 21, 48, 0.4); border: 1px solid rgba(204, 150, 56, 0.25); overflow: hidden; animation: subir 0.22s cubic-bezier(0.16, 1, 0.3, 1);">
         <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; background: #f8fafc;">
           <div style="display: flex; align-items: center; gap: 10px;">
             <div style="width: 36px; height: 36px; border-radius: 8px; background: ${isPerigo ? 'rgba(239, 68, 68, 0.1)' : 'rgba(5, 45, 98, 0.1)'}; display: grid; place-items: center; color: ${isPerigo ? '#ef4444' : '#052d62'};">
@@ -77,11 +87,22 @@ export function solicitarMotivoAcao(opcoes: OpcoesMotivoAcao): Promise<string | 
         <form id="form-dialog-motivo" style="padding: 1.5rem;">
           <div class="form-group mb-3">
             <label class="form-label" style="display: block; font-size: 0.85rem; font-weight: 600; color: #1e293b; margin-bottom: 6px;">
-              ${opcoes.labelMotivo ?? "Indique o motivo fundamentado para esta ação:"}
+              Selecione o motivo da suspensão / bloqueio:
             </label>
-            <textarea id="dialog-input-motivo" class="form-control" rows="3" placeholder="${opcoes.placeholder ?? 'Ex.: Ticket #1024 - Solicitação formal de suporte ao cliente'}" required style="width: 100%; min-height: 85px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.92rem; font-family: inherit; resize: vertical; outline: none;"></textarea>
+            <select id="dialog-select-motivo" class="form-control" style="width: 100%; min-height: 42px; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; color: #0f172a; background-color: #f8fafc; font-weight: 500; margin-bottom: 12px;">
+              ${listaMotivos.map((m, idx) => `<option value="${m}" ${idx === 0 ? "selected" : ""}>${m}</option>`).join("")}
+            </select>
+
+            <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 600; color: #475569; margin-bottom: 6px;">
+              ${opcoes.labelMotivo ?? "Detalhes adicionais ou observações (enviado na notificação ao titular):"}
+            </label>
+            <textarea id="dialog-input-motivo" class="form-control" rows="3" placeholder="${opcoes.placeholder ?? 'Opcional: acrescente detalhes específicos que serão apresentados ao utilizador...'}" style="width: 100%; min-height: 78px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; font-family: inherit; resize: vertical; outline: none;"></textarea>
+            <div style="margin-top: 8px; padding: 8px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: 0.78rem; color: #92400e; display: flex; align-items: center; gap: 8px;">
+              <span>&#9993;</span>
+              <span>O titular receberá um alerta por e-mail e verá este motivo sempre que tentar iniciar sessão.</span>
+            </div>
             <div id="dialog-msg-erro" style="display: none; color: #ef4444; font-size: 0.78rem; margin-top: 5px; font-weight: 500;">
-              O motivo deve ter pelo menos ${minChars} caracteres para efeitos de conformidade e auditoria.
+              Por favor indique ou selecione um motivo com pelo menos ${minChars} caracteres.
             </div>
           </div>
 
@@ -103,6 +124,7 @@ export function solicitarMotivoAcao(opcoes: OpcoesMotivoAcao): Promise<string | 
     }
 
     const form = backdrop.querySelector<HTMLFormElement>("#form-dialog-motivo")!;
+    const selectMotivo = backdrop.querySelector<HTMLSelectElement>("#dialog-select-motivo")!;
     const input = backdrop.querySelector<HTMLTextAreaElement>("#dialog-input-motivo")!;
     const erroDiv = backdrop.querySelector<HTMLElement>("#dialog-msg-erro")!;
     const btnClose = backdrop.querySelector<HTMLButtonElement>("#btn-dialog-close")!;
@@ -117,17 +139,25 @@ export function solicitarMotivoAcao(opcoes: OpcoesMotivoAcao): Promise<string | 
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const valor = input.value.trim();
-      if (valor.length < minChars) {
+      const selecionado = selectMotivo.value;
+      const detalheExtra = input.value.trim();
+      const ehOutro = selecionado.startsWith("Outro motivo");
+      const valorFinal = ehOutro
+        ? detalheExtra
+        : detalheExtra
+        ? `${selecionado} — ${detalheExtra}`
+        : selecionado;
+
+      if (valorFinal.length < minChars) {
         erroDiv.style.display = "block";
         input.focus();
         return;
       }
-      fechar(valor);
+      fechar(valorFinal);
     });
 
     document.body.appendChild(backdrop);
-    setTimeout(() => input.focus(), 80);
+    setTimeout(() => selectMotivo.focus(), 80);
   });
 }
 

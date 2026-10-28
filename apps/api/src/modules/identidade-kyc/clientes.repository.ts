@@ -257,14 +257,29 @@ export class ClientesRepository {
     this.db.prepare(sql).run(...valores);
   }
 
-  public bloquear(id: string): void {
+  public bloquear(id: string, motivo?: string): void {
     const agora = new Date().toISOString();
-    this.db.prepare(`UPDATE clientes SET estado = 'bloqueado', atualizado_em = ? WHERE id = ?`).run(agora, id);
+    try {
+      this.db.exec("ALTER TABLE clientes ADD COLUMN bloqueado_motivo TEXT");
+    } catch {}
+    try {
+      this.db
+        .prepare(`UPDATE clientes SET estado = 'bloqueado', bloqueado_motivo = ?, atualizado_em = ? WHERE id = ?`)
+        .run(motivo ?? "Suspensão preventiva de segurança e conformidade", agora, id);
+    } catch {
+      this.db.prepare(`UPDATE clientes SET estado = 'bloqueado', atualizado_em = ? WHERE id = ?`).run(agora, id);
+    }
   }
 
   public desbloquear(id: string): void {
     const agora = new Date().toISOString();
-    this.db.prepare(`UPDATE clientes SET estado = 'ativo', atualizado_em = ? WHERE id = ?`).run(agora, id);
+    try {
+      this.db
+        .prepare(`UPDATE clientes SET estado = 'ativo', bloqueado_motivo = NULL, atualizado_em = ? WHERE id = ?`)
+        .run(agora, id);
+    } catch {
+      this.db.prepare(`UPDATE clientes SET estado = 'ativo', atualizado_em = ? WHERE id = ?`).run(agora, id);
+    }
   }
 
   public atualizarEstadoKyc(

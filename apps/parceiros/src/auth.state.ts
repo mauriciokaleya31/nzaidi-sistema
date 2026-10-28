@@ -45,6 +45,21 @@ class AuthState {
     this.notificar();
   }
 
+  public async registo(payload: {
+    nomeEntidade: string;
+    codigoSugerido?: string;
+    tipo: string;
+    canaisSuportados: string[];
+    nomeResponsavel: string;
+    emailCorporativo: string;
+    senha: string;
+  }): Promise<void> {
+    const res = await api.registo(payload);
+    this.parceiro = res.parceiro;
+    this.usuario = res.usuario;
+    this.notificar();
+  }
+
   public async logout(): Promise<void> {
     await api.logout();
     this.parceiro = null;

@@ -164,6 +164,27 @@ class ParceiroApiClient {
     return res.dados;
   }
 
+  public async registo(payload: {
+    nomeEntidade: string;
+    codigoSugerido?: string;
+    tipo: string;
+    canaisSuportados: string[];
+    nomeResponsavel: string;
+    emailCorporativo: string;
+    senha: string;
+  }): Promise<{ usuario: UsuarioInfo; parceiro: ParceiroInfo; token: string }> {
+    const res = await this.requisitar<{
+      sucesso: boolean;
+      dados: { usuario: UsuarioInfo; parceiro: ParceiroInfo; token: string };
+    }>("/api/v1/parceiro/auth/registo", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    this.setToken(res.dados.token);
+    return res.dados;
+  }
+
   public async obterMe(): Promise<{ parceiro: ParceiroInfo; usuario: UsuarioInfo }> {
     const res = await this.requisitar<{
       sucesso: boolean;

@@ -20,6 +20,7 @@ import type {
   RelatorioReconciliacao,
   ReconciliacaoItem,
   LoginParceiroSchema,
+  RegistoParceiroPortalSchema,
   LiquidarOperacaoSchema,
   DevolverOperacaoSchema,
   SubmeterLoteReconciliacaoSchema,
@@ -54,11 +55,17 @@ export class ParceirosService {
 
     const parceiro = this.parceirosRepo.buscarParceiroPorId(usuario.parceiroId);
     if (!parceiro || parceiro.estado !== "ativo") {
-      throw new ErroAutenticacao(
-        parceiro?.estado === "suspenso"
-          ? "A conta da entidade parceira encontra-se temporariamente suspensa."
-          : "Entidade parceira não autorizada a operar."
-      );
+      if (parceiro?.estado === "suspenso") {
+        let motivoSusp = "Suspensão administrativa preventiva de conformidade e auditoria.";
+        try {
+          const rowP = this.db.prepare("SELECT suspenso_motivo FROM parceiros WHERE id = ?").get(parceiro.id) as { suspenso_motivo?: string | null } | undefined;
+          if (rowP?.suspenso_motivo) motivoSusp = rowP.suspenso_motivo;
+        } catch {}
+        throw new ErroAutenticacao(
+          `CONTA SUSPENSA / BLOQUEADA: A conta da entidade parceira encontra-se suspensa. Motivo registado: "${motivoSusp}". Contacte a Direção de Operações NZAIDI.`
+        );
+      }
+      throw new ErroAutenticacao("Entidade parceira não autorizada a operar.");
     }
 
     const senhaCorreta = await verificarSenha(input.senha, usuario.senhaHash);
@@ -81,6 +88,77 @@ export class ParceirosService {
         parceiroCodigo: parceiro.codigo,
         parceiroNome: parceiro.nome,
         usuarioEmail: usuario.email,
+      },
+      ip: ip ?? null,
+    });
+
+    const { senhaHash: _, ...usuarioLimpo } = usuario;
+    return {
+      usuario: usuarioLimpo,
+      parceiro,
+      token: rawToken,
+    };
+  }
+
+  public async registarParceiroPortal(
+    input: z.infer<typeof RegistoParceiroPortalSchema>,
+    ip?: string | null,
+    userAgent?: string | null
+  ): Promise<{ usuario: Omit<UsuarioParceiro, "senhaHash">; parceiro: Parceiro; token: string }> {
+    const emailNorm = input.emailCorporativo.trim().toLowerCase();
+    const usuarioExistente = this.parceirosRepo.buscarUsuarioPorEmail(emailNorm);
+    if (usuarioExistente) {
+      throw new ErroConflito(`O endereço de e-mail '${emailNorm}' já possui conta registada no Portal dos Parceiros.`);
+    }
+
+    const baseCod = (input.codigoSugerido || input.nomeEntidade)
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase()
+      .slice(0, 8);
+    let codigoFinal = `PARC-${baseCod || "ENT"}-${Math.floor(100 + Math.random() * 900)}`;
+    if (this.parceirosRepo.buscarParceiroPorCodigo(codigoFinal)) {
+      codigoFinal = `PARC-${baseCod || "ENT"}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+
+    const parceiroId = `parc_${randomUUID()}`;
+    const parceiro = this.parceirosRepo.criarParceiro({
+      id: parceiroId,
+      codigo: codigoFinal,
+      nome: input.nomeEntidade.trim(),
+      tipo: input.tipo,
+      canaisSuportados: input.canaisSuportados.length ? input.canaisSuportados : ["transferencia_bancaria", "sepa"],
+      comissaoPercentual: "0.50",
+      limiteDiarioAoa: "50000000.00",
+      estado: "ativo",
+      chaveApi: randomBytes(24).toString("hex"),
+    });
+
+    const senhaHash = await hashSenha(input.senha);
+    const usuarioId = `usr_parc_${randomUUID()}`;
+    const usuario = this.parceirosRepo.criarUsuarioParceiro({
+      id: usuarioId,
+      parceiroId: parceiro.id,
+      nome: input.nomeResponsavel.trim(),
+      email: emailNorm,
+      senhaHash,
+      funcao: "gestor_parceiro",
+    });
+
+    const rawToken = randomBytes(32).toString("hex");
+    this.parceirosRepo.criarSessao(parceiro.id, usuario.id, rawToken, 24, ip, userAgent);
+    this.parceirosRepo.atualizarUltimoLoginUsuario(usuario.id);
+
+    this.auditoriaRepo.registar({
+      autorId: usuario.id,
+      autorNome: usuario.nome,
+      autorFuncao: usuario.funcao,
+      acao: "PARCEIRO_REGISTO_PORTAL",
+      recurso: "parceiros",
+      recursoId: parceiro.id,
+      detalhes: {
+        parceiroCodigo: parceiro.codigo,
+        parceiroNome: parceiro.nome,
+        emailCorporativo: emailNorm,
       },
       ip: ip ?? null,
     });
@@ -604,10 +682,38 @@ export class ParceirosService {
     id: string,
     estado: EstadoParceiro,
     operador: { id: string; nome: string; funcao: string },
-    ip?: string | null | undefined
+    ip?: string | null | undefined,
+    motivo?: string | undefined
   ): Parceiro {
     const p = this.obterParceiroAdministracao(id);
     this.parceirosRepo.atualizarStatusParceiro(id, estado);
+
+    try {
+      this.db.exec("ALTER TABLE parceiros ADD COLUMN suspenso_motivo TEXT");
+    } catch {}
+    try {
+      const agora = new Date().toISOString();
+      this.db
+        .prepare("UPDATE parceiros SET suspenso_motivo = ? WHERE id = ?")
+        .run(estado === "suspenso" ? (motivo ?? "Suspensão administrativa preventiva") : null, id);
+
+      if (estado === "suspenso") {
+        this.db.prepare("DELETE FROM sessoes_parceiros WHERE parceiro_id = ?").run(id);
+        this.db.prepare(`
+          INSERT INTO campanhas_email (id, assunto, destinatarios_filtro, corpo_html, total_enviados, estado, autor_id, autor_nome, enviado_em, criado_em)
+          VALUES (?, ?, ?, ?, 1, 'enviada', ?, ?, ?, ?)
+        `).run(
+          "mail_susp_parc_" + randomUUID(),
+          `[NZAIDI] Aviso de Suspensão Operacional — ${p.nome}`,
+          p.codigo,
+          `<p>À Direção de <strong>${p.nome}</strong>,</p><p>Informamos que a conta institucional da entidade parceira foi suspensa.</p><p><strong>Motivo registado:</strong> ${motivo ?? "Suspensão preventiva"}</p>`,
+          operador.id,
+          operador.nome,
+          agora,
+          agora
+        );
+      }
+    } catch {}
 
     this.auditoriaRepo.registar({
       autorId: operador.id,
@@ -616,7 +722,7 @@ export class ParceirosService {
       acao: "ADMIN_PARCEIRO_STATUS_ALTERADO",
       recurso: "parceiros",
       recursoId: id,
-      detalhes: { estadoAnterior: p.estado, novoEstado: estado },
+      detalhes: { estadoAnterior: p.estado, novoEstado: estado, motivo },
       ip: ip ?? null,
     });
 

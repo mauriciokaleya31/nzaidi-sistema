@@ -258,23 +258,14 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
   }
 
   async function executarImpersonacaoCliente(clienteId: string, clienteNome: string): Promise<void> {
-    const ok = await confirmarModal({
-      titulo: "Entrar na Conta do Cliente",
-      subtitulo: `Cliente: ${clienteNome}`,
-      mensagem: `Confirma que deseja aceder ao Portal do Cliente na conta de ${clienteNome}?`,
-      textoConfirmar: "Entrar na Conta",
-      perigo: false,
-    });
-    if (!ok) return;
-
     try {
-      const res = await api.impersonarCliente(clienteId, "Acesso administrativo de suporte técnico e verificação operacional");
+      const res = await api.impersonarCliente(clienteId, "Acesso administrativo direto");
       if ((res as any).token) {
         try {
           localStorage.setItem("nzaidi_cliente_token", (res as any).token);
         } catch {}
       }
-      mostrarToast(`A abrir sessão da conta de ${clienteNome}...`, "sucesso");
+      mostrarToast(`A entrar na conta de ${clienteNome}...`, "sucesso");
       const urlDestino = res.urlRedirecionamento || "/cliente/#/dashboard";
       const novaAba = window.open(urlDestino, "_blank");
       if (!novaAba) {
@@ -499,7 +490,7 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
 
         try {
           await api.bloquearCliente(cli.id, motivo);
-          mostrarToast("Cliente bloqueado com sucesso.", "sucesso");
+          mostrarToast("Cliente bloqueado e notificação com o motivo enviada por e-mail ao titular.", "sucesso");
           modal.style.display = "none";
           void carregarListaClientes();
         } catch (err: any) {

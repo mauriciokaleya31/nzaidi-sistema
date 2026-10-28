@@ -69,7 +69,7 @@ export function registrarRotasAuth(
           autorNome: usuario.nome,
           acao: "LOGIN_BLOQUEADO",
           recurso: "auth",
-          detalhes: { motivo: "Conta desativada" },
+          detalhes: { motivo: usuario.bloqueadoMotivo || "Conta desativada" },
           ip,
           userAgent,
         });
@@ -77,7 +77,9 @@ export function registrarRotasAuth(
         return reply.status(403).send({
           sucesso: false,
           codigo: "CONTA_DESATIVADA",
-          erro: "Esta conta de utilizador encontra-se desativada. Contacte a gestão.",
+          erro: usuario.bloqueadoMotivo
+            ? `ACESSO SUSPENSO / BLOQUEADO: A sua conta foi bloqueada pela administração. Motivo registado: "${usuario.bloqueadoMotivo}".`
+            : "Esta conta de utilizador encontra-se desativada. Contacte a gestão.",
         });
       }
 
