@@ -9,6 +9,9 @@ Atualizado em **26/10/2026** (Ticket NZAIDI-BASE-01, ramo `feat/base-unificada`)
 | Visibilidade | **Público** desde 26/10/2026 |
 | Ramos | `main` (atualizado para produção), `feat/base-unificada` (base unificada com BNA, remessas e renovação visual), `feat/melhorias-regulamentares-bna`, `feat/acesso-paineis-gestao-usuarios` |
 | Publicação | Base unificada pronta para fusão na `main` com 93 testes automatizados aprovados e 0 falhas |
+| Visibilidade | **Privado** desde 25/10/2026 (D-01 fechada) |
+| Ramos | `main` (padrão, Etapa 0), `feat/fase-1-fundacao` (Fase 1), `feat/fase-2-api-auth-taxas` (Fase 2), `feat/fase-3-painel-administrativo` (Fase 3), `feat/fase-4-operacoes-balcao-kyc-caixa` (Fase 4), `feat/fase-5-documentos-seguranca-homologacao` (Fase 5), `feat/modo-manual-integracoes` (Ticket NZAIDI-MANUAL-01) |
+| Publicação | Etapa 0 na `main`. Fases 1 a 5 desenvolvidas em ramos dedicados com 76 testes aprovados e 0 falhas |
 
 ## 1A. Servidor e domínios (verificado e ativo em 26/10/2026)
 | Item | Resultado |
@@ -42,6 +45,17 @@ Atualizado em **26/10/2026** (Ticket NZAIDI-BASE-01, ramo `feat/base-unificada`)
 | `apps/api`: API Fastify, RBAC, KYC, Borderôs Atómicos, Reportes BNA e Remessas | **Homologado** | 101 testes automatizados (12 suites) passam a 100% |
 | `apps/admin`: Backoffice SPA com design bancário, 10+ módulos e menu mobile | **Publicado em Produção** | `https://app.nzaidi.ao` ativo e testado |
 | `scripts/verificar-documentacao.py`: Validação de links, segredos e ficheiros | **Aprovado** | 0 segredos detetados, 0 ligações quebradas |
+| `packages/design-system`: cores do logótipo, tipografia, componentes base, modo escuro, catálogo | Criado | Visual: abrir `packages/design-system/catalogo.html` |
+| `packages/dominio`: dinheiro em decimal exato, taxas (R-07), cotação de 90 s e recotação (R-08) | Criado | 17 testes unitários passam |
+| `apps/site-publico`: Website institucional responsivo e simulador de câmbio integrado com a API | **Criado e Publicado** | `vite build` aprovado; 5 testes unitários; online em `https://nzaidi.ao` |
+| **`apps/api`**: API Fastify com Autenticação `scrypt`, RBAC, Taxas, Auditoria, Clientes, KYC, Documentos com Magic Bytes, Caixa e Operações Cambiais | **Criado e Homologado** | 40 testes de integração e homologação; `tsc -b` sem erros; persistência relacional com SQLite e transações atómicas |
+| **`apps/admin`**: Painel Administrativo SPA com Balcão de Câmbios, Clientes/KYC com Dossiê Documental, Caixa/Tesouraria, Taxas e Auditoria | **Criado e Testado** | 14 testes automatizados; `vite build` aprovado; integração completa com a API |
+| **`scripts/backup.py`**: Rotina de Cópia de Segurança e Recuperação de Desastre com Verificação SHA-256 | **Criado e Validado** | Autoteste de recuperação atómica aprovado a 100% |
+| **`docs/18-plano-implantacao-producao.md`**: Plano de Produção, Checklist de Infraestrutura e Aviso Regulatório BNA | **Documentado** | Requisitos técnicos, segredos, rollback e limitações regulatórias |
+| **Renovação visual do website** (25/10/2026): multipágina (Início, Sobre Nós, Serviços, Câmbios, Segurança, Contactos, FAQ, Termos, Privacidade, 404), layout partilhado, elementos 3D em CSS | **Criado, não publicado** | `vite build` gera as 10 páginas; sem ligações partidas; sem deslocamento horizontal a 375 px; simulador com os mesmos resultados |
+| **Renovação visual do backoffice** (25/10/2026): CSS completo (antes 72 classes sem estilo, incluindo os modais), login em ecrã dividido, menu lateral no telemóvel | **Criado, não publicado** | 7 vistas abertas com a API local em memória; modais sobrepostos; 85 testes passam |
+| **Modo Manual & Integrações** (`apps/api` e `apps/admin`): Execução assistida e conciliação manual de parceiros (Wise, MaxPay, Realtransfers, Multicaixa, bancos), idempotência estrita, segregação de funções (4 olhos para >= 5M AOA) e sem contaminação do caixa físico | **Criado e Validado** | 92 testes no total (7 testes dedicados em `apps/api/test/modo-manual.test.ts`); `tsc -b` e `vite build` aprovados |
+| Integração contínua (`infra/ci/verificar.yml`): tipos, testes, segredos | Criado, **inativo** | Ativa-se ao mover para `.github/workflows/` (precisa da permissão `workflow` no GitHub) |
 
 ## 4. O que **não** foi feito
 - Nenhuma credencial de produção nem dados de identificação pessoal gravados no repositório.

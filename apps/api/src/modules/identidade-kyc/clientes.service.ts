@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { ClientesRepository } from "./clientes.repository.js";
 import type { AuditoriaRepository } from "../auditoria/auditoria.repository.js";
-import type { Cliente, CriarClienteInput, DecisaoKycInput, RegistoKyc } from "./clientes.types.js";
+import type { Cliente, CriarClienteInput, DecisaoKycInput, RegistoKyc, AtualizarClienteInput } from "./clientes.types.js";
 import { ErroValidacao, ErroNaoEncontrado, ErroConflito, ErroPermissao } from "../../plugins/erros.js";
 
 export interface ContextoOperador {
@@ -18,7 +18,6 @@ export class ClientesService {
   ) {}
 
   public async criarCliente(dados: CriarClienteInput, operador: ContextoOperador): Promise<Cliente> {
-    // 1. Deteção de duplicados
     const duplicadoDoc = this.clientesRepo.buscarPorDocumento(dados.tipoDocumento, dados.numeroDocumento);
     if (duplicadoDoc) {
       throw new ErroConflito(
@@ -39,6 +38,15 @@ export class ClientesService {
       telefone: dados.telefone.trim(),
       email: dados.email ? dados.email.trim().toLowerCase() : null,
       morada: dados.morada.trim(),
+      dataNascimento: dados.dataNascimento ?? null,
+      documentoEmissao: dados.documentoEmissao ?? null,
+      documentoValidade: dados.documentoValidade ?? null,
+      profissao: dados.profissao ?? null,
+      entidadeEmpregadora: dados.entidadeEmpregadora ?? null,
+      finalidadeConta: dados.finalidadeConta ?? null,
+      paisResidencia: dados.paisResidencia ?? "AO",
+      pep: Boolean(dados.pep),
+      avatarUrl: dados.avatarUrl ?? null,
       estado: "ativo",
       estadoKyc: "pendente",
       nivelRisco: "baixo",
@@ -48,7 +56,6 @@ export class ClientesService {
 
     this.clientesRepo.inserir(cliente);
 
-    // Auditoria obrigatória
     this.auditoriaRepo.registar({
       autorId: operador.id,
       autorNome: operador.nome,
@@ -80,9 +87,66 @@ export class ClientesService {
     busca?: string,
     estadoKyc?: string,
     limite = 50,
-    offset = 0
+    offset = 0,
+    estadoCliente?: string,
+    nivelRisco?: string
   ): { itens: Cliente[]; total: number } {
-    return this.clientesRepo.listar(busca, estadoKyc, limite, offset);
+    return this.clientesRepo.listar(busca, estadoKyc, limite, offset, estadoCliente, nivelRisco);
+  }
+
+  public atualizarCliente(
+    id: string,
+    dados: AtualizarClienteInput,
+    operador: ContextoOperador
+  ): Cliente {
+    this.buscarClientePorId(id);
+
+    this.clientesRepo.atualizarCliente(id, dados);
+
+    this.auditoriaRepo.registar({
+      autorId: operador.id,
+      autorNome: operador.nome,
+      autorFuncao: operador.funcao,
+      acao: "CLIENTE_ATUALIZADO",
+      recurso: "clientes",
+      recursoId: id,
+      detalhes: { camposAtualizados: Object.keys(dados) },
+      ip: operador.ip,
+    });
+
+    return this.buscarClientePorId(id);
+  }
+
+  public bloquearCliente(id: string, motivo: string, operador: ContextoOperador): void {
+    const cliente = this.buscarClientePorId(id);
+    this.clientesRepo.bloquear(id, motivo);
+
+    this.auditoriaRepo.registar({
+      autorId: operador.id,
+      autorNome: operador.nome,
+      autorFuncao: operador.funcao,
+      acao: "CLIENTE_BLOQUEADO",
+      recurso: "clientes",
+      recursoId: id,
+      detalhes: { motivo, nome: cliente.nome, nif: cliente.nif },
+      ip: operador.ip,
+    });
+  }
+
+  public desbloquearCliente(id: string, operador: ContextoOperador): void {
+    const cliente = this.buscarClientePorId(id);
+    this.clientesRepo.desbloquear(id);
+
+    this.auditoriaRepo.registar({
+      autorId: operador.id,
+      autorNome: operador.nome,
+      autorFuncao: operador.funcao,
+      acao: "CLIENTE_DESBLOQUEADO",
+      recurso: "clientes",
+      recursoId: id,
+      detalhes: { nome: cliente.nome, nif: cliente.nif },
+      ip: operador.ip,
+    });
   }
 
   public processarDecisaoKyc(
@@ -92,7 +156,6 @@ export class ClientesService {
   ): Cliente {
     const cliente = this.buscarClientePorId(clienteId);
 
-    // Segregação de funções: apenas compliance e gestão aprovam/rejeitam KYC
     if (dados.estadoNovo === "aprovado" || dados.estadoNovo === "rejeitado") {
       if (operador.funcao !== "compliance" && operador.funcao !== "gestao") {
         throw new ErroPermissao("Apenas os perfis de Compliance e Gestão podem aprovar ou rejeitar KYC.");
@@ -118,7 +181,6 @@ export class ClientesService {
 
     this.clientesRepo.inserirRegistoKyc(registoKyc);
 
-    // Pista de auditoria regulatória
     this.auditoriaRepo.registar({
       autorId: operador.id,
       autorNome: operador.nome,
@@ -146,5 +208,13 @@ export class ClientesService {
   public obterHistoricoKyc(clienteId: string): RegistoKyc[] {
     this.buscarClientePorId(clienteId);
     return this.clientesRepo.obterHistoricoKyc(clienteId);
+  }
+
+  public obterContadoresKyc() {
+    return this.clientesRepo.obterContadoresKyc();
+  }
+
+  public obterDetalhesCompletosCliente(clienteId: string) {
+    return this.clientesRepo.obterDetalhesCompletosCliente(clienteId);
   }
 }

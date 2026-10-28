@@ -134,7 +134,9 @@ export class DocumentosKycService {
     writeFileSync(caminhoCompleto, buffer);
 
     // 7. Sanitizar Nome Original contra Path Traversal
-    const nomeArquivoSeguro = dados.nomeArquivo.replace(/[/\\]/g, "_").slice(0, 100);
+    const apenasBase = dados.nomeArquivo.replace(/^.*[\\/]/, '');
+    const semPontosDuplos = apenasBase.replace(/\.{2,}/g, '.');
+    const nomeArquivoSeguro = semPontosDuplos.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 100) || 'documento.bin';
 
     const doc: DocumentoKyc = {
       id: docId,

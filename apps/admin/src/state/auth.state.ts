@@ -66,6 +66,15 @@ class AuthState {
       this.setUsuario(null);
     }
   }
+
+  public async encerrarImpersonacao(): Promise<void> {
+    try {
+      await api.encerrarImpersonacao();
+    } finally {
+      window.location.hash = "#dashboard";
+      window.location.reload();
+    }
+  }
 }
 
 export const authState = new AuthState();

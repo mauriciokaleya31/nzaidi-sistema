@@ -191,7 +191,7 @@ export async function renderizarTaxas(container: HTMLElement): Promise<void> {
                 <tr>
                   <td>
                     <div class="moeda-cell">
-                      <span class="flag-icon">${t.moeda === "USD" ? "🇺🇸" : "🇪🇺"}</span>
+                      <span class="flag-icon" aria-hidden="true">${t.moeda === "USD" ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>` : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10h12M4 14h12M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12a7.9 7.9 0 0 0 7.8 8 7.7 7.7 0 0 0 5.2-2"></path></svg>`}</span>
                       <strong>${t.moeda}</strong>
                     </div>
                   </td>

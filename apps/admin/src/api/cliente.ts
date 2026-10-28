@@ -1,3 +1,111 @@
+
+// --- Tipos Contábeis e Financeiros (Módulo D) ---
+export interface ContaContabilItem {
+  codigo: string;
+  nome: string;
+  natureza: 'devedora' | 'credora';
+  tipo: 'ativo' | 'passivo' | 'patrimonio' | 'proveito' | 'custo';
+  moeda: string;
+  totalDebitoAoa?: string;
+  totalCreditoAoa?: string;
+  saldoAoa?: string;
+}
+
+export interface PartidaContabilItem {
+  id: string;
+  lancamentoId: string;
+  contaCodigo: string;
+  contaNome: string;
+  tipo: 'D' | 'C';
+  montanteOriginal: string;
+  moeda: string;
+  montanteAoa: string;
+  descricaoLinha?: string | null;
+  ordem?: number;
+}
+
+export interface LancamentoContabilItem {
+  id: string;
+  numeroLancamento: string;
+  dataMovimento: string;
+  origemTipo: string;
+  origemId: string;
+  descricao: string;
+  moeda: string;
+  montanteOriginal: string;
+  taxaCambio?: string | null;
+  contravalorAoa: string;
+  estado: 'confirmado' | 'estornado';
+  estornadoEm?: string | null;
+  estornoLancamentoId?: string | null;
+  motivoEstorno?: string | null;
+  operadorNome: string;
+  criadoEm: string;
+  partidas?: PartidaContabilItem[];
+}
+
+export interface DivergenciaReconciliacaoItem {
+  id: string;
+  tipo: string;
+  referenciaId: string;
+  origem: string;
+  valorEsperado: string;
+  valorObservado: string;
+  moeda: string;
+  diferenca: string;
+  estado: 'aberta' | 'em_analise' | 'resolvida' | 'desconsiderada_autorizada';
+  motivoResolucao?: string | null;
+  resolvidoPorNome?: string | null;
+  resolvidoEm?: string | null;
+  criadoEm: string;
+}
+
+export interface ResumoDiarioRelatorio {
+  periodo: { dataInicio: string; dataFim: string };
+  operacoesCambio: { tipo: string; moeda: string; quantidade: number; totalDivisa: string; totalAoa: string }[];
+  remessas: { moeda: string; quantidade: number; totalDivisa: string; totalAoa: string; totalComissaoAoa: string }[];
+  receitasApuradas: { contaCodigo: string; contaNome: string; totalAoa: string }[];
+}
+
+export interface PosicaoCambialRelatorio {
+  periodo: { dataInicio: string; dataFim: string };
+  posicao: {
+    moeda: string;
+    compras: { quantidade: number; totalDivisa: string; totalAoa: string; taxaMedia: string };
+    vendas: { quantidade: number; totalDivisa: string; totalAoa: string; taxaMedia: string };
+    posicaoLiquidaDivisa: string;
+    margemBrutaEstimadaAoa: string;
+  }[];
+}
+
+
+export interface ParceiroItem {
+  id: string;
+  codigo: string;
+  nome: string;
+  tipo: "remessas" | "pagamentos" | "cambio" | "correspondente";
+  canaisSuportados: string[];
+  comissaoPercentual: string;
+  limiteDiarioAoa: string;
+  estado: "ativo" | "suspenso" | "inativo";
+  chaveApi?: string | null;
+  webhookUrl?: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+}
+
+export interface CriarParceiroPayload {
+  codigo: string;
+  nome: string;
+  tipo: "remessas" | "pagamentos" | "cambio" | "correspondente";
+  canaisSuportados: string[];
+  comissaoPercentual: string;
+  limiteDiarioAoa: string;
+  emailAdmin: string;
+  nomeAdmin: string;
+  senhaAdmin: string;
+}
+
 import type { MoedaDivisa } from "@nzaidi/dominio";
 
 export type FuncaoUsuario = "atendente" | "compliance" | "tesouraria" | "gestao";
@@ -8,6 +116,8 @@ export interface UsuarioSessao {
   email: string;
   funcao: FuncaoUsuario;
   permissoes: string[];
+  impersonadoPor?: string | null;
+  impersonadoNome?: string | null;
 }
 
 export interface UsuarioItem {
@@ -16,6 +126,10 @@ export interface UsuarioItem {
   email: string;
   funcao: FuncaoUsuario;
   ativo: boolean;
+  telefone?: string | null;
+  avatarUrl?: string | null;
+  bloqueadoEm?: string | null;
+  bloqueadoMotivo?: string | null;
   criadoEm: string;
   atualizadoEm: string;
   ultimoLoginEm?: string | null;
@@ -153,6 +267,96 @@ export class ApiError extends Error {
   }
 }
 
+
+export interface ExecucaoIntegracaoManualItem {
+  id: string;
+  transacaoId: string;
+  tipoIntegracao: string;
+  canalOrigem: string;
+  referenciaExterna: string;
+  valorMoeda: string;
+  moeda: string;
+  estado: "pendente" | "concluida" | "rejeitada" | "cancelada";
+  operadorId: string;
+  operadorNome: string;
+  operadorFuncao: string;
+  aprovadorId?: string | null;
+  aprovadorNome?: string | null;
+  momentoExecucao: string;
+  momentoAprovacao?: string | null;
+  comprovativoArquivo?: string | null;
+  comprovativoHashSha256?: string | null;
+  notas?: string | null;
+  chaveIdempotencia: string;
+}
+
+export interface CriarExecucaoManualPayload {
+  transacaoId: string;
+  tipoIntegracao: string;
+  canalOrigem: string;
+  referenciaExterna: string;
+  valorMoeda: string;
+  moeda: string;
+  chaveIdempotencia: string;
+  notas?: string | undefined;
+  comprovativoArquivo?: string | undefined;
+  comprovativoHashSha256?: string | undefined;
+}
+
+export interface ItemFilaOperacional {
+  id: string;
+  tipo: "kyc_dossie" | "pedido_cambio" | "pedido_remessa" | "liquidacao_manual" | "alerta_caixa";
+  referenciaId: string;
+  codigoVisual: string;
+  titulo: string;
+  descricao: string;
+  clienteNome?: string | null;
+  clienteId?: string | null;
+  montante?: string | null;
+  moeda?: string | null;
+  prioridade: "urgente" | "alta" | "normal";
+  estado: "pendente" | "em_analise" | "concluida" | "rejeitada";
+  responsavelId?: string | null;
+  responsavelNome?: string | null;
+  criadoEm: string;
+  atualizadoEm: string;
+  detalhes: Record<string, any>;
+}
+
+export interface AtividadeOperadorRecente {
+  id: string;
+  acao: string;
+  recurso: string;
+  recursoId?: string | null;
+  detalhes?: any;
+  criadoEm: string;
+}
+
+export interface ResumoDashboardOperacional {
+  pedidosCambioPendentes: number;
+  pedidosRemessasPendentes: number;
+  kycPendentes: number;
+  kycAprovados: number;
+  kycRejeitados: number;
+  liquidacoesManuaisPendentes: number;
+  caixasAbertos: number;
+  alertasDivergencia: number;
+  minhasTarefasPendentes: number;
+  totalTarefasPendentes: number;
+  atividadesRecentes: AtividadeOperadorRecente[];
+}
+
+export interface FiltrosFilaOperacional {
+  tipo?: "kyc_dossie" | "pedido_cambio" | "pedido_remessa" | "liquidacao_manual" | "alerta_caixa" | undefined;
+  estado?: "pendente" | "em_analise" | "concluida" | "rejeitada" | undefined;
+  prioridade?: "urgente" | "alta" | "normal" | undefined;
+  responsavelId?: string | undefined;
+  apenasMinhas?: boolean | undefined;
+  busca?: string | undefined;
+  limite?: number | undefined;
+  offset?: number | undefined;
+}
+
 export class AdminApiClient {
   constructor(private baseUrl = "") {}
 
@@ -181,6 +385,21 @@ export class AdminApiClient {
     }
 
     return dados as T;
+  }
+
+  public async inicializarPrimeiroAdmin(payload: {
+    tokenInicializacao: string;
+    nome: string;
+    email: string;
+    senha: string;
+  }): Promise<{ sucesso: boolean; mensagem: string; usuario: UsuarioSessao }> {
+    return this.requisitar<{ sucesso: boolean; mensagem: string; usuario: UsuarioSessao }>(
+      "/api/v1/auth/primeiro-admin",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
   }
 
   public async get<T>(caminho: string): Promise<T> {
@@ -345,6 +564,21 @@ export class AdminApiClient {
     return `${this.baseUrl}/api/v1/clientes/${clienteId}/documentos/${docId}/download`;
   }
 
+  public async impersonarCliente(
+    clienteId: string,
+    motivo: string = "Acesso de suporte administrativo"
+  ): Promise<{ sucesso: boolean; dados?: any; urlRedirecionamento?: string; redirectUrl?: string; token?: string; erro?: string; mensagem?: string }> {
+    try {
+      const res = await this.requisitar<any>(`/api/v1/clientes/${clienteId}/impersonar`, {
+        method: "POST",
+        body: JSON.stringify({ motivo }),
+      });
+      return { sucesso: true, dados: res, urlRedirecionamento: res.urlRedirecionamento, redirectUrl: res.urlRedirecionamento, token: res.token };
+    } catch (err: any) {
+      return { sucesso: false, erro: err.message || "Falha ao personificar conta de cliente." };
+    }
+  }
+
   // --- Caixa & Tesouraria ---
   public async obterCaixaAtivo(): Promise<CaixaAtivoResposta | null> {
     const res = await this.requisitar<{ sucesso: boolean; dados: CaixaAtivoResposta | null }>("/api/v1/caixa/ativo", {
@@ -463,6 +697,692 @@ export class AdminApiClient {
       method: "PATCH",
       body: JSON.stringify({ ativo }),
     });
+  }
+
+  // --- Integrações Manuais & Conciliação (Ticket NZAIDI-MANUAL-01) ---
+  public async listarIntegracoesManuais(
+    limite = 50,
+    offset = 0,
+    estado?: string
+  ): Promise<{ total: number; itens: ExecucaoIntegracaoManualItem[] }> {
+    const params = new URLSearchParams();
+    params.set("limite", String(limite));
+    params.set("offset", String(offset));
+    if (estado) params.set("estado", estado);
+
+    return this.requisitar<{ total: number; itens: ExecucaoIntegracaoManualItem[] }>(
+      `/api/v1/integracoes-manuais/execucoes?${params.toString()}`,
+      { method: "GET" }
+    );
+  }
+
+  public async obterIntegracaoManual(id: string): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      `/api/v1/integracoes-manuais/execucoes/${id}`,
+      { method: "GET" }
+    );
+    return res.execucao;
+  }
+
+  // --- Gestão de Parceiros Comerciais (Módulo B) ---
+  public async listarParceirosAdmin(): Promise<ParceiroItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ParceiroItem[] }>("/api/v1/admin/parceiros", {
+      method: "GET",
+    });
+    return res.dados;
+  }
+
+  public async criarParceiroAdmin(payload: CriarParceiroPayload): Promise<{ parceiro: ParceiroItem }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: { parceiro: ParceiroItem } }>("/api/v1/admin/parceiros", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async alterarStatusParceiroAdmin(id: string, estado: "ativo" | "suspenso" | "inativo", motivo?: string): Promise<ParceiroItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ParceiroItem }>(
+      "/api/v1/admin/parceiros/" + id + "/status",
+      {
+        method: "PATCH",
+        body: JSON.stringify({ estado, motivo }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async atribuirRemessaParceiroAdmin(id: string, remessaId: string, canal: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      "/api/v1/admin/parceiros/" + id + "/atribuir-remessa",
+      {
+        method: "POST",
+        body: JSON.stringify({ remessaId, canal }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async impersonarParceiroAdmin(id: string): Promise<{ sucesso: boolean; dados?: any; erro?: string }> {
+    try {
+      const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+        "/api/v1/admin/parceiros/" + id + "/impersonar",
+        {
+          method: "POST",
+        }
+      );
+      return { sucesso: true, dados: res.dados };
+    } catch (err: any) {
+      return { sucesso: false, erro: err.message || "Falha ao personificar entidade parceira." };
+    }
+  }
+
+
+  public async criarIntegracaoManual(
+    payload: CriarExecucaoManualPayload
+  ): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      "/api/v1/integracoes-manuais/execucoes",
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.execucao;
+  }
+
+  public async aprovarIntegracaoManual(
+    id: string,
+    notasAprovacao?: string
+  ): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      `/api/v1/integracoes-manuais/execucoes/${id}/aprovar`,
+      {
+        method: "POST",
+        body: JSON.stringify({ notasAprovacao }),
+      }
+    );
+    return res.execucao;
+  }
+
+  public async rejeitarIntegracaoManual(
+    id: string,
+    motivo: string
+  ): Promise<ExecucaoIntegracaoManualItem> {
+    const res = await this.requisitar<{ sucesso: boolean; execucao: ExecucaoIntegracaoManualItem }>(
+      `/api/v1/integracoes-manuais/execucoes/${id}/rejeitar`,
+      {
+        method: "POST",
+        body: JSON.stringify({ motivo }),
+      }
+    );
+    return res.execucao;
+  }
+
+  // ==========================================
+  // MÓDULO C — PAINEL OPERACIONAL DA EQUIPA
+  // ==========================================
+
+  public async obterDashboardOperacional(): Promise<ResumoDashboardOperacional> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ResumoDashboardOperacional }>(
+      "/api/v1/operacional/dashboard"
+    );
+    return res.dados;
+  }
+
+  public async listarFilaOperacional(
+    filtros: FiltrosFilaOperacional = {}
+  ): Promise<{ itens: ItemFilaOperacional[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filtros.tipo) params.set("tipo", filtros.tipo);
+    if (filtros.estado) params.set("estado", filtros.estado);
+    if (filtros.prioridade) params.set("prioridade", filtros.prioridade);
+    if (filtros.responsavelId) params.set("responsavelId", filtros.responsavelId);
+    if (filtros.apenasMinhas) params.set("apenasMinhas", "true");
+    if (filtros.busca) params.set("busca", filtros.busca);
+    if (filtros.limite) params.set("limite", String(filtros.limite));
+    if (filtros.offset) params.set("offset", String(filtros.offset));
+
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    const res = await this.requisitar<{ sucesso: boolean; total: number; dados: ItemFilaOperacional[] }>(
+      `/api/v1/operacional/fila${qs}`
+    );
+    return { itens: res.dados, total: res.total };
+  }
+
+  public async obterDetalhesItemOperacional(tipo: string, id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/fila/${tipo}/${id}`
+    );
+    return res.dados;
+  }
+
+  public async atribuirTarefaOperacional(
+    tipo: string,
+    id: string,
+    payload: { responsavelId?: string | null | undefined; prioridade?: "urgente" | "alta" | "normal" | undefined; notas?: string | undefined }
+  ): Promise<{ sucesso: boolean; responsavelId?: string | null; responsavelNome?: string | null }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/fila/${tipo}/${id}/atribuir`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async processarPedidoCambioOperacional(
+    id: string,
+    payload: { decisao: "aprovar" | "rejeitar"; motivoRejeicao?: string | undefined; caixaId?: string | undefined; notas?: string | undefined }
+  ): Promise<{ sucesso: boolean; estado: string }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/pedidos-cambio/${id}/processar`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async processarPedidoRemessaOperacional(
+    id: string,
+    payload: { decisao: "atribuir_parceiro" | "liquidar_direto" | "rejeitar"; parceiroId?: string | undefined; motivoRejeicao?: string | undefined; notas?: string | undefined }
+  ): Promise<{ sucesso: boolean; estado: string; parceiroNome?: string }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/pedidos-remessas/${id}/processar`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async decidirDocumentoKycOperacional(
+    id: string,
+    payload: { statusValidacao: "aprovado" | "rejeitado" | "pendente_atualizacao"; motivoRejeicao?: string | undefined }
+  ): Promise<{ sucesso: boolean; status: string }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/operacional/kyc/documentos/${id}/decisao`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarCaixasOperacional(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; total: number; dados: any[] }>(
+      "/api/v1/operacional/caixas"
+    );
+    return res.dados;
+  }
+
+  // --- Módulo D: Contabilidade, Livro Razão e Reconciliação ---
+  public async obterContasContabeis(): Promise<ContaContabilItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ContaContabilItem[] }>('/api/v1/contabilidade/contas');
+    return res.dados;
+  }
+
+  public async obterBalanceteContabil(): Promise<ContaContabilItem[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: ContaContabilItem[] }>('/api/v1/contabilidade/balancete');
+    return res.dados;
+  }
+
+  public async listarLivroRazao(filtros: {
+    dataInicio?: string | undefined;
+    dataFim?: string | undefined;
+    contaCodigo?: string | undefined;
+    origemTipo?: string | undefined;
+    limite?: number | undefined;
+    offset?: number | undefined;
+  }): Promise<{ itens: any[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filtros.dataInicio) params.set('dataInicio', filtros.dataInicio);
+    if (filtros.dataFim) params.set('dataFim', filtros.dataFim);
+    if (filtros.contaCodigo) params.set('contaCodigo', filtros.contaCodigo);
+    if (filtros.origemTipo) params.set('origemTipo', filtros.origemTipo);
+    if (filtros.limite) params.set('limite', String(filtros.limite));
+    if (filtros.offset) params.set('offset', String(filtros.offset));
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: { itens: any[]; total: number } }>(
+      `/api/v1/contabilidade/livro-razao?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async obterLancamentoContabil(id: string): Promise<LancamentoContabilItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: LancamentoContabilItem }>(
+      `/api/v1/contabilidade/lancamentos/${id}`
+    );
+    return res.dados;
+  }
+
+  public async estornarLancamentoContabil(id: string, motivo: string): Promise<LancamentoContabilItem> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: LancamentoContabilItem }>(
+      `/api/v1/contabilidade/lancamentos/${id}/estorno`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ motivo }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarDivergencias(filtros: {
+    tipo?: string | undefined;
+    estado?: string | undefined;
+    limite?: number | undefined;
+    offset?: number | undefined;
+  }): Promise<{ itens: DivergenciaReconciliacaoItem[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filtros.tipo) params.set('tipo', filtros.tipo);
+    if (filtros.estado) params.set('estado', filtros.estado);
+    if (filtros.limite) params.set('limite', String(filtros.limite));
+    if (filtros.offset) params.set('offset', String(filtros.offset));
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: { itens: DivergenciaReconciliacaoItem[]; total: number } }>(
+      `/api/v1/contabilidade/reconciliacao/divergencias?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async executarReconciliacaoGeral(): Promise<{ totalVerificadas: number; novasDivergencias: number }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: { totalVerificadas: number; novasDivergencias: number } }>(
+      '/api/v1/contabilidade/reconciliacao/executar',
+      { method: 'POST' }
+    );
+    return res.dados;
+  }
+
+  public async resolverDivergencia(id: string, estado: 'resolvida' | 'desconsiderada_autorizada', motivo: string): Promise<void> {
+    await this.requisitar<{ sucesso: boolean }>(
+      `/api/v1/contabilidade/reconciliacao/divergencias/${id}/resolver`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ estado, motivo }),
+      }
+    );
+  }
+
+  public async obterRelatorioResumoDiario(filtros: { dataInicio?: string | undefined; dataFim?: string | undefined }): Promise<ResumoDiarioRelatorio> {
+    const params = new URLSearchParams();
+    if (filtros.dataInicio) params.set('dataInicio', filtros.dataInicio);
+    if (filtros.dataFim) params.set('dataFim', filtros.dataFim);
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: ResumoDiarioRelatorio }>(
+      `/api/v1/contabilidade/relatorios/resumo-diario?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async obterRelatorioPosicaoCambial(filtros: { dataInicio?: string | undefined; dataFim?: string | undefined }): Promise<PosicaoCambialRelatorio> {
+    const params = new URLSearchParams();
+    if (filtros.dataInicio) params.set('dataInicio', filtros.dataInicio);
+    if (filtros.dataFim) params.set('dataFim', filtros.dataFim);
+
+    const res = await this.requisitar<{ sucesso: boolean; dados: PosicaoCambialRelatorio }>(
+      `/api/v1/contabilidade/relatorios/posicao-cambial?${params.toString()}`
+    );
+    return res.dados;
+  }
+
+  public async obterHistoricoTaxas(moeda?: string | undefined): Promise<any[]> {
+    const url = moeda ? `/api/v1/contabilidade/taxas/historico?moeda=${moeda}` : '/api/v1/contabilidade/taxas/historico';
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(url);
+    return res.dados;
+  }
+
+
+  public async encerrarImpersonacao(): Promise<void> {
+    await this.requisitar('/api/v1/auth/encerrar-impersonacao', { method: 'POST' });
+  }
+
+  public async impersonarUsuario(id: string, motivo: string): Promise<any> {
+    const res = await this.requisitar<any>(`/api/v1/usuarios/${id}/impersonar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+    return res;
+  }
+
+  public async bloquearUsuario(id: string, motivo: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}/bloquear`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  public async desbloquearUsuario(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}/desbloquear`, { method: 'POST' });
+  }
+
+  public async terminarSessoesUsuario(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}/terminar-sessoes`, { method: 'POST' });
+  }
+
+  public async obterDetalhesUsuario(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/usuarios/${id}`);
+    return res.dados;
+  }
+
+  public async atualizarUsuario(id: string, payload: any): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async obterPerfilProprio(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/usuarios/me');
+    return res.dados;
+  }
+
+  public async atualizarPerfilProprio(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/usuarios/me', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async alterarSenhaPropria(payload: any): Promise<void> {
+    await this.requisitar('/api/v1/usuarios/me/senha', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async listarSessoesProprias(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/usuarios/me/sessoes');
+    return res.dados;
+  }
+
+  public async revogarSessaoPropria(sessaoId: string): Promise<void> {
+    await this.requisitar(`/api/v1/usuarios/me/sessoes/${sessaoId}`, { method: 'DELETE' });
+  }
+
+  public async obterDetalhesCliente(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/clientes/${id}/detalhes`);
+    return res.dados;
+  }
+
+  public async atualizarCliente(id: string, payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/clientes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async bloquearCliente(id: string, motivo: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/bloquear`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo }),
+    });
+  }
+
+  public async desbloquearCliente(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/desbloquear`, { method: 'POST' });
+  }
+
+  public async terminarSessoesCliente(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/terminar-sessoes`, { method: 'POST' });
+  }
+
+
+
+  public async solicitarDocumentosKyc(id: string, mensagem: string): Promise<void> {
+    await this.requisitar(`/api/v1/clientes/${id}/kyc/solicitar-documentos`, {
+      method: 'POST',
+      body: JSON.stringify({ mensagem }),
+    });
+  }
+
+  public async obterEstatisticasKyc(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/kyc/estatisticas');
+    return res.dados;
+  }
+
+  public async obterDashboardExecutivo(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/dashboard/executivo');
+    return res.dados;
+  }
+
+  public async listarNotificacoes(apenasNaoLidas?: boolean, categoria?: string): Promise<{ itens: any[]; totalNaoLidas: number }> {
+    const params = new URLSearchParams();
+    if (apenasNaoLidas) params.set('apenasNaoLidas', 'true');
+    if (categoria) params.set('categoria', categoria);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[]; totalNaoLidas: number }>(`/api/v1/notificacoes?${params.toString()}`);
+    return { itens: res.dados, totalNaoLidas: res.totalNaoLidas };
+  }
+
+  public async marcarNotificacaoLida(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/notificacoes/${id}/lida`, { method: 'PATCH' });
+  }
+
+  public async marcarTodasNotificacoesLidas(): Promise<void> {
+    await this.requisitar('/api/v1/notificacoes/marcar-todas-lidas', { method: 'POST' });
+  }
+
+  public async listarAnuncios(destino?: string, estado?: string): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (destino) params.set('destino', destino);
+    if (estado) params.set('estado', estado);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/comunicacao/anuncios?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async criarAnuncio(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/comunicacao/anuncios', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async atualizarAnuncio(id: string, payload: any): Promise<void> {
+    await this.requisitar(`/api/v1/comunicacao/anuncios/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async removerAnuncio(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/comunicacao/anuncios/${id}`, { method: 'DELETE' });
+  }
+
+  public async listarDicas(categoria?: string): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (categoria) params.set('categoria', categoria);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/comunicacao/dicas?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async criarDica(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/comunicacao/dicas', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async removerDica(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/comunicacao/dicas/${id}`, { method: 'DELETE' });
+  }
+
+  public async listarCampanhas(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/comunicacao/campanhas');
+    return res.dados;
+  }
+
+  public async criarCampanha(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/comunicacao/campanhas', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async dispararCampanha(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; mensagem: string; dados: any }>(`/api/v1/comunicacao/campanhas/${id}/disparar`, {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async obterProvedoresComunicacao(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/comunicacao/provedores');
+    return res.dados;
+  }
+
+  public async salvarProvedorComunicacao(payload: any): Promise<void> {
+    await this.requisitar('/api/v1/comunicacao/provedores', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async testarProvedorComunicacao(tipo: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/comunicacao/provedores/${tipo}/testar`, {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  // --- MÉTODOS DE PAGAMENTO (MANUAL E APPYPAY) ---
+  public async listarMetodosPagamentoAdmin(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/pagamentos/admin/metodos');
+    return res.dados;
+  }
+
+  public async atualizarMetodoPagamentoAdmin(id: string, payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/pagamentos/admin/metodos/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async testarConexaoAppyPay(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; mensagem: string; dados: any }>('/api/v1/pagamentos/admin/metodos/appypay/testar', {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async listarTransacoesPagamentoAdmin(filtros?: { estado?: string; limite?: number }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filtros?.estado) params.set('estado', filtros.estado);
+    if (filtros?.limite) params.set('limite', filtros.limite.toString());
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/pagamentos?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async confirmarPagamentoManual(id: string, notasInternas?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/pagamentos/${id}/confirmar`, {
+      method: 'POST',
+      body: JSON.stringify({ notasInternas }),
+    });
+    return res.dados;
+  }
+
+  public async rejeitarPagamentoManual(id: string, motivo: string, notasInternas?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/pagamentos/${id}/rejeitar`, {
+      method: 'POST',
+      body: JSON.stringify({ motivo, notasInternas }),
+    });
+    return res.dados;
+  }
+
+  // --- MÓDULO CARTOES VISA VIRTUAIS COM STROWALLET ---
+  public async obterDashboardCartoes(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/dashboard');
+    return res.dados;
+  }
+
+  public async obterConfigCartoes(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/config');
+    return res.dados;
+  }
+
+  public async atualizarConfigCartoes(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/config', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async obterComercialCartoes(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/comercial');
+    return res.dados;
+  }
+
+  public async atualizarComercialCartoes(payload: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/comercial', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return res.dados;
+  }
+
+  public async testarConexaoStroWallet(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>('/api/v1/cartoes/admin/testar-conexao', {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async listarCartoesAdmin(filtros?: { estado?: string; busca?: string }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filtros?.estado) params.set('estado', filtros.estado);
+    if (filtros?.busca) params.set('busca', filtros.busca);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/cartoes/admin/cartoes?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async obterDetalhesCartaoAdmin(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/cartoes/admin/cartoes/${id}`);
+    return res.dados;
+  }
+
+  public async alterarStatusCartaoAdmin(id: string, novoEstado: 'ativo' | 'congelado'): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/cartoes/admin/cartoes/${id}/alterar-status`, {
+      method: 'POST',
+      body: JSON.stringify({ novoEstado }),
+    });
+    return res.dados;
+  }
+
+  public async sincronizarCartaoAdmin(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(`/api/v1/cartoes/admin/cartoes/${id}/sincronizar`, {
+      method: 'POST',
+    });
+    return res.dados;
+  }
+
+  public async listarTransacoesCartoesAdmin(filtros?: { tipo?: string; estado?: string }): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (filtros?.tipo) params.set('tipo', filtros.tipo);
+    if (filtros?.estado) params.set('estado', filtros.estado);
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>(`/api/v1/cartoes/admin/transacoes?${params.toString()}`);
+    return res.dados;
+  }
+
+  public async listarAdesoesCartoesAdmin(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>('/api/v1/cartoes/admin/adesao');
+    return res.dados;
+  }
+
+  public async avaliarAdesaoCartaoAdmin(clienteId: string, aprovado: boolean, motivo?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; mensagem: string }>(`/api/v1/cartoes/admin/adesao/${clienteId}/avaliar`, {
+      method: 'POST',
+      body: JSON.stringify({ aprovado, motivo }),
+    });
+    return res;
   }
 }
 

@@ -4,7 +4,6 @@ import type { MoedaDivisa } from "@nzaidi/dominio";
 
 export async function renderizarBalcao(container: HTMLElement): Promise<void> {
   const usuario = authState.getUsuario();
-  if (!usuario) return;
 
   container.innerHTML = `
     <div class="view-header">
@@ -20,7 +19,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
     <div id="alerta-balcao" class="alert-box d-none"></div>
 
     <div id="balcao-verificacao-caixa">
-      <div class="loading-state">A verificar caixa operacional...</div>
+      <div class="loading-state">A verificar caixa operacional e taxas de câmbio...</div>
     </div>
 
     <!-- Modal Borderô de Câmbio Emitido -->
@@ -31,16 +30,16 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
           <button id="btn-fechar-modal-bordero" class="btn-fechar-modal">&times;</button>
         </div>
         <div class="modal-body" id="bordero-impresso-conteudo">
-          <!-- Conteúdo formal formatado para impressão -->
+          <!-- Conteúdo gerado dinamicamente -->
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="display: flex; justify-content: space-between;">
           <button type="button" id="btn-imprimir-bordero" class="btn btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px; margin-right: 6px;">
               <polyline points="6 9 6 2 18 2 18 9"></polyline>
               <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
               <rect x="6" y="14" width="12" height="8"></rect>
             </svg>
-            Imprimir Comprovativo (PDF)
+            Imprimir Borderô Oficial
           </button>
           <button type="button" id="btn-concluir-bordero" class="btn btn-secondary">Concluir</button>
         </div>
@@ -54,12 +53,27 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
   const conteudoBordero = container.querySelector<HTMLDivElement>("#bordero-impresso-conteudo");
 
   // 1. Verificar Caixa Ativo do Operador
-  const dadosCaixa = await api.obterCaixaAtivo();
+  let dadosCaixa = null;
+  try {
+    dadosCaixa = await api.obterCaixaAtivo();
+  } catch (err: any) {
+    if (containerCaixa) {
+      containerCaixa.innerHTML = `
+        <div class="alert-box alert-error">
+          Erro ao verificar estado do caixa: ${err.message || "Falha na comunicação"}.
+          <button id="btn-tentar-caixa" class="btn btn-sm btn-secondary ml-2">Tentar Novamente</button>
+        </div>
+      `;
+      containerCaixa.querySelector("#btn-tentar-caixa")?.addEventListener("click", () => void renderizarBalcao(container));
+    }
+    return;
+  }
+
   if (!dadosCaixa || !dadosCaixa.caixa) {
     if (containerCaixa) {
       containerCaixa.innerHTML = `
         <div class="card p-4 text-center">
-          <div class="mb-4" style="font-size: 3rem;">⚠️</div>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-4" style="margin: 0 auto 1rem;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
           <h2 class="text-xl font-bold mb-2">Caixa do Operador Não Encontrado</h2>
           <p class="text-muted mb-4">
             Para realizar operações de compra e venda de moeda estrangeira, é obrigatório abrir um caixa operacional com os respetivos fundos iniciais de Kwanza e divisas.
@@ -73,11 +87,16 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
     return;
   }
 
-  // 2. Carregar Clientes com KYC aprovado e Taxas do Dia
-  const [clientes, taxas] = await Promise.all([
-    api.listarClientes("", "aprovado"),
-    api.listarTaxas(),
-  ]);
+  // 2. Carregar Taxas do Dia
+  let taxas: TaxaItem[] = [];
+  try {
+    taxas = await api.listarTaxas();
+  } catch (err: any) {
+    if (alerta) {
+      alerta.textContent = `Aviso: Falha ao carregar taxas de câmbio: ${err.message}.`;
+      alerta.classList.remove("d-none");
+    }
+  }
 
   if (!containerCaixa) return;
 
@@ -85,7 +104,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
     <div class="dashboard-grid">
       <!-- Painel de Execução da Operação -->
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h2 class="card-title">Nova Operação Cambial</h2>
           <span class="badge badge-success">Caixa: ${dadosCaixa.caixa.numeroCaixa}</span>
         </div>
@@ -94,22 +113,24 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
             <div id="erro-operacao" class="alert-box alert-error d-none"></div>
 
             <div class="form-group">
-              <label class="form-label" for="op-cliente">Cliente (KYC Aprovado)</label>
-              <select id="op-cliente" class="form-select" required>
-                <option value="">Selecione um cliente aprovado...</option>
-                ${clientes
-                  .map(
-                    (c) => `
-                  <option value="${c.id}">${c.nome} (${c.tipoDocumento.toUpperCase()}: ${c.numeroDocumento})</option>
-                `
-                  )
-                  .join("")}
-              </select>
-              ${
-                clientes.length === 0
-                  ? `<small class="text-danger">Nenhum cliente com KYC aprovado encontrado. <a href="#clientes">Cadastre ou aprove um cliente aqui</a>.</small>`
-                  : ""
-              }
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="form-label" for="op-cliente" style="margin-bottom: 0;">
+                  Cliente (KYC Aprovado) *
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span id="status-clientes-badge" class="badge badge-warning" style="font-size: 0.75rem;">A carregar...</span>
+                  <button type="button" id="btn-recarregar-clientes" class="btn btn-sm btn-link" style="padding: 2px 6px; font-size: 0.8rem; text-decoration: none; border: 1px solid #cbd5e1; border-radius: 4px;" title="Atualizar lista de clientes">
+                    ↻ Atualizar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Container Dinâmico e Reativo de Seleção de Clientes -->
+              <div id="grupo-cliente-container">
+                <select id="op-cliente" class="form-select" disabled>
+                  <option value="">A carregar clientes com KYC aprovado...</option>
+                </select>
+              </div>
             </div>
 
             <div class="form-row">
@@ -152,7 +173,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
               </div>
             </div>
 
-            <button type="submit" id="btn-submeter-operacao" class="btn btn-primary btn-block">
+            <button type="submit" id="btn-submeter-operacao" class="btn btn-primary btn-block" disabled>
               Confirmar Operação & Emitir Borderô
             </button>
           </form>
@@ -218,7 +239,6 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
 
   // Elementos do formulário e simulação
   const formOp = containerCaixa.querySelector<HTMLFormElement>("#form-operacao-balcao");
-  const selectCliente = containerCaixa.querySelector<HTMLSelectElement>("#op-cliente");
   const selectTipo = containerCaixa.querySelector<HTMLSelectElement>("#op-tipo");
   const selectMoeda = containerCaixa.querySelector<HTMLSelectElement>("#op-moeda");
   const inputMontante = containerCaixa.querySelector<HTMLInputElement>("#op-montante");
@@ -227,10 +247,15 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
   const simTimer = containerCaixa.querySelector<HTMLElement>("#sim-timer-texto");
   const erroDiv = containerCaixa.querySelector<HTMLDivElement>("#erro-operacao");
   const btnSubmeter = containerCaixa.querySelector<HTMLButtonElement>("#btn-submeter-operacao");
+  const grupoClienteContainer = containerCaixa.querySelector<HTMLDivElement>("#grupo-cliente-container");
+  const statusClientesBadge = containerCaixa.querySelector<HTMLElement>("#status-clientes-badge");
+  const btnRecarregarClientes = containerCaixa.querySelector<HTMLButtonElement>("#btn-recarregar-clientes");
 
   let cotacaoCriadaEm = new Date().toISOString();
   let timerInterval: any = null;
   let segundosRestantes = 90;
+  let carregandoClientes = false;
+  let clientesElegiveis: ClienteItem[] = [];
 
   function iniciarTimerCotacao(): void {
     if (timerInterval) clearInterval(timerInterval);
@@ -256,6 +281,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
   }
 
   function recalcularSimulacao(): void {
+    const selectClienteAtual = containerCaixa?.querySelector<HTMLSelectElement>("#op-cliente");
     const moeda = (selectMoeda?.value || "USD") as MoedaDivisa;
     const tipo = selectTipo?.value || "compra";
     const taxaItem = taxas.find((t) => t.moeda === moeda);
@@ -264,6 +290,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
     if (!taxaItem || isNaN(montante) || montante <= 0) {
       if (simTaxa) simTaxa.textContent = "-";
       if (simTotal) simTotal.textContent = "0.00 AOA";
+      if (btnSubmeter) btnSubmeter.disabled = true;
       return;
     }
 
@@ -273,21 +300,123 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
     if (simTaxa) simTaxa.textContent = `${taxa.toFixed(4)} AOA`;
     if (simTotal) simTotal.textContent = `${total.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AOA`;
 
-    if (btnSubmeter) btnSubmeter.disabled = false;
+    // Só habilita o botão se houver cliente válido selecionado
+    if (btnSubmeter) {
+      btnSubmeter.disabled = !selectClienteAtual || !selectClienteAtual.value || selectClienteAtual.value === "";
+    }
     iniciarTimerCotacao();
   }
+
+  // Função centralizada para carregar/atualizar a lista de clientes elegíveis
+  async function atualizarListaClientes(clienteSelecionadoId?: string): Promise<void> {
+    if (carregandoClientes) return;
+    carregandoClientes = true;
+
+    if (statusClientesBadge) {
+      statusClientesBadge.textContent = "A atualizar...";
+      statusClientesBadge.className = "badge badge-warning";
+    }
+    if (btnRecarregarClientes) btnRecarregarClientes.disabled = true;
+
+    try {
+      // Requisitar estritamente clientes com estado KYC aprovado
+      clientesElegiveis = await api.listarClientes("", "aprovado");
+
+      if (statusClientesBadge) {
+        statusClientesBadge.textContent = `${clientesElegiveis.length} elegível(eis)`;
+        statusClientesBadge.className = clientesElegiveis.length > 0 ? "badge badge-success" : "badge badge-warning";
+      }
+
+      if (grupoClienteContainer) {
+        if (clientesElegiveis.length === 0) {
+          grupoClienteContainer.innerHTML = `
+            <select id="op-cliente" class="form-select" disabled>
+              <option value="">Nenhum cliente com KYC aprovado disponível</option>
+            </select>
+            <div class="alert-box alert-warning mt-2" style="font-size: 0.85rem; padding: 10px 14px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> <strong>Nenhum cliente elegível.</strong> Operações cambiais requerem estritamente diligência de identificação concluída. Clientes com KYC pendente ou rejeitado não são selecionáveis.
+              <div style="margin-top: 6px;">
+                <a href="#clientes" style="color: var(--nz-azul-600); font-weight: 600; text-decoration: underline;">
+                  Aceder a Clientes & KYC para registar ou aprovar dossiês →
+                </a>
+              </div>
+            </div>
+          `;
+          if (btnSubmeter) btnSubmeter.disabled = true;
+        } else {
+          const opcoes = clientesElegiveis
+            .map(
+              (c) => `
+            <option value="${c.id}" ${clienteSelecionadoId === c.id ? "selected" : ""}>
+              ${c.nome} (${c.tipoDocumento.toUpperCase()}: ${c.numeroDocumento})
+            </option>
+          `
+            )
+            .join("");
+
+          grupoClienteContainer.innerHTML = `
+            <select id="op-cliente" class="form-select" required>
+              <option value="">Selecione um cliente aprovado...</option>
+              ${opcoes}
+            </select>
+            <small class="text-muted" style="font-size: 0.8rem; display: block; margin-top: 4px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg> Verificação documental e conformidade regulamentar BNA aprovadas.
+            </small>
+          `;
+
+          const novoSelect = grupoClienteContainer.querySelector<HTMLSelectElement>("#op-cliente");
+          novoSelect?.addEventListener("change", recalcularSimulacao);
+        }
+      }
+    } catch (err: any) {
+      if (statusClientesBadge) {
+        statusClientesBadge.textContent = "Erro de rede";
+        statusClientesBadge.className = "badge badge-danger";
+      }
+      if (grupoClienteContainer) {
+        grupoClienteContainer.innerHTML = `
+          <div class="alert-box alert-error" style="font-size: 0.85rem; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Falha ao obter lista de clientes elegíveis: ${err.message || "Erro de ligação"}.</span>
+            <button type="button" id="btn-tentar-novamente-clientes" class="btn btn-sm btn-secondary">
+              Tentar Novamente
+            </button>
+          </div>
+        `;
+        grupoClienteContainer
+          .querySelector("#btn-tentar-novamente-clientes")
+          ?.addEventListener("click", () => void atualizarListaClientes());
+      }
+    } finally {
+      carregandoClientes = false;
+      if (btnRecarregarClientes) btnRecarregarClientes.disabled = false;
+      recalcularSimulacao();
+    }
+  }
+
+  btnRecarregarClientes?.addEventListener("click", () => {
+    const atualId = containerCaixa?.querySelector<HTMLSelectElement>("#op-cliente")?.value;
+    void atualizarListaClientes(atualId);
+  });
 
   selectTipo?.addEventListener("change", recalcularSimulacao);
   selectMoeda?.addEventListener("change", recalcularSimulacao);
   inputMontante?.addEventListener("input", recalcularSimulacao);
   simTimer?.addEventListener("click", recalcularSimulacao);
 
-  recalcularSimulacao();
+  // Carregamento inicial automático da lista
+  await atualizarListaClientes();
 
   // Submissão da operação cambial
   formOp?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!selectCliente?.value || !selectTipo || !selectMoeda || !inputMontante) return;
+    const selectClienteAtual = containerCaixa.querySelector<HTMLSelectElement>("#op-cliente");
+    if (!selectClienteAtual?.value || !selectTipo || !selectMoeda || !inputMontante) {
+      if (erroDiv) {
+        erroDiv.textContent = "Selecione um cliente com KYC aprovado e informe o montante.";
+        erroDiv.classList.remove("d-none");
+      }
+      return;
+    }
 
     erroDiv?.classList.add("d-none");
     if (btnSubmeter) btnSubmeter.disabled = true;
@@ -298,7 +427,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
     try {
       const res = await api.criarOperacao({
         chaveIdempotencia,
-        clienteId: selectCliente.value,
+        clienteId: selectClienteAtual.value,
         tipo: selectTipo.value as any,
         moedaDivisa: selectMoeda.value as any,
         montanteDivisa: inputMontante.value,
@@ -345,7 +474,7 @@ export async function renderizarBalcao(container: HTMLElement): Promise<void> {
       }
 
       modalBordero?.classList.remove("d-none");
-    } catch (err) {
+    } catch (err: any) {
       if (erroDiv) {
         erroDiv.textContent = err instanceof ApiError ? err.message : "Erro ao concluir operação cambial.";
         erroDiv.classList.remove("d-none");

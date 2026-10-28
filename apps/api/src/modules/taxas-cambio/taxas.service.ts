@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 import {
   calcularTaxas,
@@ -137,6 +138,40 @@ export class TaxasRepository {
       config.atualizadoPorNome ?? null,
       config.motivo ?? null
     );
+
+    try {
+      const calculadas = calcularTaxas(
+        {
+          moeda: config.moeda,
+          referencia: config.referencia,
+          margemCompra: config.margemCompra,
+          margemVenda: config.margemVenda,
+        },
+        LIMITES_MARGEM_OFICIAIS
+      );
+      const histStmt = this.db.prepare(`
+        INSERT INTO taxas_historico (
+          id, moeda, referencia, margem_compra, margem_venda, taxa_compra, taxa_venda,
+          fonte, alterado_por_id, alterado_por_nome, motivo, criado_em
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      histStmt.run(
+        `txh_${randomUUID()}`,
+        config.moeda,
+        config.referencia,
+        config.margemCompra,
+        config.margemVenda,
+        calculadas.compra.toFixed(4),
+        calculadas.venda.toFixed(4),
+        config.fonte,
+        config.atualizadoPorId ?? null,
+        config.atualizadoPorNome ?? null,
+        config.motivo ?? null,
+        config.atualizadoEm
+      );
+    } catch {
+      // Tabela de histórico opcional em bootstrap
+    }
   }
 }
 

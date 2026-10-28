@@ -9,6 +9,8 @@ export interface Sessao {
   revogadoEm?: string | null | undefined;
   ip?: string | null | undefined;
   userAgent?: string | null | undefined;
+  impersonadoPor?: string | null | undefined;
+  impersonadoNome?: string | null | undefined;
 }
 
 export class SessionsRepository {
@@ -18,7 +20,9 @@ export class SessionsRepository {
     usuarioId: string,
     ttlHoras: number,
     ip?: string | null | undefined,
-    userAgent?: string | null | undefined
+    userAgent?: string | null | undefined,
+    impersonadoPor?: string | null | undefined,
+    impersonadoNome?: string | null | undefined
   ): Sessao {
     const id = randomBytes(32).toString("hex");
     const agora = new Date();
@@ -28,11 +32,20 @@ export class SessionsRepository {
     const expiraEmIso = expiraEm.toISOString();
 
     const stmt = this.db.prepare(`
-      INSERT INTO sessoes (id, usuario_id, criado_em, expira_em, ip, user_agent)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO sessoes (id, usuario_id, criado_em, expira_em, ip, user_agent, impersonado_por, impersonado_nome)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(id, usuarioId, criadoEmIso, expiraEmIso, ip ?? null, userAgent ?? null);
+    stmt.run(
+      id,
+      usuarioId,
+      criadoEmIso,
+      expiraEmIso,
+      ip ?? null,
+      userAgent ?? null,
+      impersonadoPor ?? null,
+      impersonadoNome ?? null
+    );
 
     return {
       id,
@@ -42,6 +55,8 @@ export class SessionsRepository {
       revogadoEm: null,
       ip: ip ?? null,
       userAgent: userAgent ?? null,
+      impersonadoPor: impersonadoPor ?? null,
+      impersonadoNome: impersonadoNome ?? null,
     };
   }
 
@@ -50,7 +65,9 @@ export class SessionsRepository {
       SELECT 
         id, usuario_id as usuarioId, criado_em as criadoEm,
         expira_em as expiraEm, revogado_em as revogadoEm,
-        ip, user_agent as userAgent
+        ip, user_agent as userAgent,
+        impersonado_por as impersonadoPor,
+        impersonado_nome as impersonadoNome
       FROM sessoes
       WHERE id = ? AND revogado_em IS NULL
     `);
@@ -64,6 +81,24 @@ export class SessionsRepository {
     }
 
     return row as Sessao;
+  }
+
+  public listarSessoesAtivas(usuarioId: string): Sessao[] {
+    const agoraIso = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      SELECT 
+        id, usuario_id as usuarioId, criado_em as criadoEm,
+        expira_em as expiraEm, revogado_em as revogadoEm,
+        ip, user_agent as userAgent,
+        impersonado_por as impersonadoPor,
+        impersonado_nome as impersonadoNome
+      FROM sessoes
+      WHERE usuario_id = ? AND revogado_em IS NULL AND expira_em > ?
+      ORDER BY criado_em DESC
+    `);
+
+    const rows = stmt.all(usuarioId, agoraIso) as any[];
+    return rows as Sessao[];
   }
 
   public revogarSessao(id: string): void {

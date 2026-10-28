@@ -63,7 +63,7 @@ padroes = {
     "Caminho absoluto de servidor": re.compile(r"(?:/mnt/home|/var/www|/home\d*/nzaidi)", re.IGNORECASE),
 }
 for pasta, dirs, ficheiros in os.walk(RAIZ):
-    dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "dist")]
+    dirs[:] = [d for d in dirs if d not in (".git", "node_modules", "dist", "dist-ts")]
     for nome in ficheiros:
         if nome.lower().endswith((".pdf", ".png", ".jpg", ".webp", ".zip")):
             continue

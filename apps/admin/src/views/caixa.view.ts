@@ -118,15 +118,79 @@ export async function renderizarCaixa(container: HTMLElement): Promise<void> {
   const formMov = container.querySelector<HTMLFormElement>("#form-movimento");
   const formFecho = container.querySelector<HTMLFormElement>("#form-fecho");
 
+  let caixaAtual: CaixaAtivoResposta | null = null;
+
+  // Listeners estáticos dos modais (registados uma única vez)
+  container.querySelector("#btn-fechar-modal-mov")?.addEventListener("click", () => modalMov?.classList.add("d-none"));
+  container.querySelector("#btn-cancelar-mov")?.addEventListener("click", () => modalMov?.classList.add("d-none"));
+  container.querySelector("#btn-fechar-modal-fecho")?.addEventListener("click", () => modalFecho?.classList.add("d-none"));
+  container.querySelector("#btn-cancelar-fecho")?.addEventListener("click", () => modalFecho?.classList.add("d-none"));
+
+  // Submissão do movimento manual (registada uma única vez, sem duplicação de requests)
+  formMov?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!caixaAtual?.caixa) return;
+
+    const tipo = (container.querySelector("#mov-tipo") as HTMLInputElement).value as any;
+    const moeda = (container.querySelector("#mov-moeda") as HTMLSelectElement).value as any;
+    const montante = (container.querySelector("#mov-montante") as HTMLInputElement).value;
+    const descricao = (container.querySelector("#mov-descricao") as HTMLInputElement).value;
+    const erroMov = container.querySelector("#modal-erro-mov") as HTMLDivElement;
+
+    try {
+      await api.movimentarCaixa(caixaAtual.caixa.id, { tipo, moeda, montante, descricao });
+      modalMov?.classList.add("d-none");
+      formMov.reset();
+      await atualizarVisualizacao();
+    } catch (err) {
+      erroMov.textContent = err instanceof ApiError ? err.message : "Erro ao registar movimento.";
+      erroMov.classList.remove("d-none");
+    }
+  });
+
+  // Submissão do Fecho de Caixa (registada uma única vez)
+  formFecho?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!caixaAtual?.caixa) return;
+
+    const contadoAoa = (container.querySelector("#fecho-aoa") as HTMLInputElement).value;
+    const contadoUsd = (container.querySelector("#fecho-usd") as HTMLInputElement).value;
+    const contadoEur = (container.querySelector("#fecho-eur") as HTMLInputElement).value;
+    const justificativa = (container.querySelector("#fecho-justificativa") as HTMLTextAreaElement).value;
+    const erroFecho = container.querySelector("#modal-erro-fecho") as HTMLDivElement;
+
+    try {
+      await api.fecharCaixa(caixaAtual.caixa.id, {
+        saldoContadoAoa: contadoAoa,
+        saldoContadoUsd: contadoUsd,
+        saldoContadoEur: contadoEur,
+        justificativaDiferenca: justificativa,
+      });
+
+      modalFecho?.classList.add("d-none");
+      formFecho.reset();
+      if (alerta) {
+        alerta.className = "alert-box alert-success";
+        alerta.textContent = "Caixa encerrado com sucesso!";
+        alerta.classList.remove("d-none");
+        setTimeout(() => alerta.classList.add("d-none"), 5000);
+      }
+      await atualizarVisualizacao();
+    } catch (err) {
+      erroFecho.textContent = err instanceof ApiError ? err.message : "Erro ao encerrar caixa.";
+      erroFecho.classList.remove("d-none");
+    }
+  });
+
   async function atualizarVisualizacao(): Promise<void> {
     if (!containerConteudo || !acoesTopo) return;
     containerConteudo.innerHTML = `<div class="loading-state">A verificar estado do caixa...</div>`;
     acoesTopo.innerHTML = "";
 
     try {
-      const dadosCaixa: CaixaAtivoResposta | null = await api.obterCaixaAtivo();
+      caixaAtual = await api.obterCaixaAtivo();
 
-      if (!dadosCaixa || !dadosCaixa.caixa) {
+      if (!caixaAtual || !caixaAtual.caixa) {
         // Operador sem caixa aberto: apresentar ecrã de Abertura
         containerConteudo.innerHTML = `
           <div class="card" style="max-width: 650px; margin: 0 auto;">
@@ -148,22 +212,24 @@ export async function renderizarCaixa(container: HTMLElement): Promise<void> {
 
                 <div class="form-row">
                   <div class="form-group col-4">
-                    <label class="form-label" for="abrir-aoa">Fundo Kwanza (AOA)</label>
-                    <input type="text" id="abrir-aoa" class="form-input" value="1000000.00" required />
+                    <label class="form-label" for="abrir-aoa">Fundo Inicial AOA (Kz)</label>
+                    <input type="text" id="abrir-aoa" class="form-input" required placeholder="0.00" value="0.00" />
                   </div>
                   <div class="form-group col-4">
-                    <label class="form-label" for="abrir-usd">Fundo Dólar (USD)</label>
-                    <input type="text" id="abrir-usd" class="form-input" value="2000.00" required />
+                    <label class="form-label" for="abrir-usd">Fundo Inicial USD ($)</label>
+                    <input type="text" id="abrir-usd" class="form-input" required placeholder="0.00" value="0.00" />
                   </div>
                   <div class="form-group col-4">
-                    <label class="form-label" for="abrir-eur">Fundo Euro (EUR)</label>
-                    <input type="text" id="abrir-eur" class="form-input" value="1000.00" required />
+                    <label class="form-label" for="abrir-eur">Fundo Inicial EUR (€)</label>
+                    <input type="text" id="abrir-eur" class="form-input" required placeholder="0.00" value="0.00" />
                   </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block mt-4">
-                  Abrir Caixa & Iniciar Sessão
-                </button>
+                <div class="mt-4">
+                  <button type="submit" id="btn-confirmar-abertura" class="btn btn-primary btn-block">
+                    Abrir Caixa Operacional
+                  </button>
+                </div>
               </form>
             </div>
           </div>
@@ -180,10 +246,10 @@ export async function renderizarCaixa(container: HTMLElement): Promise<void> {
 
           try {
             await api.abrirCaixa({
+              agencia,
               saldoInicialAoa: saldoAoa,
               saldoInicialUsd: saldoUsd,
               saldoInicialEur: saldoEur,
-              agencia,
             });
 
             if (alerta) {
@@ -198,20 +264,24 @@ export async function renderizarCaixa(container: HTMLElement): Promise<void> {
             erroDiv.classList.remove("d-none");
           }
         });
+
         return;
       }
 
-      // Caixa está aberto: Exibir resumo e ferramentas operacionais
-      const { caixa, saldos } = dadosCaixa;
+      // Caixa aberto: apresentar saldos e controlos
+      const { caixa, saldos } = caixaAtual;
 
       acoesTopo.innerHTML = `
         <button id="btn-suprimento" class="btn btn-secondary">
-          + Suprimento (Entrada)
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+          Suprimento (+ Entrada)
         </button>
-        <button id="btn-sangria" class="btn btn-secondary ml-2">
-          - Sangria (Saída)
+        <button id="btn-sangria" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M5 12h14"/></svg>
+          Sangria (- Saída)
         </button>
-        <button id="btn-abrir-fecho" class="btn btn-danger ml-2">
+        <button id="btn-abrir-fecho" class="btn btn-danger">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Fechar Caixa
         </button>
       `;
@@ -264,85 +334,26 @@ export async function renderizarCaixa(container: HTMLElement): Promise<void> {
         </div>
       `;
 
-      // Eventos para Suprimento, Sangria e Fecho
-      const btnSuprimento = acoesTopo.querySelector("#btn-suprimento");
-      const btnSangria = acoesTopo.querySelector("#btn-sangria");
-      const btnAbrirFecho = acoesTopo.querySelector("#btn-abrir-fecho");
-
-      btnSuprimento?.addEventListener("click", () => {
+      // Ações rápidas do topo
+      acoesTopo.querySelector("#btn-suprimento")?.addEventListener("click", () => {
         (container.querySelector("#mov-tipo") as HTMLInputElement).value = "suprimento";
         (container.querySelector("#modal-mov-titulo") as HTMLElement).textContent = "Registar Suprimento (+ Entrada)";
         modalMov?.classList.remove("d-none");
       });
 
-      btnSangria?.addEventListener("click", () => {
+      acoesTopo.querySelector("#btn-sangria")?.addEventListener("click", () => {
         (container.querySelector("#mov-tipo") as HTMLInputElement).value = "sangria";
         (container.querySelector("#modal-mov-titulo") as HTMLElement).textContent = "Registar Sangria (- Saída para Cofre)";
         modalMov?.classList.remove("d-none");
       });
 
-      btnAbrirFecho?.addEventListener("click", () => {
+      acoesTopo.querySelector("#btn-abrir-fecho")?.addEventListener("click", () => {
         (container.querySelector("#fecho-aoa") as HTMLInputElement).value = saldos.AOA.saldoEsperado;
         (container.querySelector("#fecho-usd") as HTMLInputElement).value = saldos.USD.saldoEsperado;
         (container.querySelector("#fecho-eur") as HTMLInputElement).value = saldos.EUR.saldoEsperado;
         modalFecho?.classList.remove("d-none");
       });
 
-      // Fecho do modal
-      container.querySelector("#btn-fechar-modal-mov")?.addEventListener("click", () => modalMov?.classList.add("d-none"));
-      container.querySelector("#btn-cancelar-mov")?.addEventListener("click", () => modalMov?.classList.add("d-none"));
-      container.querySelector("#btn-fechar-modal-fecho")?.addEventListener("click", () => modalFecho?.classList.add("d-none"));
-      container.querySelector("#btn-cancelar-fecho")?.addEventListener("click", () => modalFecho?.classList.add("d-none"));
-
-      // Submissão do movimento manual
-      formMov?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const tipo = (container.querySelector("#mov-tipo") as HTMLInputElement).value as any;
-        const moeda = (container.querySelector("#mov-moeda") as HTMLSelectElement).value as any;
-        const montante = (container.querySelector("#mov-montante") as HTMLInputElement).value;
-        const descricao = (container.querySelector("#mov-descricao") as HTMLInputElement).value;
-        const erroMov = container.querySelector("#modal-erro-mov") as HTMLDivElement;
-
-        try {
-          await api.movimentarCaixa(caixa.id, { tipo, moeda, montante, descricao });
-          modalMov?.classList.add("d-none");
-          await atualizarVisualizacao();
-        } catch (err) {
-          erroMov.textContent = err instanceof ApiError ? err.message : "Erro ao registar movimento.";
-          erroMov.classList.remove("d-none");
-        }
-      });
-
-      // Submissão do Fecho de Caixa
-      formFecho?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const contadoAoa = (container.querySelector("#fecho-aoa") as HTMLInputElement).value;
-        const contadoUsd = (container.querySelector("#fecho-usd") as HTMLInputElement).value;
-        const contadoEur = (container.querySelector("#fecho-eur") as HTMLInputElement).value;
-        const justificativa = (container.querySelector("#fecho-justificativa") as HTMLTextAreaElement).value;
-        const erroFecho = container.querySelector("#modal-erro-fecho") as HTMLDivElement;
-
-        try {
-          await api.fecharCaixa(caixa.id, {
-            saldoContadoAoa: contadoAoa,
-            saldoContadoUsd: contadoUsd,
-            saldoContadoEur: contadoEur,
-            justificativaDiferenca: justificativa,
-          });
-
-          modalFecho?.classList.add("d-none");
-          if (alerta) {
-            alerta.className = "alert-box alert-success";
-            alerta.textContent = "Caixa encerrado com sucesso!";
-            alerta.classList.remove("d-none");
-            setTimeout(() => alerta.classList.add("d-none"), 5000);
-          }
-          await atualizarVisualizacao();
-        } catch (err) {
-          erroFecho.textContent = err instanceof ApiError ? err.message : "Erro ao encerrar caixa.";
-          erroFecho.classList.remove("d-none");
-        }
-      });
     } catch {
       containerConteudo.innerHTML = `<p class="p-4 text-danger">Erro ao carregar módulo de caixa.</p>`;
     }
