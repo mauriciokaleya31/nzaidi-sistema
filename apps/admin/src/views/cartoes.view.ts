@@ -1,4 +1,5 @@
 import { api } from '../api/cliente.js';
+import { solicitarMotivoAcao, confirmarModal, mostrarToast } from '../components/modal-dialogo.js';
 
 export async function renderCartoesView(container: HTMLElement): Promise<void> {
   container.innerHTML = `
@@ -607,13 +608,21 @@ export async function renderCartoesView(container: HTMLElement): Promise<void> {
           const estadoAtual = target.getAttribute('data-estado');
           const novoEstado = estadoAtual === 'ativo' ? 'congelado' : 'ativo';
 
-          if (confirm(`Deseja alterar o estado do cartão para ${novoEstado}?`)) {
+          const confirmou = await confirmarModal({
+            titulo: "Alterar Estado do Cartão",
+            mensagem: `Deseja realmente alterar o estado do cartão para ${novoEstado}?`,
+            textoConfirmar: "Sim, Alterar",
+            perigo: novoEstado === 'congelado',
+          });
+
+          if (confirmou) {
             try {
               await api.alterarStatusCartaoAdmin(id, novoEstado as any);
+              mostrarToast(`Estado do cartão alterado para ${novoEstado}.`, "sucesso");
               await carregarCartoes();
               await carregarDashboard();
             } catch (err: any) {
-              alert(`Falha ao alterar estado: ${err.message}`);
+              mostrarToast(`Falha ao alterar estado: ${err.message}`, "erro");
             }
           }
         });
@@ -728,10 +737,10 @@ export async function renderCartoesView(container: HTMLElement): Promise<void> {
           const id = (e.currentTarget as HTMLElement).getAttribute('data-id')!;
           try {
             await api.avaliarAdesaoCartaoAdmin(id, true);
-            alert('Adesão aprovada!');
+            mostrarToast('Adesão ao cartão aprovada com sucesso!', 'sucesso');
             await carregarAdesoes();
           } catch (err: any) {
-            alert(`Erro: ${err.message}`);
+            mostrarToast(`Erro ao aprovar adesão: ${err.message}`, 'erro');
           }
         });
       });
@@ -739,14 +748,22 @@ export async function renderCartoesView(container: HTMLElement): Promise<void> {
       tbody.querySelectorAll('.btn-rejeitar-adesao').forEach((btn) => {
         btn.addEventListener('click', async (e) => {
           const id = (e.currentTarget as HTMLElement).getAttribute('data-id')!;
-          const motivo = prompt('Motivo de rejeição da adesão:');
+          const motivo = await solicitarMotivoAcao({
+            titulo: "Rejeitar Adesão ao Cartão",
+            labelMotivo: "Indique o motivo de rejeição da adesão:",
+            placeholder: "Ex.: Documentação ilegível / Incompatibilidade cadastral",
+            textoConfirmar: "Rejeitar Adesão",
+            perigo: true,
+            minimoCaracteres: 5,
+          });
+
           if (motivo) {
             try {
               await api.avaliarAdesaoCartaoAdmin(id, false, motivo);
-              alert('Adesão rejeitada.');
+              mostrarToast('Adesão rejeitada.', 'info');
               await carregarAdesoes();
             } catch (err: any) {
-              alert(`Erro: ${err.message}`);
+              mostrarToast(`Erro ao rejeitar: ${err.message}`, 'erro');
             }
           }
         });

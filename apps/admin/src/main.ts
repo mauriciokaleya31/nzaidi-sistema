@@ -61,7 +61,7 @@ async function renderizarAplicacao(): Promise<void> {
   // Estrutura do Layout Administrativo Completo
   appRoot.innerHTML = `
     <div class="app-layout">
-      <div id="sidebar-container"></div>
+      <div id="sidebar-container" style="width: 272px; min-width: 272px; flex-shrink: 0; background: #031d42; color: #ffffff;"></div>
       <div class="app-main-wrapper">
         <div id="header-container"></div>
         <main class="app-content" id="view-container"></main>

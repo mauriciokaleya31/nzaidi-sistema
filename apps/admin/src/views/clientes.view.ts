@@ -1,5 +1,6 @@
 import { api, type ClienteItem } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { solicitarMotivoAcao, confirmarModal, mostrarToast } from "../components/modal-dialogo.js";
 
 function escapeHtml(texto: string): string {
   const div = document.createElement("div");
@@ -429,72 +430,98 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
             finalidadeConta: (conteudo.querySelector("#edit-cli-finalidade") as HTMLInputElement).value.trim() || null,
             paisResidencia: (conteudo.querySelector("#edit-cli-pais") as HTMLInputElement).value.trim() || "AO",
           });
-          alert("Dados cadastrais do cliente atualizados com sucesso.");
+          mostrarToast("Dados cadastrais do cliente atualizados com sucesso.", "sucesso");
           void carregarListaClientes();
         } catch (err: any) {
-          alert(`Erro ao atualizar: ${err.message}`);
+          mostrarToast(`Erro ao atualizar: ${err.message}`, "erro");
         }
       });
 
-      // Impersonar Cliente
+      // Impersonar Cliente (Acesso de Suporte Auditado)
       conteudo.querySelector("#btn-impersonar-cliente-act")?.addEventListener("click", async () => {
-        const motivo = prompt("Indique o motivo formal de suporte para assumir a conta do cliente:");
-        if (!motivo || motivo.trim().length < 5) {
-          alert("O motivo formal de suporte é obrigatório (mínimo 5 caracteres).");
-          return;
-        }
+        const motivo = await solicitarMotivoAcao({
+          titulo: "Assumir Conta em Modo de Suporte",
+          subtitulo: `Cliente: ${cli.nome} (${cli.nif})`,
+          labelMotivo: "Indique o motivo formal de suporte para assumir a conta do cliente:",
+          placeholder: "Ex.: Ticket #1042 - Assistência na submissão de documentos KYC e validação cadastral",
+          textoConfirmar: "Entrar na Conta",
+          perigo: false,
+          minimoCaracteres: 5,
+        });
+
+        if (!motivo) return;
 
         try {
-          const res = await api.impersonarCliente(cli.id, motivo.trim());
+          const res = await api.impersonarCliente(cli.id, motivo);
           if (res.urlRedirecionamento) {
             window.open(res.urlRedirecionamento, "_blank");
           } else {
-            alert("Sessão de suporte gerada com sucesso.");
+            mostrarToast("Sessão de suporte gerada com sucesso.", "sucesso");
           }
         } catch (err: any) {
-          alert(`Erro na impersonação: ${err.message}`);
+          mostrarToast(`Erro na impersonação: ${err.message}`, "erro");
         }
       });
 
       // Bloquear Cliente
       conteudo.querySelector("#btn-bloquear-cliente-act")?.addEventListener("click", async () => {
-        const motivo = prompt("Indique o motivo fundamentado para o bloqueio do cliente:");
-        if (!motivo || motivo.trim().length < 5) {
-          alert("O motivo do bloqueio é obrigatório.");
-          return;
-        }
+        const motivo = await solicitarMotivoAcao({
+          titulo: "Bloquear Conta de Cliente",
+          subtitulo: `Cliente: ${cli.nome} (${cli.nif})`,
+          labelMotivo: "Indique o motivo fundamentado para o bloqueio do cliente:",
+          placeholder: "Ex.: Suspeita de fraude / Divergência grave documental identificada",
+          textoConfirmar: "Confirmar Bloqueio",
+          perigo: true,
+          minimoCaracteres: 5,
+        });
+
+        if (!motivo) return;
 
         try {
-          await api.bloquearCliente(cli.id, motivo.trim());
-          alert("Cliente bloqueado com sucesso.");
+          await api.bloquearCliente(cli.id, motivo);
+          mostrarToast("Cliente bloqueado com sucesso.", "sucesso");
           modal.style.display = "none";
           void carregarListaClientes();
         } catch (err: any) {
-          alert(`Erro ao bloquear: ${err.message}`);
+          mostrarToast(`Erro ao bloquear: ${err.message}`, "erro");
         }
       });
 
       // Desbloquear Cliente
       conteudo.querySelector("#btn-desbloquear-cliente-act")?.addEventListener("click", async () => {
-        if (!confirm("Deseja realmente desbloquear este cliente?")) return;
+        const confirmou = await confirmarModal({
+          titulo: "Desbloquear Conta",
+          mensagem: `Deseja realmente desbloquear a conta do cliente ${cli.nome}? O acesso aos canais digitais será restabelecido.`,
+          textoConfirmar: "Sim, Desbloquear",
+          perigo: false,
+        });
+        if (!confirmou) return;
+
         try {
           await api.desbloquearCliente(cli.id);
-          alert("Cliente desbloqueado com sucesso.");
+          mostrarToast("Cliente desbloqueado com sucesso.", "sucesso");
           modal.style.display = "none";
           void carregarListaClientes();
         } catch (err: any) {
-          alert(`Erro ao desbloquear: ${err.message}`);
+          mostrarToast(`Erro ao desbloquear: ${err.message}`, "erro");
         }
       });
 
       // Terminar Sessões
       conteudo.querySelector("#btn-terminar-sessoes-cliente-act")?.addEventListener("click", async () => {
-        if (!confirm("Deseja revogar todas as sessões ativas do cliente no portal?")) return;
+        const confirmou = await confirmarModal({
+          titulo: "Terminar Sessões Ativas",
+          mensagem: `Deseja revogar todas as sessões ativas de ${cli.nome}? Todas as ligações abertas nos portais serão fechadas.`,
+          textoConfirmar: "Revogar Sessões",
+          perigo: true,
+        });
+        if (!confirmou) return;
+
         try {
           await api.terminarSessoesCliente(cli.id);
-          alert("Sessões ativas do cliente terminadas com sucesso.");
+          mostrarToast("Sessões ativas do cliente terminadas com sucesso.", "sucesso");
         } catch (err: any) {
-          alert(`Erro: ${err.message}`);
+          mostrarToast(`Erro: ${err.message}`, "erro");
         }
       });
     } catch {
@@ -536,11 +563,11 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
 
     try {
       await api.criarCliente(payload);
-      alert("Cliente registado com sucesso.");
+      mostrarToast("Cliente registado com sucesso.", "sucesso");
       if (modalCriar) modalCriar.style.display = "none";
       void carregarListaClientes();
     } catch (err: any) {
-      alert(`Erro ao criar cliente: ${err.message}`);
+      mostrarToast(`Erro ao criar cliente: ${err.message}`, "erro");
     }
   });
 

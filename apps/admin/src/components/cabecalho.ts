@@ -1,5 +1,6 @@
 import { authState } from "../state/auth.state.js";
 import { api } from "../api/cliente.js";
+import { confirmarModal } from "./modal-dialogo.js";
 
 function obterEtiquetaFuncao(funcao: string): { label: string; classe: string } {
   switch (funcao) {
@@ -121,7 +122,13 @@ export function renderizarCabecalho(container: HTMLElement): void {
   // Botão encerrar impersonação
   const btnEncerrarImp = container.querySelector<HTMLButtonElement>("#btn-encerrar-impersonacao");
   btnEncerrarImp?.addEventListener("click", async () => {
-    if (confirm("Deseja encerrar o modo de suporte e regressar à sua conta de administrador?")) {
+    const confirmou = await confirmarModal({
+      titulo: "Encerrar Modo de Suporte",
+      mensagem: "Deseja encerrar a sessão de suporte e regressar à sua conta de administrador?",
+      textoConfirmar: "Regressar à Minha Conta",
+      perigo: false,
+    });
+    if (confirmou) {
       await authState.encerrarImpersonacao();
     }
   });
@@ -129,7 +136,13 @@ export function renderizarCabecalho(container: HTMLElement): void {
   // Botão logout
   const btnLogout = container.querySelector("#btn-logout");
   btnLogout?.addEventListener("click", async () => {
-    if (confirm("Deseja realmente terminar a sua sessão de trabalho?")) {
+    const confirmou = await confirmarModal({
+      titulo: "Terminar Sessão",
+      mensagem: "Deseja realmente terminar a sua sessão de trabalho no NZAIDI Backoffice?",
+      textoConfirmar: "Terminar Sessão",
+      perigo: true,
+    });
+    if (confirmou) {
       await authState.fazerLogout();
       window.location.hash = "#login";
     }

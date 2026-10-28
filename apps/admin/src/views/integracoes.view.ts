@@ -1,5 +1,6 @@
 import { api, type ExecucaoIntegracaoManualItem } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { solicitarMotivoAcao, confirmarModal, mostrarToast } from "../components/modal-dialogo.js";
 
 export async function renderizarIntegracoes(container: HTMLElement): Promise<void> {
   const podeConsultar = authState.temPermissao("integracoes:consultar_manual");
@@ -329,14 +330,20 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
           if (!id) return;
-          const confirmou = window.confirm("Confirma a aprovação desta liquidação manual como segundo operador (4 Olhos)?");
+          const confirmou = await confirmarModal({
+            titulo: "Aprovação de Liquidação (4 Olhos)",
+            mensagem: "Confirma a aprovação desta liquidação manual como segundo operador autorizado?",
+            textoConfirmar: "Aprovar Liquidação",
+            perigo: false,
+          });
           if (!confirmou) return;
 
           try {
             await api.aprovarIntegracaoManual(id, "Aprovação confirmada pelo segundo operador no painel administrativo.");
+            mostrarToast("Liquidação aprovada com sucesso.", "sucesso");
             await carregarExecucoes();
           } catch (erro: any) {
-            alert(`Erro ao aprovar execução: ${erro.message || "Erro desconhecido"}`);
+            mostrarToast(`Erro ao aprovar execução: ${erro.message || "Erro desconhecido"}`, "erro");
           }
         });
       });
@@ -345,14 +352,22 @@ export async function renderizarIntegracoes(container: HTMLElement): Promise<voi
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
           if (!id) return;
-          const motivo = window.prompt("Indique o motivo da rejeição da liquidação manual:");
-          if (!motivo || motivo.trim() === "") return;
+          const motivo = await solicitarMotivoAcao({
+            titulo: "Rejeitar Liquidação Manual",
+            labelMotivo: "Indique o motivo da rejeição da liquidação manual:",
+            placeholder: "Ex.: Comprovativo ilegível / Valor não conciliado no extrato",
+            textoConfirmar: "Rejeitar Liquidação",
+            perigo: true,
+            minimoCaracteres: 5,
+          });
+          if (!motivo) return;
 
           try {
             await api.rejeitarIntegracaoManual(id, motivo);
+            mostrarToast("Liquidação rejeitada.", "info");
             await carregarExecucoes();
           } catch (erro: any) {
-            alert(`Erro ao rejeitar execução: ${erro.message || "Erro desconhecido"}`);
+            mostrarToast(`Erro ao rejeitar execução: ${erro.message || "Erro desconhecido"}`, "erro");
           }
         });
       });

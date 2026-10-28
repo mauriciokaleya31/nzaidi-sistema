@@ -1,5 +1,6 @@
 import { api } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { confirmarModal, mostrarToast } from "../components/modal-dialogo.js";
 
 function escapeHtml(texto: string): string {
   const div = document.createElement("div");
@@ -356,8 +357,15 @@ export async function renderizarComunicacao(container: HTMLElement): Promise<voi
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
           if (!id) return;
-          if (confirm("Deseja remover esta dica?")) {
+          const confirmou = await confirmarModal({
+            titulo: "Remover Dica",
+            mensagem: "Deseja realmente remover esta dica informativa?",
+            textoConfirmar: "Remover",
+            perigo: true,
+          });
+          if (confirmou) {
             await api.removerDica(id);
+            mostrarToast("Dica informativa removida.", "sucesso");
             void carregarDicas();
           }
         });
@@ -408,13 +416,19 @@ export async function renderizarComunicacao(container: HTMLElement): Promise<voi
         btn.addEventListener("click", async () => {
           const id = btn.getAttribute("data-id");
           if (!id) return;
-          if (confirm("Deseja disparar esta campanha de email para o segmento selecionado?")) {
+          const confirmou = await confirmarModal({
+            titulo: "Disparar Campanha de Email",
+            mensagem: "Deseja disparar esta campanha de email para o segmento selecionado através do provedor activo?",
+            textoConfirmar: "Disparar Agora",
+            perigo: false,
+          });
+          if (confirmou) {
             try {
               const r = await api.dispararCampanha(id);
-              alert(`Campanha enviada com sucesso para ${r.totalEnviados} destinatários.`);
+              mostrarToast(`Campanha enviada com sucesso para ${r.totalEnviados} destinatários.`, "sucesso");
               void carregarCampanhas();
             } catch (err: any) {
-              alert(`Erro: ${err.message}`);
+              mostrarToast(`Erro: ${err.message}`, "erro");
             }
           }
         });
@@ -446,12 +460,12 @@ export async function renderizarComunicacao(container: HTMLElement): Promise<voi
         conteudo: (container.querySelector("#anuncio-conteudo") as HTMLTextAreaElement).value.trim(),
         publicoAlvo: "todos",
       });
-      alert("Anúncio criado com sucesso.");
+      mostrarToast("Anúncio criado com sucesso.", "sucesso");
       if (modalAnuncio) modalAnuncio.style.display = "none";
       (container.querySelector("#form-criar-anuncio") as HTMLFormElement).reset();
       void carregarAnuncios();
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      mostrarToast(`Erro: ${err.message}`, "erro");
     }
   });
 
@@ -475,12 +489,12 @@ export async function renderizarComunicacao(container: HTMLElement): Promise<voi
         ordem: parseInt((container.querySelector("#dica-ordem") as HTMLInputElement).value, 10),
         conteudo: (container.querySelector("#dica-conteudo") as HTMLTextAreaElement).value.trim(),
       });
-      alert("Dica registada com sucesso.");
+      mostrarToast("Dica registada com sucesso.", "sucesso");
       if (modalDica) modalDica.style.display = "none";
       (container.querySelector("#form-criar-dica") as HTMLFormElement).reset();
       void carregarDicas();
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      mostrarToast(`Erro: ${err.message}`, "erro");
     }
   });
 
@@ -504,12 +518,12 @@ export async function renderizarComunicacao(container: HTMLElement): Promise<voi
         modeloHtml: (container.querySelector("#campanha-html") as HTMLTextAreaElement).value.trim(),
         totalDestinatarios: 250,
       });
-      alert("Campanha criada com sucesso.");
+      mostrarToast("Campanha criada com sucesso.", "sucesso");
       if (modalCampanha) modalCampanha.style.display = "none";
       (container.querySelector("#form-criar-campanha") as HTMLFormElement).reset();
       void carregarCampanhas();
     } catch (err: any) {
-      alert(`Erro: ${err.message}`);
+      mostrarToast(`Erro: ${err.message}`, "erro");
     }
   });
 

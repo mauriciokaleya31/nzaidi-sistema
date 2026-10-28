@@ -34,7 +34,7 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
 
     <!-- Contadores da Fila de Verificação -->
     <div class="dashboard-grid mb-4" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-      <div class="card stat-card" style="border-left: 4px solid #f59e0b; cursor: pointer;" data-filtro-kyc="pendente">
+      <div class="card stat-card" style="border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: transform 0.15s, box-shadow 0.15s;" data-filtro-kyc="pendente">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Pendentes</span>
         </div>
@@ -44,7 +44,7 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
         </div>
       </div>
 
-      <div class="card stat-card" style="border-left: 4px solid #3b82f6; cursor: pointer;" data-filtro-kyc="em_analise">
+      <div class="card stat-card" style="border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: transform 0.15s, box-shadow 0.15s;" data-filtro-kyc="em_analise">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Em Análise</span>
         </div>
@@ -54,7 +54,7 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
         </div>
       </div>
 
-      <div class="card stat-card" style="border-left: 4px solid #8b5cf6; cursor: pointer;" data-filtro-kyc="actualizacao_necessaria">
+      <div class="card stat-card" style="border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: transform 0.15s, box-shadow 0.15s;" data-filtro-kyc="actualizacao_necessaria">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Docs Requeridos</span>
         </div>
@@ -64,7 +64,7 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
         </div>
       </div>
 
-      <div class="card stat-card" style="border-left: 4px solid #10b981; cursor: pointer;" data-filtro-kyc="aprovado">
+      <div class="card stat-card" style="border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: transform 0.15s, box-shadow 0.15s;" data-filtro-kyc="aprovado">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Aprovados</span>
         </div>
@@ -74,7 +74,7 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
         </div>
       </div>
 
-      <div class="card stat-card" style="border-left: 4px solid #ef4444; cursor: pointer;" data-filtro-kyc="rejeitado">
+      <div class="card stat-card" style="border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: transform 0.15s, box-shadow 0.15s;" data-filtro-kyc="rejeitado">
         <div class="card-header" style="padding-bottom: 2px;">
           <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Rejeitados</span>
         </div>
@@ -368,7 +368,7 @@ export async function renderizarKyc(container: HTMLElement): Promise<void> {
             <h4 style="font-size: 13px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Pista de Decisões KYC Anteriores</h4>
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${historico.map((h: any) => `
-                <div style="padding: 10px 14px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #031d42; font-size: 12px;">
+                <div style="padding: 10px 14px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 12px;">
                   <div style="display: flex; justify-content: space-between;">
                     <strong>${h.estadoNovo.toUpperCase()}</strong> (${h.nivelRisco.toUpperCase()}) por <em>${escapeHtml(h.decididoPorNome)}</em>
                     <span class="text-muted">${new Date(h.momento).toLocaleString("pt-AO")}</span>

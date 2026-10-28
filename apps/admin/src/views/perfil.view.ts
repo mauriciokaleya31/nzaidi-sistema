@@ -1,3 +1,4 @@
+import { mostrarToast } from "../components/modal-dialogo.js";
 import { api } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
 
@@ -194,7 +195,7 @@ export async function renderizarPerfil(container: HTMLElement): Promise<void> {
           if (!id) return;
           if (confirm("Deseja revogar esta sessão activa?")) {
             await api.revogarSessaoPropria(id);
-            alert("Sessão revogada.");
+            mostrarToast("Sessão revogada.", "sucesso");
             void carregarSessoes();
           }
         });
@@ -212,13 +213,13 @@ export async function renderizarPerfil(container: HTMLElement): Promise<void> {
 
     const formatosPermitidos = ["image/jpeg", "image/png", "image/webp"];
     if (!formatosPermitidos.includes(file.type)) {
-      alert("Formato inválido. Por favor envie uma imagem JPG, PNG ou WebP.");
+      mostrarToast("Formato inválido. Por favor envie uma imagem JPG, PNG ou WebP.", "erro");
       inputFile.value = "";
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("A imagem selecionada é demasiado grande. O tamanho máximo permitido é de 2 MB.");
+      mostrarToast("A imagem selecionada é demasiado grande (máx 2 MB).", "erro");
       inputFile.value = "";
       return;
     }
@@ -250,9 +251,9 @@ export async function renderizarPerfil(container: HTMLElement): Promise<void> {
       const elCardNome = container.querySelector("#perfil-card-nome");
       if (elCardNome) elCardNome.textContent = nome;
 
-      alert("Perfil atualizado com sucesso.");
+      mostrarToast("Perfil atualizado com sucesso.", "sucesso");
     } catch (err: any) {
-      alert(`Erro ao guardar perfil: ${err.message}`);
+      mostrarToast(`Erro ao guardar perfil: ${err.message}`, "erro");
     }
   });
 
@@ -264,12 +265,12 @@ export async function renderizarPerfil(container: HTMLElement): Promise<void> {
     const confirma = (container.querySelector("#senha-confirma-input") as HTMLInputElement).value;
 
     if (nova !== confirma) {
-      alert("A confirmação da nova palavra-passe não coincide.");
+      mostrarToast("A confirmação da nova palavra-passe não coincide.", "erro");
       return;
     }
 
     if (nova.length < 10) {
-      alert("A nova palavra-passe deve conter pelo menos 10 caracteres.");
+      mostrarToast("A nova palavra-passe deve conter pelo menos 10 caracteres.", "erro");
       return;
     }
 
@@ -279,10 +280,10 @@ export async function renderizarPerfil(container: HTMLElement): Promise<void> {
         novaSenha: nova,
       });
 
-      alert("Palavra-passe alterada com sucesso.");
+      mostrarToast("Palavra-passe alterada com sucesso.", "sucesso");
       (container.querySelector("#form-perfil-senha") as HTMLFormElement).reset();
     } catch (err: any) {
-      alert(`Erro ao alterar palavra-passe: ${err.message}`);
+      mostrarToast(`Erro ao alterar palavra-passe: ${err.message}`, "erro");
     }
   });
 

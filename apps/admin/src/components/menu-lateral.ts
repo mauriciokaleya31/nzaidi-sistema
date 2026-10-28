@@ -299,7 +299,7 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
 
   container.innerHTML = `
     <div id="sidebar-fundo" class="sidebar-fundo" aria-hidden="true"></div>
-    <aside id="sidebar" class="sidebar app-sidebar" aria-label="Menu principal">
+    <aside id="sidebar" class="sidebar app-sidebar" aria-label="Menu principal" style="width: 272px; min-width: 272px; background: linear-gradient(180deg, #031d42 0%, #021530 100%) !important; color: #ffffff !important;">
       <div class="sidebar-header">
         <div class="sidebar-brand">
           <img src="/simbolo.png" alt="NZAIDI" class="sidebar-logo" width="40" height="40" />

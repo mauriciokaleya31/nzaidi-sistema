@@ -660,7 +660,7 @@ img {
   line-height: 1.55;
   margin-bottom: 1rem;
   border: 1px solid transparent;
-  border-left-width: 4px;
+  border: 1px solid transparent;
 }
 .alert-box svg {
   display: inline-block;
@@ -1404,7 +1404,7 @@ img {
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, #fffaf0, #fff);
   border: 1px solid var(--border-dourado);
-  border-left: 4px solid var(--nz-dourado-500);
+  
 }
 .system-status-indicator {
   display: inline-flex;
@@ -2074,8 +2074,8 @@ img {
   background: linear-gradient(90deg, rgba(204, 150, 56, 0.28) 0%, rgba(204, 150, 56, 0.06) 100%) !important;
   color: #ffffff !important;
   font-weight: 700 !important;
-  border-left: 3px solid #cc9638;
-  padding-left: calc(0.85rem - 3px);
+  border: 1px solid rgba(204, 150, 56, 0.4) !important;
+  padding-left: 0.85rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -2150,4 +2150,180 @@ img {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px -4px rgba(5, 45, 98, 0.1) !important;
   border-color: #cbd5e1 !important;
+}
+
+
+/* ==========================================================================
+   SISTEMA UNIVERSAL DE FORMULÁRIOS E MODAIS (NZAIDI DESIGN SYSTEM)
+   ========================================================================== */
+.form-control,
+input.form-control,
+select.form-control,
+textarea.form-control,
+.form-input,
+.form-select,
+.form-textarea {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #1e293b;
+  background-color: #ffffff;
+  background-clip: padding-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  outline: none;
+}
+
+select.form-control,
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+textarea.form-control,
+.form-textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-control:focus,
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  border-color: #0c3f82 !important;
+  box-shadow: 0 0 0 3px rgba(12, 63, 130, 0.15) !important;
+  outline: none !important;
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+/* Modais Universais */
+.modal-box {
+  position: relative;
+  background-color: #ffffff !important;
+  border-radius: 14px !important;
+  width: 100%;
+  max-width: 580px;
+  box-shadow: 0 25px 50px -12px rgba(2, 21, 48, 0.35) !important;
+  border: 1px solid rgba(204, 150, 56, 0.25) !important;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: subir 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #1e293b;
+}
+
+.modal-box.modal-lg {
+  max-width: 940px !important;
+}
+
+.modal-box .modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  margin-bottom: 0;
+}
+
+.modal-box .modal-body {
+  padding: 1.5rem;
+  flex-grow: 1;
+}
+
+.modal-box .modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  margin-top: 0;
+}
+
+/* Abas nos Modais e Páginas */
+.tab-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.btn-tab {
+  background: none;
+  border: none;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-tab:hover {
+  background: #f1f5f9;
+  color: #031d42;
+}
+
+.btn-tab.active {
+  background: #031d42;
+  color: #ffffff;
+}
+
+/* Forçar Sidebar com fundo escuro e visibilidade absoluta */
+#sidebar-container {
+  width: 272px !important;
+  min-width: 272px !important;
+  max-width: 272px !important;
+  flex-shrink: 0 !important;
+  background: #031d42 !important;
+  color: #ffffff !important;
+}
+
+#sidebar,
+.app-sidebar,
+aside.sidebar {
+  width: 272px !important;
+  min-width: 272px !important;
+  max-width: 272px !important;
+  background: linear-gradient(180deg, #031d42 0%, #021530 100%) !important;
+  color: #ffffff !important;
 }

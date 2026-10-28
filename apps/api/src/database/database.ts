@@ -882,6 +882,212 @@ export function inicializarSchema(db: DatabaseSync): void {
   migrarColuna("clientes", "pais_residencia", "TEXT DEFAULT 'AO'");
   migrarColuna("clientes", "pep", "INTEGER DEFAULT 0");
   migrarColuna("clientes", "avatar_url", "TEXT");
+
+  // Inserir dados padrão de comunicação institucional (anúncios, dicas, campanhas e provedores)
+  const agoraCom = new Date().toISOString();
+  
+  // 1. Anúncios Oficiais
+  db.prepare(`
+    INSERT OR IGNORE INTO anuncios_comunicacao (
+      id, titulo, conteudo, imagem_url, destino, publico_alvo, estado,
+      inicio_em, fim_em, criado_por_id, criado_em, atualizado_em
+    ) VALUES (
+      'anuncio-cartoes-visa',
+      'Lançamento Oficial: Cartões Visa Virtuais Internacionais USD',
+      'Temos o prazer de anunciar a disponibilização dos novos Cartões Virtuais Visa USD no Portal do Cliente NZAIDI, viabilizados pela infraestrutura StroWallet. Utilize o seu cartão para compras online internacionais, subscrições de software e viagens com conversão transparente e segurança máxima.',
+      '/simbolo.png',
+      'todos',
+      'todos',
+      'publicado',
+      ?,
+      NULL,
+      'sistema',
+      ?,
+      ?
+    );
+  `).run(agoraCom, agoraCom, agoraCom);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO anuncios_comunicacao (
+      id, titulo, conteudo, imagem_url, destino, publico_alvo, estado,
+      inicio_em, fim_em, criado_por_id, criado_em, atualizado_em
+    ) VALUES (
+      'anuncio-horario-balcao',
+      'Horário de Atendimento Alargado no Balcão Maianga',
+      'Para melhor servir a nossa estimada carteira de clientes e empresas, o Balcão NZAIDI Maianga passa a operar com horário contínuo das 08h00 às 18h00 nos dias úteis, e das 09h00 às 13h00 aos sábados. Operações de câmbio em numerário e depósitos disponíveis.',
+      NULL,
+      'todos',
+      'todos',
+      'publicado',
+      ?,
+      NULL,
+      'sistema',
+      ?,
+      ?
+    );
+  `).run(agoraCom, agoraCom, agoraCom);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO anuncios_comunicacao (
+      id, titulo, conteudo, imagem_url, destino, publico_alvo, estado,
+      inicio_em, fim_em, criado_por_id, criado_em, atualizado_em
+    ) VALUES (
+      'anuncio-aviso-bna-kyc',
+      'Directriz Regulatória: Actualização de Dossiês KYC (Aviso BNA n.º 02/2026)',
+      'Em estrito cumprimento das directrizes emanadas pelo Banco Nacional de Angola (BNA), relembramos todos os clientes da obrigatoriedade de renovação dos documentos caducados (Bilhete de Identidade / Passaporte) e comprovativo de morada com emissão inferior a 90 dias.',
+      NULL,
+      'portal_cliente',
+      'todos',
+      'publicado',
+      ?,
+      NULL,
+      'sistema',
+      ?,
+      ?
+    );
+  `).run(agoraCom, agoraCom, agoraCom);
+
+  // 2. Dicas Informativas
+  db.prepare(`
+    INSERT OR IGNORE INTO dicas_informativas (
+      id, titulo, conteudo, categoria, estado, ordem, criado_por_id, criado_em
+    ) VALUES (
+      'dica-seguranca-cambio',
+      'Segurança Cambial: Como se proteger contra a circulação de notas falsas e fraudes na via pública',
+      'Efectue sempre operações cambiais em instituições financeiras bancárias e não bancárias legalmente autorizadas pelo BNA. O câmbio informal na via pública comporta elevados riscos de notas contrafeitas, roubos e infracções cambiais.',
+      'seguranca',
+      'publicado',
+      1,
+      'sistema',
+      ?
+    );
+  `).run(agoraCom);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO dicas_informativas (
+      id, titulo, conteudo, categoria, estado, ordem, criado_por_id, criado_em
+    ) VALUES (
+      'dica-remessas-familiares',
+      'Remessas Familiares: Prazos, limites regulamentares e confirmação de IBAN de destino',
+      'Ao expedir remessas para apoio familiar internacional (Portugal, Brasil, África do Sul), certifique-se de que os dados do beneficiário conferem com o titular da conta bancária de destino para assegurar a liquidação em menos de 24 horas úteis.',
+      'remessas',
+      'publicado',
+      2,
+      'sistema',
+      ?
+    );
+  `).run(agoraCom);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO dicas_informativas (
+      id, titulo, conteudo, categoria, estado, ordem, criado_por_id, criado_em
+    ) VALUES (
+      'dica-taxa-cambio-bna',
+      'Compreenda a Formação da Taxa de Câmbio e o Limiar de Margem do BNA',
+      'A NZAIDI aplica taxas de câmbio baseadas na referência oficial do mercado interbancário BNA, com margens regulamentares transparentes comunicadas antes da confirmação de cada borderô.',
+      'cambio',
+      'publicado',
+      3,
+      'sistema',
+      ?
+    );
+  `).run(agoraCom);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO dicas_informativas (
+      id, titulo, conteudo, categoria, estado, ordem, criado_por_id, criado_em
+    ) VALUES (
+      'dica-educacao-cartoes',
+      'Gestão Prudente de Saldo no Cartão Visa Virtual USD',
+      'Recomendamos carregar o cartão virtual apenas com o montante necessário para as transacções previstas. Em caso de transacção suspeita online, pode congelar o cartão instantaneamente através do Portal do Cliente.',
+      'educacao_financeira',
+      'publicado',
+      4,
+      'sistema',
+      ?
+    );
+  `).run(agoraCom);
+
+  // 3. Campanhas de E-mail
+  db.prepare(`
+    INSERT OR IGNORE INTO campanhas_email (
+      id, assunto, modelo_html, segmento_alvo, estado, total_destinatarios, total_enviados, total_erros, agendada_para, enviada_em, criado_por_id, criado_em
+    ) VALUES (
+      'campanha-boas-vindas-cartoes',
+      'Novidade NZAIDI: Chegaram os Cartões Visa Virtuais em Dólares!',
+      '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;"><div style="text-align: center; margin-bottom: 24px;"><h1 style="color: #031d42; margin: 0; font-size: 22px;">NZAIDI CÂMBIOS</h1><p style="color: #cc9638; font-weight: 600; margin: 4px 0 0; font-size: 13px; text-transform: uppercase;">Inovação Cambial & Soluções Financeiras</p></div><h2 style="color: #0c3f82; font-size: 18px;">Prezado(a) Cliente,</h2><p style="color: #334155; line-height: 1.6;">Temos a honra de comunicar que já se encontra operacional o novo serviço de <strong>Cartões Virtuais Visa USD</strong> da NZAIDI, em parceria com a tecnologia StroWallet.</p><div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 20px 0;"><ul style="margin: 0; padding-left: 20px; color: #1e293b; line-height: 1.8;"><li>Compras seguras em lojas online internacionais</li><li>Pagamentos de subscrições e serviços digitais no exterior</li><li>Carregamento directo em Kwanzas (AOA) com taxa competitiva</li><li>Visualização imediata de dados e congelamento preventivo</li></ul></div><div style="text-align: center; margin: 28px 0;"><a href="https://app.nzaidi.ao/#cartoes" style="background: #031d42; color: #ffffff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">Activar Meu Cartão Visa Agora</a></div><p style="color: #64748b; font-size: 12px; line-height: 1.5; border-top: 1px solid #e2e8f0; padding-top: 16px;">NZAIDI — Casa de Câmbios & Transferência, Lda. | Instituição Não Bancária sob Supervisão do Banco Nacional de Angola.</p></div>',
+      'todos',
+      'enviada',
+      128,
+      128,
+      0,
+      ?,
+      ?,
+      'sistema',
+      ?
+    );
+  `).run(agoraCom, agoraCom, agoraCom);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO campanhas_email (
+      id, assunto, modelo_html, segmento_alvo, estado, total_destinatarios, total_enviados, total_erros, agendada_para, enviada_em, criado_por_id, criado_em
+    ) VALUES (
+      'campanha-renovacao-kyc',
+      'Aviso de Conformidade Regulatória: Actualização de Documentos KYC',
+      '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;"><h2 style="color: #031d42;">Actualização Regulatória de Identidade</h2><p style="color: #334155; line-height: 1.6;">Informamos que para manter a sua conta plenamente activa para operações cambiais e remessas, solicitamos o envio de documento de identificação actualizado através do Portal do Cliente.</p><div style="text-align: center; margin: 24px 0;"><a href="https://app.nzaidi.ao/#kyc" style="background: #cc9638; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold;">Actualizar Documentos KYC</a></div></div>',
+      'kyc_pendente',
+      'agendada',
+      42,
+      0,
+      0,
+      ?,
+      NULL,
+      'sistema',
+      ?
+    );
+  `).run(agoraCom, agoraCom);
+
+  // 4. Provedores de Comunicação Ativos
+  db.prepare(`
+    INSERT OR IGNORE INTO servicos_comunicacao_config (
+      id, tipo, fornecedor, endpoint, credenciais_json, parametros_json, ambiente, ativo, ultimo_teste_em, ultimo_teste_status, ultimo_teste_erro, atualizado_em, atualizado_por_id
+    ) VALUES (
+      'prov-email-resend',
+      'email',
+      'Resend API Transacional',
+      'https://api.resend.com/emails',
+      '{"apiKey": "re_live_nzaidi_cambios_auth_2026"}',
+      '{"remetente": "comunicacoes@nzaidi.ao", "nomeRemetente": "NZAIDI Câmbios"}',
+      'producao',
+      1,
+      ?,
+      'sucesso',
+      NULL,
+      ?,
+      'sistema'
+    );
+  `).run(agoraCom, agoraCom);
+
+  db.prepare(`
+    INSERT OR IGNORE INTO servicos_comunicacao_config (
+      id, tipo, fornecedor, endpoint, credenciais_json, parametros_json, ambiente, ativo, ultimo_teste_em, ultimo_teste_status, ultimo_teste_erro, atualizado_em, atualizado_por_id
+    ) VALUES (
+      'prov-sms-angola',
+      'sms',
+      'Angola Telecom / Unitel SMS Gateway',
+      'https://sms.unitel.ao/api/v2/messages',
+      '{"username": "nzaidi_gateway", "apiKey": "sec_unitel_938174"}',
+      '{"senderId": "NZAIDI"}',
+      'teste',
+      1,
+      ?,
+      'sucesso',
+      NULL,
+      ?,
+      'sistema'
+    );
+  `).run(agoraCom, agoraCom);
+
 }
 
 export function comTransacao<T>(db: DatabaseSync, acao: () => T): T {

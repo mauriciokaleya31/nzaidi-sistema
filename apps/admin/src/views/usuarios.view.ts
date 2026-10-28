@@ -1,5 +1,6 @@
 import { api, type UsuarioItem, type FuncaoUsuario } from "../api/cliente.js";
 import { authState } from "../state/auth.state.js";
+import { solicitarMotivoAcao, confirmarModal, mostrarToast } from "../components/modal-dialogo.js";
 
 function escapeHtml(texto: string): string {
   const div = document.createElement("div");
@@ -359,84 +360,117 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
             email: (conteudo.querySelector("#edit-user-email") as HTMLInputElement).value.trim(),
             funcao: (conteudo.querySelector("#edit-user-funcao") as HTMLSelectElement).value,
           });
-          alert("Utilizador atualizado com sucesso.");
+          mostrarToast("Utilizador atualizado com sucesso.", "sucesso");
           void carregarListaUsuarios();
         } catch (err: any) {
-          alert(`Erro ao atualizar: ${err.message}`);
+          mostrarToast(`Erro ao atualizar: ${err.message}`, "erro");
         }
       });
 
-      // Impersonar
+      // Impersonar (Acesso Auditado de Suporte)
       conteudo.querySelector("#btn-impersonar-user-act")?.addEventListener("click", async () => {
-        const motivo = prompt(`Indique o motivo de auditoria ou suporte para assumir a conta de ${u.nome}:`);
-        if (!motivo || motivo.trim().length < 5) {
-          alert("O motivo formal é obrigatório (mínimo 5 caracteres).");
-          return;
-        }
+        const motivo = await solicitarMotivoAcao({
+          titulo: "Assumir Conta de Utilizador",
+          subtitulo: `Membro da equipa: ${u.nome} (${u.email})`,
+          labelMotivo: "Indique o motivo de auditoria ou suporte para assumir a conta:",
+          placeholder: "Ex.: Auditoria de permissões de tesouraria / Suporte técnico à estação de trabalho",
+          textoConfirmar: "Iniciar Modo Suporte",
+          perigo: false,
+          minimoCaracteres: 5,
+        });
+
+        if (!motivo) return;
 
         try {
-          await api.impersonarUsuario(u.id, motivo.trim());
-          alert(`Modo de suporte iniciado como ${u.nome}. A página será recarregada.`);
-          window.location.reload();
+          await api.impersonarUsuario(u.id, motivo);
+          mostrarToast(`Modo de suporte iniciado como ${u.nome}.`, "sucesso");
+          setTimeout(() => window.location.reload(), 400);
         } catch (err: any) {
-          alert(`Erro na impersonação: ${err.message}`);
+          mostrarToast(`Erro na impersonação: ${err.message}`, "erro");
         }
       });
 
       // Bloquear
       conteudo.querySelector("#btn-bloquear-user-act")?.addEventListener("click", async () => {
-        const motivo = prompt(`Indique o motivo formal para bloquear ${u.nome}:`);
-        if (!motivo || motivo.trim().length < 5) {
-          alert("O motivo do bloqueio é obrigatório.");
-          return;
-        }
+        const motivo = await solicitarMotivoAcao({
+          titulo: "Bloquear Acesso de Utilizador",
+          subtitulo: `Funcionário: ${u.nome}`,
+          labelMotivo: "Indique o motivo formal para bloquear o acesso:",
+          placeholder: "Ex.: Suspensão preventiva / Desligamento da empresa",
+          textoConfirmar: "Bloquear Acesso",
+          perigo: true,
+          minimoCaracteres: 5,
+        });
+
+        if (!motivo) return;
 
         try {
-          await api.bloquearUsuario(u.id, motivo.trim());
-          alert("Utilizador bloqueado e sessões encerradas.");
+          await api.bloquearUsuario(u.id, motivo);
+          mostrarToast("Utilizador bloqueado e sessões encerradas.", "sucesso");
           modal.style.display = "none";
           void carregarListaUsuarios();
         } catch (err: any) {
-          alert(`Erro ao bloquear: ${err.message}`);
+          mostrarToast(`Erro ao bloquear: ${err.message}`, "erro");
         }
       });
 
       // Desbloquear
       conteudo.querySelector("#btn-desbloquear-user-act")?.addEventListener("click", async () => {
-        if (!confirm(`Deseja desbloquear a conta de ${u.nome}?`)) return;
+        const confirmou = await confirmarModal({
+          titulo: "Desbloquear Utilizador",
+          mensagem: `Deseja realmente desbloquear a conta de ${u.nome}? O funcionário poderá autenticar-se novamente no sistema.`,
+          textoConfirmar: "Desbloquear",
+          perigo: false,
+        });
+        if (!confirmou) return;
+
         try {
           await api.desbloquearUsuario(u.id);
-          alert("Utilizador desbloqueado com sucesso.");
+          mostrarToast("Utilizador desbloqueado com sucesso.", "sucesso");
           modal.style.display = "none";
           void carregarListaUsuarios();
         } catch (err: any) {
-          alert(`Erro ao desbloquear: ${err.message}`);
+          mostrarToast(`Erro ao desbloquear: ${err.message}`, "erro");
         }
       });
 
       // Terminar Sessões
       conteudo.querySelector("#btn-terminar-sessoes-user-act")?.addEventListener("click", async () => {
-        if (!confirm(`Deseja terminar todas as sessões ativas de ${u.nome}?`)) return;
+        const confirmou = await confirmarModal({
+          titulo: "Revogar Sessões Ativas",
+          mensagem: `Deseja terminar todas as sessões ativas de ${u.nome}? Todas as ligações abertas serão fechadas imediatamente.`,
+          textoConfirmar: "Terminar Sessões",
+          perigo: true,
+        });
+        if (!confirmou) return;
+
         try {
           await api.terminarSessoesUsuario(u.id);
-          alert("Todas as sessões do utilizador foram revogadas.");
+          mostrarToast("Todas as sessões do utilizador foram revogadas.", "sucesso");
           void abrirModalDetalhesUser(u.id);
         } catch (err: any) {
-          alert(`Erro: ${err.message}`);
+          mostrarToast(`Erro: ${err.message}`, "erro");
         }
       });
 
       // Alternar Ativo/Inativo
       conteudo.querySelector("#btn-alternar-ativo-act")?.addEventListener("click", async () => {
         const novoAtivo = !u.ativo;
-        if (!confirm(`Deseja ${novoAtivo ? 'reativar' : 'desativar'} a conta de ${u.nome}?`)) return;
+        const confirmou = await confirmarModal({
+          titulo: `${novoAtivo ? 'Reativar' : 'Desativar'} Conta`,
+          mensagem: `Deseja ${novoAtivo ? 'reativar' : 'desativar'} a conta de ${u.nome}?`,
+          textoConfirmar: novoAtivo ? "Reativar" : "Desativar",
+          perigo: !novoAtivo,
+        });
+        if (!confirmou) return;
+
         try {
           await api.alternarStatusUsuario(u.id, novoAtivo);
-          alert(`Conta ${novoAtivo ? 'reativada' : 'desativada'} com sucesso.`);
+          mostrarToast(`Conta ${novoAtivo ? 'reativada' : 'desativada'} com sucesso.`, "sucesso");
           modal.style.display = "none";
           void carregarListaUsuarios();
         } catch (err: any) {
-          alert(`Erro: ${err.message}`);
+          mostrarToast(`Erro: ${err.message}`, "erro");
         }
       });
     } catch {
@@ -474,11 +508,11 @@ export async function renderizarUsuarios(container: HTMLElement): Promise<void> 
 
     try {
       await api.criarUsuario(payload);
-      alert("Funcionário registado com sucesso.");
+      mostrarToast("Funcionário registado com sucesso.", "sucesso");
       if (modalNovo) modalNovo.style.display = "none";
       void carregarListaUsuarios();
     } catch (err: any) {
-      alert(`Erro ao criar utilizador: ${err.message}`);
+      mostrarToast(`Erro ao criar utilizador: ${err.message}`, "erro");
     }
   });
 
