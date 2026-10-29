@@ -48,8 +48,8 @@ function htmlCabecalho(actual: string): string {
         </a>
         <nav class="nav-desktop" aria-label="Principal">${ligacoesMenu(actual)}</nav>
         <div class="cabecalho-acoes">
-          <a href="${URL_APP}" class="btn-entrar" rel="noopener">
-            <span>Aceder ao Sistema</span>
+          <a href="/entrar.html" class="btn-entrar">
+            <span>Aceder à Conta</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg>
           </a>
           <button class="btn-menu-mobile" id="btn-menu-mobile" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu-mobile">
@@ -59,7 +59,7 @@ function htmlCabecalho(actual: string): string {
       </div>
       <nav class="menu-mobile" id="menu-mobile" aria-label="Menu">
         ${ligacoesMenu(actual)}
-        <a href="${URL_APP}" class="btn-entrar btn-entrar--bloco" rel="noopener">Aceder ao Sistema</a>
+        <a href="/entrar.html" class="btn-entrar btn-entrar--bloco">Aceder à Conta</a>
       </nav>
     </header>`;
 }
@@ -92,7 +92,7 @@ function htmlRodape(): string {
             <li><a href="/cambios.html">Câmbio de Divisas</a></li>
             <li><a href="/cambios.html#simulador">Simulador</a></li>
             <li><a href="/servicos.html">Todos os Serviços</a></li>
-            <li><a href="${URL_APP}" rel="noopener">Aceder a app.nzaidi.ao</a></li>
+            <li><a href="/entrar.html">Aceder à Conta</a></li>
           </ul>
         </div>
         <div class="rodape-col">
