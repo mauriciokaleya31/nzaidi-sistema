@@ -19,7 +19,7 @@ export default defineConfig({
     // Website multipágina: cada página HTML é uma entrada da compilação
     rollupOptions: {
       input: Object.fromEntries(
-        ["index", "sobre", "servicos", "cambios", "seguranca", "contactos", "faq", "termos", "privacidade", "entrar", "404"].map(
+        ["index", "sobre", "servicos", "cambios", "seguranca", "parceiros", "contactos", "faq", "termos", "privacidade", "entrar", "404"].map(
           (p) => [p, path.resolve(__dirname, `${p}.html`)],
         ),
       ),
