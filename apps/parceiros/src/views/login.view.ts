@@ -27,75 +27,30 @@ export function renderizarLogin(container: HTMLElement): void {
         <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
 
         <div class="auth-split-shell ${abaAtiva === "registo" ? "modo-registo-amplo" : ""}">
-          <!-- Coluna Esquerda: Painel Institucional B2B & Correspondentes Animado -->
+          <!-- Coluna Esquerda: Vitrine Clean e Profissional -->
           <aside class="auth-showcase-panel">
             <div class="auth-showcase-top">
-              <div class="auth-brand-pill">
-                <span class="auth-brand-dot"></span>
-                <span>Rede Institucional de Correspondentes • B2B</span>
+              <div class="auth-brand-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+                <img src="/simbolo.png" alt="NZAIDI" style="width: 44px; height: 44px; border-radius: 50%; background: #fff; padding: 2px;" onerror="this.style.display='none'" />
+                <div>
+                  <div style="font-family: var(--fonte-titulos); font-size: 1.3rem; font-weight: 800; letter-spacing: 0.15em; color: #fff;">NZAIDI</div>
+                  <div style="font-size: 0.7rem; color: #eac172; letter-spacing: 0.18em; text-transform: uppercase;">Casa de Câmbios</div>
+                </div>
               </div>
+
               <h1 class="auth-hero-title">
-                Liquidação Internacional e <span>Parcerias Globais NZAIDI</span>
+                Portal dos Parceiros
               </h1>
               <p class="auth-hero-subtitle">
-                Plataforma dedicada a bancos correspondentes, operadores de remessas e agentes liquidatários com reconciliação em tempo real e trilho de auditoria BNA.
+                Mesa exclusiva de correspondentes para liquidação, distribuição e reconciliação de remessas e pagamentos.
               </p>
-            </div>
-
-            <div class="auth-floating-stage">
-              <div class="auth-float-card auth-float-card-1">
-                <div class="auth-float-header">
-                  <span class="auth-float-tag">Corredores de Liquidação Ativos</span>
-                  <span class="auth-float-live">● SLA 99.98%</span>
-                </div>
-                <div class="auth-float-rates">
-                  <div class="auth-float-rate-item">
-                    <strong>SEPA / EUROPA</strong>
-                    <span>EUR • D+0 / D+1</span>
-                  </div>
-                  <div class="auth-float-rate-item">
-                    <strong>SWIFT / GLOBAL</strong>
-                    <span>USD • Prioritário</span>
-                  </div>
-                  <div class="auth-float-rate-item">
-                    <strong>NAMÍBIA / SADC</strong>
-                    <span>NAD • Direto</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="auth-float-card auth-float-card-2">
-                <div class="auth-visa-mini">
-                  <div class="auth-visa-chip"></div>
-                  <div>
-                    <div class="auth-visa-title">Conta Corrente & Comissionamento Automático</div>
-                    <div class="auth-visa-sub">Extratos multi-moeda, comprovativos SWIFT e API de liquidação</div>
-                  </div>
-                  <span class="auth-visa-badge">B2B PRO</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="auth-trust-row">
-              <div class="auth-trust-item">
-                <strong>Multi-Canal</strong>
-                <span>SEPA, SWIFT, Wise & Cash</span>
-              </div>
-              <div class="auth-trust-item">
-                <strong>Compliance</strong>
-                <span>Supervisão BNA / AML</span>
-              </div>
-              <div class="auth-trust-item">
-                <strong>Liquidação</strong>
-                <span>Comissões Transparentes</span>
-              </div>
             </div>
           </aside>
 
           <!-- Coluna Direita: Formulário Espaçoso (Login / Criar Conta Parceiro) -->
           <section class="auth-form-panel">
             <div class="auth-form-header">
-              <div class="auth-logo-mark">NZ</div>
+              
               <div>
                 <h2 class="auth-form-title">Portal dos Parceiros</h2>
                 <p class="auth-form-subtitle">

@@ -38,83 +38,36 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
         <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
 
         <div class="auth-split-shell ${abaAtiva === "registo" ? "modo-registo-amplo" : ""}">
-          <!-- Coluna Esquerda: Vitrine Institucional NZAIDI com Animações 3D -->
+          <!-- Coluna Esquerda: Vitrine Clean e Profissional -->
           <aside class="auth-showcase-panel">
             <div class="auth-showcase-top">
-              <div class="auth-brand-pill">
-                <span class="auth-brand-dot"></span>
-                <span>Plataforma Digital Oficial • Supervisão BNA</span>
+              <div class="auth-brand-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+                <img src="/simbolo.png" alt="NZAIDI" style="width: 44px; height: 44px; border-radius: 50%; background: #fff; padding: 2px;" onerror="this.style.display='none'" />
+                <div>
+                  <div style="font-family: var(--fonte-titulos); font-size: 1.3rem; font-weight: 800; letter-spacing: 0.15em; color: #fff;">NZAIDI</div>
+                  <div style="font-size: 0.7rem; color: #eac172; letter-spacing: 0.18em; text-transform: uppercase;">Casa de Câmbios</div>
+                </div>
               </div>
+
               <h1 class="auth-hero-title">
-                Operações Cambiais, Remessas e <span>Cartões Visa USD</span>
+                Portal do Cliente
               </h1>
               <p class="auth-hero-subtitle">
-                Compre e venda divisas com cotação garantida, envie transferências internacionais auditadas e gira o seu cartão virtual internacional com máxima segurança bancária.
+                Aceda com segurança para realizar operações cambiais, enviar remessas e gerir os seus cartões virtuais.
               </p>
-            </div>
-
-            <!-- Cartões Flutuantes com Cotações em Tempo Real e Cartão Virtual -->
-            <div class="auth-floating-stage">
-              <div class="auth-float-card auth-float-card-1">
-                <div class="auth-float-header">
-                  <span class="auth-float-tag">Cotação em Tempo Real</span>
-                  <span class="auth-float-live">● VÁLIDA 90s</span>
-                </div>
-                <div class="auth-float-rates">
-                  <div class="auth-float-rate-item">
-                    <strong>USD / AOA</strong>
-                    <span>925,50 Kz</span>
-                  </div>
-                  <div class="auth-float-rate-item">
-                    <strong>EUR / AOA</strong>
-                    <span>1.008,20 Kz</span>
-                  </div>
-                  <div class="auth-float-rate-item">
-                    <strong>ESTADO BNA</strong>
-                    <span style="color: #6ee7b7; font-size: 0.82rem;">REGULAR</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="auth-float-card auth-float-card-2">
-                <div class="auth-visa-mini">
-                  <div class="auth-visa-chip"></div>
-                  <div>
-                    <div class="auth-visa-title">NZAIDI Visa Virtual USD</div>
-                    <div class="auth-visa-sub">•••• •••• •••• 4829 • Validade 12/28</div>
-                  </div>
-                  <span class="auth-visa-badge">VISA</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="auth-trust-row">
-              <div class="auth-trust-item">
-                <strong>100% Digital</strong>
-                <span>Liquidação célere</span>
-              </div>
-              <div class="auth-trust-item">
-                <strong>KYC Integrado</strong>
-                <span>Conformidade BNA</span>
-              </div>
-              <div class="auth-trust-item">
-                <strong>Encriptação TLS</strong>
-                <span>Proteção ponta a ponta</span>
-              </div>
             </div>
           </aside>
 
-          <!-- Coluna Direita: Formulário Elegante, Amplo e Espaçoso -->
+          <!-- Coluna Direita: Formulário Elegante e Direto -->
           <section class="auth-form-panel">
             <div class="auth-form-header">
-              <div class="auth-logo-mark">NZ</div>
               <div>
                 <h2 class="auth-form-title">${abaAtiva === "login" ? "Iniciar Sessão" : "Criar Conta Digital"}</h2>
                 <p class="auth-form-subtitle">
                   ${
                     abaAtiva === "login"
-                      ? "Introduza as suas credenciais para aceder à sua conta de cliente."
-                      : "Preencha os seus dados oficiais para ter acesso imediato às operações cambiais."
+                      ? "Introduza as suas credenciais para aceder à sua conta."
+                      : "Preencha os seus dados oficiais para se registar na plataforma."
                   }
                 </p>
               </div>
@@ -158,7 +111,7 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
               <form id="form-registo" class="auth-form-spacious">
                 <div class="form-group-spacious">
                   <label class="form-label" for="reg-nome">Nome Completo / Razão Social</label>
-                  <input type="text" id="reg-nome" class="form-input-spacious" placeholder="Nome completo conforme documento de identidade" required>
+                  <input type="text" id="reg-nome" class="form-input-spacious" placeholder="Nome completo conforme documento" required>
                 </div>
 
                 <div class="form-row-spacious">
@@ -170,8 +123,8 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
                     </select>
                   </div>
                   <div class="form-group-spacious">
-                    <label class="form-label" for="reg-nif">NIF (Número de Identificação Fiscal)</label>
-                    <input type="text" id="reg-nif" class="form-input-spacious" placeholder="Ex.: 5417000000" required>
+                    <label class="form-label" for="reg-nif">NIF</label>
+                    <input type="text" id="reg-nif" class="form-input-spacious" placeholder="Número de Identificação Fiscal" required>
                   </div>
                 </div>
 
@@ -187,28 +140,28 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
                   </div>
                   <div class="form-group-spacious">
                     <label class="form-label" for="reg-num-doc">Número do Documento</label>
-                    <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Indique o número do documento oficial" required>
+                    <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Indique o número do documento" required>
                   </div>
                 </div>
 
                 <div class="form-row-spacious">
                   <div class="form-group-spacious">
-                    <label class="form-label" for="reg-telefone">Telefone / Telemóvel</label>
+                    <label class="form-label" for="reg-telefone">Telefone</label>
                     <input type="tel" id="reg-telefone" class="form-input-spacious" placeholder="+244 923 000 000" required>
                   </div>
                   <div class="form-group-spacious">
-                    <label class="form-label" for="reg-email">Endereço de E-mail</label>
+                    <label class="form-label" for="reg-email">E-mail</label>
                     <input type="email" id="reg-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required>
                   </div>
                 </div>
 
                 <div class="form-row-spacious">
                   <div class="form-group-spacious">
-                    <label class="form-label" for="reg-morada">Morada de Residência / Sede</label>
-                    <input type="text" id="reg-morada" class="form-input-spacious" placeholder="Rua, Bairro, Município, Província" required>
+                    <label class="form-label" for="reg-morada">Morada</label>
+                    <input type="text" id="reg-morada" class="form-input-spacious" placeholder="Rua, Bairro, Província" required>
                   </div>
                   <div class="form-group-spacious">
-                    <label class="form-label" for="reg-senha">Palavra-passe (mín. 8 caracteres)</label>
+                    <label class="form-label" for="reg-senha">Palavra-passe</label>
                     <input type="password" id="reg-senha" class="form-input-spacious" placeholder="Mínimo de 8 caracteres" minlength="8" required>
                   </div>
                 </div>
@@ -225,7 +178,6 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
             }
 
             <div class="auth-form-footer">
-              <span>NZAIDI — Instituição Licenciada BNA</span>
               <a href="https://nzaidi.ao/" target="_blank" rel="noopener">Voltar ao Website Principal</a>
             </div>
           </section>
