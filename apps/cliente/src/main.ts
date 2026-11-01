@@ -624,7 +624,7 @@ function renderizarAppShell() {
           <a href="#cartoes" class="sidebar-nav-link"><svg><use href="#i-cartao"/></svg><span>Cartões Visa</span></a>
           <a href="#documentos" class="sidebar-nav-link"><svg><use href="#i-doc"/></svg><span>Documentos KYC</span></a>
           <a href="#perfil" class="sidebar-nav-link"><svg><use href="#i-pessoa"/></svg><span>Minha conta</span></a>
-          <a href="#suporte" id="sidebar-link-suporte" class="sidebar-nav-link"><svg><use href="#i-ajuda"/></svg><span>Apoio e Suporte</span></a>
+          <a href="#suporte" id="sidebar-link-suporte" class="sidebar-nav-link"><svg><use href="#i-ajuda"/></svg><span>Centro de Suporte</span></a>
         </nav>
 
         <div class="sidebar-footer">
@@ -944,6 +944,7 @@ function renderizarAppShell() {
         <a href="#cambio"><svg><use href="#i-troca"/></svg>Câmbios</a>
         <a href="#remessas"><svg><use href="#i-aviao"/></svg>Remessas</a>
         <a href="#cartoes"><svg><use href="#i-cartao"/></svg>Cartões</a>
+        <a href="#suporte"><svg><use href="#i-ajuda"/></svg>Suporte</a>
         <a href="#documentos"><svg><use href="#i-doc"/></svg>Docs</a>
         <a href="#perfil"><svg><use href="#i-pessoa"/></svg>Conta</a>
       </nav>

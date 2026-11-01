@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  base: "/cliente/",
+  base: "/",
   resolve: {
     alias: {
       "@nzaidi/dominio": path.resolve(__dirname, "../../packages/dominio/src/index.ts"),
@@ -15,7 +15,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5175,
+    port: 5173,
+    host: "0.0.0.0",
     proxy: {
       "/api": {
         target: "http://localhost:3000",

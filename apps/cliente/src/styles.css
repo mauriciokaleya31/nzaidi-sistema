@@ -40,7 +40,7 @@ button,input,select{font:inherit;color:inherit}
 .prototipo{font-size:12px;color:var(--suave);border:1px dashed var(--borda);border-radius:99px;padding:3px 10px;white-space:nowrap}
 
 /* ---------- estrutura ---------- */
-main{max-width:1540px;width:100%;margin:0 auto;padding:24px 32px 120px;box-sizing:border-box}
+main{max-width:100%;width:100%;margin:0;padding:24px 32px 120px;box-sizing:border-box}
 .vista{display:none;perspective:1400px}
 .vista.ativa{display:block}
 .heroi{position:relative;overflow:hidden;border-radius:28px;color:#fff;padding:36px 40px;min-height:270px;

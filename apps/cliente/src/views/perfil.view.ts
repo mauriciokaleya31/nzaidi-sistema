@@ -15,6 +15,17 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
   let modal2faAberto = false;
   let modalDesativar2faAberto = false;
   let mostrarModalPedirAlteracao = false;
+
+  // Carregar permissões de sessão reais da API
+  if (permissoesSessao === null) {
+    api.obterPermissoesSessao().then((res) => {
+      permissoesSessao = res;
+      if (secaoAtiva === "seguranca") {
+        render();
+      }
+    }).catch(() => {});
+  }
+
   let campoPedirAlteracao: "nome" | "numeroDocumento" | "dataNascimento" = "nome";
 
   function render() {
@@ -100,13 +111,13 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
       });
     });
 
-    // Listeners de Avatar / Fotografia de Perfil
+        // Listeners de Avatar / Fotografia de Perfil
     const inputFoto = container.querySelector("#input-foto-avatar") as HTMLInputElement | null;
     inputFoto?.addEventListener("change", async () => {
       const f = inputFoto.files?.[0];
       if (!f) return;
-      if (f.size > 5 * 1024 * 1024) {
-        mensagemErro = "A imagem selecionada deve ter no máximo 5MB.";
+      if (f.size > 2 * 1024 * 1024) {
+        mensagemErro = "A fotografia selecionada não pode exceder 2 MB.";
         render();
         return;
       }
@@ -116,19 +127,18 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
         try {
           aGuardar = true;
           render();
-          await api.atualizarPerfil({ avatarUrl: base64 });
-          if (authState.cliente) authState.cliente.avatarUrl = base64;
-          localStorage.setItem("nzaidi_avatar_url", base64);
+          const res = await api.atualizarAvatar(base64, f.type || "image/png");
+          const novaUrl = res.dados?.avatarUrl || base64;
+          if (authState.cliente) authState.cliente.avatarUrl = novaUrl;
+          localStorage.setItem("nzaidi_avatar_url", novaUrl);
           mensagemSucesso = "Fotografia de perfil atualizada com sucesso.";
           mensagemErro = "";
+          window.dispatchEvent(new CustomEvent("nzaidi-avatar-atualizado", { detail: { avatarUrl: novaUrl } }));
         } catch (err: any) {
           mensagemErro = err.message || "Erro ao atualizar fotografia de perfil.";
         } finally {
           aGuardar = false;
           render();
-          document.querySelectorAll(".sidebar-user-card .avatar, .header-user-avatar").forEach((el) => {
-            el.innerHTML = `<img src="${base64}" alt="Avatar" class="avatar-img" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
-          });
         }
       };
       leitor.readAsDataURL(f);
@@ -143,6 +153,7 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
         localStorage.removeItem("nzaidi_avatar_url");
         mensagemSucesso = "Fotografia de perfil removida com sucesso.";
         mensagemErro = "";
+        window.dispatchEvent(new CustomEvent("nzaidi-avatar-atualizado", { detail: { avatarUrl: "" } }));
       } catch (err: any) {
         mensagemErro = err.message || "Erro ao remover fotografia.";
       } finally {
