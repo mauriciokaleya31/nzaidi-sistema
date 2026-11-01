@@ -1337,6 +1337,57 @@ export function inicializarSchema(db: DatabaseSync): void {
 
     CREATE INDEX IF NOT EXISTS idx_recup_email ON clientes_recuperacao_senha(email);
 
+    
+    -- --- Permissões de Sessão do Cliente ---
+    CREATE TABLE IF NOT EXISTS clientes_permissoes_sessao (
+      cliente_id TEXT PRIMARY KEY,
+      permitir_cambio_online INTEGER NOT NULL DEFAULT 1,
+      permitir_remessas_online INTEGER NOT NULL DEFAULT 1,
+      exigir_2fa_operacoes INTEGER NOT NULL DEFAULT 0,
+      notificar_login_novo_dispositivo INTEGER NOT NULL DEFAULT 1,
+      manter_sessao_ativa INTEGER NOT NULL DEFAULT 1,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+
+    -- --- Sistema de Suporte & Chat (Cliente <-> Administração) ---
+    CREATE TABLE IF NOT EXISTS suporte_atendimentos (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      operador_id TEXT,
+      operador_nome TEXT,
+      assunto TEXT NOT NULL,
+      categoria TEXT NOT NULL CHECK(categoria IN ('duvida', 'cambio', 'remessa', 'cartao', 'kyc', 'reclamacao', 'outro')),
+      estado TEXT NOT NULL CHECK(estado IN ('pendente', 'em_atendimento', 'resolvido', 'encerrado')) DEFAULT 'pendente',
+      prioridade TEXT NOT NULL CHECK(prioridade IN ('baixa', 'normal', 'alta', 'urgente')) DEFAULT 'normal',
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      encerrado_em TEXT,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+      FOREIGN KEY (operador_id) REFERENCES usuarios(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_suporte_cliente ON suporte_atendimentos(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_suporte_operador ON suporte_atendimentos(operador_id);
+    CREATE INDEX IF NOT EXISTS idx_suporte_estado ON suporte_atendimentos(estado);
+
+    CREATE TABLE IF NOT EXISTS suporte_mensagens (
+      id TEXT PRIMARY KEY,
+      atendimento_id TEXT NOT NULL,
+      remetente_tipo TEXT NOT NULL CHECK(remetente_tipo IN ('cliente', 'operador', 'sistema')),
+      remetente_id TEXT NOT NULL,
+      remetente_nome TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      anexo_nome TEXT,
+      anexo_tipo TEXT,
+      anexo_base64 TEXT,
+      lida INTEGER NOT NULL DEFAULT 0,
+      lida_em TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (atendimento_id) REFERENCES suporte_atendimentos(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_suporte_msg_atendimento ON suporte_mensagens(atendimento_id);
+    CREATE INDEX IF NOT EXISTS idx_suporte_msg_lida ON suporte_mensagens(lida);
+
     CREATE TABLE IF NOT EXISTS mobile_alertas (
       id TEXT PRIMARY KEY,
       tipo TEXT NOT NULL,
@@ -1404,5 +1455,41 @@ export function comTransacao<T>(db: DatabaseSync, acao: () => T): T {
 export function criarConexaoBanco(caminho = ":memory:"): DatabaseSync {
   const db = new DatabaseSync(caminho);
   inicializarSchema(db);
+  
+    // Migração defensiva: colunas de 2FA em clientes_credenciais e usuarios
+    try {
+      const infoCred = db.prepare("PRAGMA table_info(clientes_credenciais);").all() as any[];
+      const colsCred = infoCred.map((c) => c.name);
+      if (!colsCred.includes("dois_fatores_ativo")) {
+        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_ativo INTEGER NOT NULL DEFAULT 0;");
+      }
+      if (!colsCred.includes("dois_fatores_segredo")) {
+        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_segredo TEXT;");
+      }
+      if (!colsCred.includes("dois_fatores_backup_codigos")) {
+        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_backup_codigos TEXT;");
+      }
+      if (!colsCred.includes("dois_fatores_ativado_em")) {
+        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_ativado_em TEXT;");
+      }
+
+      const infoUsr = db.prepare("PRAGMA table_info(usuarios);").all() as any[];
+      const colsUsr = infoUsr.map((c) => c.name);
+      if (!colsUsr.includes("dois_fatores_ativo")) {
+        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_ativo INTEGER NOT NULL DEFAULT 0;");
+      }
+      if (!colsUsr.includes("dois_fatores_segredo")) {
+        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_segredo TEXT;");
+      }
+      if (!colsUsr.includes("dois_fatores_backup_codigos")) {
+        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_backup_codigos TEXT;");
+      }
+      if (!colsUsr.includes("dois_fatores_ativado_em")) {
+        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_ativado_em TEXT;");
+      }
+    } catch (e) {
+      // Ignorar se já existem
+    }
+
   return db;
 }

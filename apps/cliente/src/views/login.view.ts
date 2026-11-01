@@ -2,7 +2,8 @@ import { authState } from "../auth.state.js";
 import { icone } from "../components/icones.js";
 
 export function renderLoginView(container: HTMLElement, onSucesso: () => void): void {
-  let abaAtiva: "login" | "registo" = "login";
+  let abaAtiva: "login" | "registo" | "2fa" = "login";
+  let preAuthTokenAtual = "";
   let erroMsg = "";
   let carregando = false;
 
@@ -33,6 +34,162 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
   }
 
   function render() {
+    let tituloForm = "Iniciar Sessão";
+    let subtituloForm = "Introduza as suas credenciais para aceder ao seu portal seguro.";
+
+    if (abaAtiva === "registo") {
+      tituloForm = "Criar Conta Digital";
+      subtituloForm = "Preencha os seus dados de identificação para abrir a sua conta.";
+    } else if (abaAtiva === "2fa") {
+      tituloForm = "Segurança da Conta (2FA)";
+      subtituloForm = "Validação de identidade em duas etapas para acesso protegido.";
+    }
+
+    let conteudoFormulario = "";
+
+    if (abaAtiva === "2fa") {
+      conteudoFormulario = `
+        <form id="form-2fa" class="auth-form-spacious">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: #eaf2fc; color: #08264F; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: #08264F; margin-bottom: 6px;">Verificação em Duas Etapas</h3>
+            <p style="font-size: 0.85rem; color: #64748b; line-height: 1.4;">Introduza o código de 6 dígitos da sua aplicação de autenticação ou um código de recuperação.</p>
+          </div>
+
+          <div class="form-group-spacious">
+            <label class="form-label" for="codigo-2fa">Código de Segurança / Recuperação</label>
+            <div class="input-with-icon">
+              <span class="input-icon-box">${icone("seguranca", 18)}</span>
+              <input type="text" id="codigo-2fa" class="form-input-spacious" placeholder="Ex: 123456 ou A1B2C3D4" required autofocus autocomplete="one-time-code" style="font-size: 1.1rem; letter-spacing: 2px; text-align: center; font-weight: 700;" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-auth-submit" ${carregando ? "disabled" : ""}>
+            <span>${carregando ? "A validar código..." : "Validar e Entrar"}</span>
+          </button>
+
+          <div style="text-align: center; margin-top: 14px;">
+            <button type="button" id="btn-cancelar-2fa" style="background: transparent; border: 0; color: #64748b; font-size: 0.85rem; cursor: pointer; text-decoration: underline;">Voltar ao início de sessão</button>
+          </div>
+        </form>
+      `;
+    } else if (abaAtiva === "login") {
+      conteudoFormulario = `
+        <form id="form-login" class="auth-form-spacious">
+          <div class="form-group-spacious">
+            <label class="form-label" for="login-email">Endereço de E-mail</label>
+            <div class="input-with-icon">
+              <span class="input-icon-box">${icone("conta", 18)}</span>
+              <input type="email" id="login-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="form-group-spacious">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label class="form-label" for="login-senha" style="margin-bottom: 0;">Palavra-passe</label>
+            </div>
+            <div class="input-with-icon">
+              <span class="input-icon-box">${icone("seguranca", 18)}</span>
+              <input type="password" id="login-senha" class="form-input-spacious" placeholder="Introduza a sua palavra-passe" required autocomplete="current-password" />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-auth-submit" ${carregando ? "disabled" : ""}>
+            <span>${carregando ? "A validar credenciais..." : "Entrar na Minha Conta"}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" style="margin-left: 8px;">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </form>
+      `;
+    } else {
+      conteudoFormulario = `
+        <form id="form-registo" class="auth-form-spacious">
+          <div class="form-group-spacious">
+            <label class="form-label" for="reg-nome">Nome Completo / Razão Social</label>
+            <input type="text" id="reg-nome" class="form-input-spacious" placeholder="Conforme documento de identificação" required />
+          </div>
+
+          <div class="form-row-spacious">
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-tipo-pessoa">Tipo de Titular</label>
+              <select id="reg-tipo-pessoa" class="form-input-spacious">
+                <option value="singular">Pessoa Singular (Individual)</option>
+                <option value="colectivo">Pessoa Colectiva (Empresa)</option>
+              </select>
+            </div>
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-nif">NIF</label>
+              <input type="text" id="reg-nif" class="form-input-spacious" placeholder="Número de Identificação Fiscal" required />
+            </div>
+          </div>
+
+          <div class="form-row-spacious">
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-tipo-doc">Documento Oficial</label>
+              <select id="reg-tipo-doc" class="form-input-spacious">
+                <option value="bi">Bilhete de Identidade (BI)</option>
+                <option value="passaporte">Passaporte com Visto</option>
+                <option value="cartao_residente">Cartão de Residente</option>
+                <option value="nif_empresa">Certidão Comercial / NIF</option>
+              </select>
+            </div>
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-num-doc">Número do Documento</label>
+              <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Número do documento" required />
+            </div>
+          </div>
+
+          <div class="form-row-spacious">
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-telefone">Telefone</label>
+              <input type="tel" id="reg-telefone" class="form-input-spacious" placeholder="+244 923 000 000" required />
+            </div>
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-email">E-mail</label>
+              <input type="email" id="reg-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required />
+            </div>
+          </div>
+
+          <div class="form-row-spacious">
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-morada">Morada Habitual</label>
+              <input type="text" id="reg-morada" class="form-input-spacious" placeholder="Rua, Bairro, Município, Província" required />
+            </div>
+            <div class="form-group-spacious">
+              <label class="form-label" for="reg-senha">Palavra-passe</label>
+              <input type="password" id="reg-senha" class="form-input-spacious" placeholder="Mínimo de 8 caracteres" minlength="8" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-auth-submit" ${carregando ? "disabled" : ""}>
+            <span>${carregando ? "A registar a sua conta..." : "Criar Conta e Aceder"}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" style="margin-left: 8px;">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
+        </form>
+      `;
+    }
+
+    const abasHtml =
+      abaAtiva === "2fa"
+        ? ""
+        : `
+      <div class="auth-tabs-modern" role="tablist">
+        <button type="button" class="auth-tab-modern ${abaAtiva === "login" ? "ativo" : ""}" id="tab-login" role="tab" aria-selected="${abaAtiva === "login"}">
+          ${icone("conta", 16)} <span>Iniciar Sessão</span>
+        </button>
+        <button type="button" class="auth-tab-modern ${abaAtiva === "registo" ? "ativo" : ""}" id="tab-registo" role="tab" aria-selected="${abaAtiva === "registo"}">
+          ${icone("documentos", 16)} <span>Criar Conta Nova</span>
+        </button>
+      </div>
+    `;
+
     container.innerHTML = `
       <div class="auth-panoramic-wrapper">
         <div class="auth-bg-overlay" aria-hidden="true"></div>
@@ -99,129 +256,16 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
           <section class="auth-form-panel">
             <div class="auth-form-header">
               <div>
-                <h2 class="auth-form-title">${abaAtiva === "login" ? "Iniciar Sessão" : "Criar Conta Digital"}</h2>
-                <p class="auth-form-subtitle">
-                  ${
-                    abaAtiva === "login"
-                      ? "Introduza as suas credenciais para aceder ao seu portal seguro."
-                      : "Preencha os seus dados de identificação para abrir a sua conta."
-                  }
-                </p>
+                <h2 class="auth-form-title">${tituloForm}</h2>
+                <p class="auth-form-subtitle">${subtituloForm}</p>
               </div>
             </div>
 
-            <!-- Alternador de Abas Moderno -->
-            <div class="auth-tabs-modern" role="tablist">
-              <button type="button" class="auth-tab-modern ${abaAtiva === "login" ? "ativo" : ""}" id="tab-login" role="tab" aria-selected="${abaAtiva === "login"}">
-                ${icone("conta", 16)} <span>Iniciar Sessão</span>
-              </button>
-              <button type="button" class="auth-tab-modern ${abaAtiva === "registo" ? "ativo" : ""}" id="tab-registo" role="tab" aria-selected="${abaAtiva === "registo"}">
-                ${icone("documentos", 16)} <span>Criar Conta Nova</span>
-              </button>
-            </div>
+            ${abasHtml}
 
             ${renderizarAlertaErro(erroMsg)}
 
-            ${
-              abaAtiva === "login"
-                ? `
-              <form id="form-login" class="auth-form-spacious">
-                <div class="form-group-spacious">
-                  <label class="form-label" for="login-email">Endereço de E-mail</label>
-                  <div class="input-with-icon">
-                    <span class="input-icon-box">${icone("conta", 18)}</span>
-                    <input type="email" id="login-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required autocomplete="email" />
-                  </div>
-                </div>
-
-                <div class="form-group-spacious">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <label class="form-label" for="login-senha" style="margin-bottom: 0;">Palavra-passe</label>
-                  </div>
-                  <div class="input-with-icon">
-                    <span class="input-icon-box">${icone("seguranca", 18)}</span>
-                    <input type="password" id="login-senha" class="form-input-spacious" placeholder="Introduza a sua palavra-passe" required autocomplete="current-password" />
-                  </div>
-                </div>
-
-                <button type="submit" class="btn-auth-submit" ${carregando ? "disabled" : ""}>
-                  <span>${carregando ? "A validar credenciais..." : "Entrar na Minha Conta"}</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" style="margin-left: 8px;">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </button>
-              </form>
-            `
-                : `
-              <form id="form-registo" class="auth-form-spacious">
-                <div class="form-group-spacious">
-                  <label class="form-label" for="reg-nome">Nome Completo / Razão Social</label>
-                  <input type="text" id="reg-nome" class="form-input-spacious" placeholder="Conforme documento de identificação" required />
-                </div>
-
-                <div class="form-row-spacious">
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-tipo-pessoa">Tipo de Titular</label>
-                    <select id="reg-tipo-pessoa" class="form-input-spacious">
-                      <option value="singular">Pessoa Singular (Individual)</option>
-                      <option value="colectivo">Pessoa Colectiva (Empresa)</option>
-                    </select>
-                  </div>
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-nif">NIF</label>
-                    <input type="text" id="reg-nif" class="form-input-spacious" placeholder="Número de Identificação Fiscal" required />
-                  </div>
-                </div>
-
-                <div class="form-row-spacious">
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-tipo-doc">Documento Oficial</label>
-                    <select id="reg-tipo-doc" class="form-input-spacious">
-                      <option value="bi">Bilhete de Identidade (BI)</option>
-                      <option value="passaporte">Passaporte com Visto</option>
-                      <option value="cartao_residente">Cartão de Residente</option>
-                      <option value="nif_empresa">Certidão Comercial / NIF</option>
-                    </select>
-                  </div>
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-num-doc">Número do Documento</label>
-                    <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Número do documento" required />
-                  </div>
-                </div>
-
-                <div class="form-row-spacious">
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-telefone">Telefone</label>
-                    <input type="tel" id="reg-telefone" class="form-input-spacious" placeholder="+244 923 000 000" required />
-                  </div>
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-email">E-mail</label>
-                    <input type="email" id="reg-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required />
-                  </div>
-                </div>
-
-                <div class="form-row-spacious">
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-morada">Morada Habitual</label>
-                    <input type="text" id="reg-morada" class="form-input-spacious" placeholder="Rua, Bairro, Município, Província" required />
-                  </div>
-                  <div class="form-group-spacious">
-                    <label class="form-label" for="reg-senha">Palavra-passe</label>
-                    <input type="password" id="reg-senha" class="form-input-spacious" placeholder="Mínimo de 8 caracteres" minlength="8" required />
-                  </div>
-                </div>
-
-                <button type="submit" class="btn-auth-submit" ${carregando ? "disabled" : ""}>
-                  <span>${carregando ? "A registar a sua conta..." : "Criar Conta e Aceder"}</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" style="margin-left: 8px;">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </button>
-              </form>
-            `
-            }
+            ${conteudoFormulario}
 
             <div class="auth-form-footer">
               <span>Ao continuar, declara aceitar as políticas de privacidade e termos regulamentares da NZAIDI.</span>
@@ -256,13 +300,47 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
       const senha = (container.querySelector("#login-senha") as HTMLInputElement).value;
 
       try {
-        await authState.login(email, senha);
+        const res = await authState.login(email, senha);
+        if (res.requer2fa && res.preAuthToken) {
+          abaAtiva = "2fa";
+          preAuthTokenAtual = res.preAuthToken;
+          carregando = false;
+          render();
+          return;
+        }
         onSucesso();
       } catch (err: any) {
         erroMsg = err.message || "Credenciais inválidas. Verifique o seu email e palavra-passe.";
         carregando = false;
         render();
       }
+    });
+
+    // Form 2FA
+    const form2fa = container.querySelector("#form-2fa") as HTMLFormElement | null;
+    form2fa?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      erroMsg = "";
+      carregando = true;
+      render();
+
+      const codigo = (container.querySelector("#codigo-2fa") as HTMLInputElement).value.trim();
+
+      try {
+        await authState.validar2faLogin(preAuthTokenAtual, codigo);
+        onSucesso();
+      } catch (err: any) {
+        erroMsg = err.message || "Código inválido ou expirado. Tente novamente.";
+        carregando = false;
+        render();
+      }
+    });
+
+    container.querySelector("#btn-cancelar-2fa")?.addEventListener("click", () => {
+      abaAtiva = "login";
+      preAuthTokenAtual = "";
+      erroMsg = "";
+      render();
     });
 
     // Form Registo

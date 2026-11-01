@@ -1467,6 +1467,109 @@ export class AdminApiClient {
     return res.dados || [];
   }
 
+
+  // --- Módulo de Gestão de Suporte ao Cliente ---
+  public async listarAtendimentosSuporte(filtros?: { estado?: string; categoria?: string }): Promise<any[]> {
+    const q = new URLSearchParams();
+    if (filtros?.estado) q.set("estado", filtros.estado);
+    if (filtros?.categoria) q.set("categoria", filtros.categoria);
+    const qs = q.toString() ? `?${q.toString()}` : "";
+    const res = await this.requisitar<{ sucesso: boolean; total: number; dados: any[] }>(
+      `/api/v1/admin/suporte/atendimentos${qs}`
+    );
+    return res.dados || [];
+  }
+
+  public async obterAtendimentoSuporte(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/admin/suporte/atendimentos/${id}`
+    );
+    return res.dados;
+  }
+
+  public async assumirAtendimentoSuporte(id: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/admin/suporte/atendimentos/${id}/assumir`,
+      { method: "POST" }
+    );
+    return res.dados;
+  }
+
+  public async transferirAtendimentoSuporte(id: string, novoOperadorId: string, motivo?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/admin/suporte/atendimentos/${id}/transferir`,
+      {
+        method: "POST",
+        body: JSON.stringify({ novoOperadorId, motivo }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async atualizarEstadoSuporte(id: string, estado: string, solucao?: string): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/admin/suporte/atendimentos/${id}/estado`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ estado, solucao }),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarMensagensSuporteAdmin(atendimentoId: string): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; total: number; dados: any[] }>(
+      `/api/v1/admin/suporte/atendimentos/${atendimentoId}/mensagens`
+    );
+    return res.dados || [];
+  }
+
+  public async enviarMensagemSuporteAdmin(atendimentoId: string, dados: {
+    mensagem: string;
+    anexoNome?: string;
+    anexoTipo?: string;
+    anexoBase64?: string;
+  }): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>(
+      `/api/v1/admin/suporte/atendimentos/${atendimentoId}/mensagens`,
+      {
+        method: "POST",
+        body: JSON.stringify(dados),
+      }
+    );
+    return res.dados;
+  }
+
+  public async listarOperadoresSuporte(): Promise<any[]> {
+    try {
+      const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/suporte/operadores");
+      return res.dados || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async obterNotificacoesAdmin(): Promise<{ naoLidas: number; dados: any[] }> {
+    try {
+      const res = await this.requisitar<{ sucesso: boolean; naoLidas: number; dados: any[] }>("/api/v1/admin/notificacoes");
+      return { naoLidas: res.naoLidas || 0, dados: res.dados || [] };
+    } catch {
+      return { naoLidas: 0, dados: [] };
+    }
+  }
+
+  public async marcarNotificacaoAdminLida(id: string): Promise<void> {
+    try {
+      await this.requisitar(`/api/v1/admin/notificacoes/${id}/lida`, { method: "PATCH" });
+    } catch {}
+  }
+
+  public async marcarTodasNotificacoesAdminLidas(): Promise<void> {
+    try {
+      await this.requisitar("/api/v1/admin/notificacoes/ler-todas", { method: "POST" });
+    } catch {}
+  }
+
 }
 
 export const api = new AdminApiClient();

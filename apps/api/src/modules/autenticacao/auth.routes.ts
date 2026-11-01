@@ -1,3 +1,11 @@
+import {
+  gerarSegredoBase32,
+  gerarUriTotp,
+  gerarSvgQrCode,
+  verificarCodigoTotp,
+  gerarCodigosRecuperacao,
+  verificarCodigoRecuperacao,
+} from "./totp.js";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { UsersRepository } from "./users.repository.js";
@@ -83,7 +91,7 @@ export function registrarRotasAuth(
         });
       }
 
-      const senhaCorreta = await verificarSenha(dados.senha, usuario.senhaHash);
+            const senhaCorreta = await verificarSenha(dados.senha, usuario.senhaHash);
       if (!senhaCorreta) {
         auditoriaRepo.registar({
           autorId: usuario.id,
@@ -99,6 +107,22 @@ export function registrarRotasAuth(
           sucesso: false,
           codigo: "CREDENCIAS_INVALIDAS",
           erro: "Email ou palavra-passe incorretos.",
+        });
+      }
+
+      // Se o utilizador tem 2FA ativado, emitir preAuthToken e exigir confirmação
+      if (usuario.doisFatoresAtivo) {
+        const preAuthToken = Buffer.from(JSON.stringify({
+          usuarioId: usuario.id,
+          email: usuario.email,
+          exp: Date.now() + 5 * 60 * 1000
+        })).toString("base64url");
+
+        return reply.status(200).send({
+          sucesso: true,
+          requer2fa: true,
+          mensagem: "Autenticação de dois factores necessária.",
+          dados: { preAuthToken },
         });
       }
 
@@ -355,4 +379,193 @@ export function registrarRotasAuth(
       mensagem: "Palavra-passe alterada com sucesso.",
     });
   });
+  // ========================================================================
+  // AUTENTICAÇÃO DE DOIS FACTORES (2FA TOTP) - ADMIN & EQUIPA
+  // ========================================================================
+
+  app.post(
+    "/api/v1/auth/2fa/configurar",
+    { preHandler: [exigirAutenticacao] },
+    async (request, reply) => {
+      const usuario = request.usuario!;
+      const segredoBase32 = gerarSegredoBase32(20);
+      const uri = gerarUriTotp(usuario.email, segredoBase32, "NZAIDI Admin");
+      const qrCodeSvg = gerarSvgQrCode(uri);
+      const { codigosTexto, hashes } = gerarCodigosRecuperacao(8);
+
+      usersRepo.salvarConfiguracao2fa(usuario.id, segredoBase32, hashes);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Configuração de 2FA para administrador gerada.",
+        dados: {
+          segredoBase32,
+          uri,
+          qrCodeSvg,
+          codigosRecuperacao: codigosTexto,
+        },
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/auth/2fa/ativar",
+    { preHandler: [exigirAutenticacao] },
+    async (request, reply) => {
+      const usuario = request.usuario!;
+      const { codigoTotp } = z.object({ codigoTotp: z.string().length(6) }).parse(request.body);
+
+      const userDb = usersRepo.buscarPorId(usuario.id);
+      if (!userDb || !userDb.doisFatoresSegredo) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "Configure primeiro a autenticação de dois factores.",
+        });
+      }
+
+      const valido = verificarCodigoTotp(userDb.doisFatoresSegredo, codigoTotp);
+      if (!valido) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "Código incorreto. Tente novamente com o código gerado no seu telemóvel.",
+        });
+      }
+
+      usersRepo.ativar2fa(usuario.id);
+
+      auditoriaRepo.registar({
+        autorId: usuario.id,
+        autorNome: usuario.nome,
+        acao: "ATIVAR_2FA_ADMIN",
+        recurso: "usuarios",
+        recursoId: usuario.id,
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação de dois factores ativada com sucesso para a sua conta.",
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/auth/2fa/desativar",
+    { preHandler: [exigirAutenticacao] },
+    async (request, reply) => {
+      const usuario = request.usuario!;
+      const { senha } = z.object({ senha: z.string().min(1) }).parse(request.body);
+
+      const userDb = usersRepo.buscarPorId(usuario.id);
+      if (!userDb) throw new Error("Utilizador não encontrado.");
+
+      const senhaCorreta = await verificarSenha(senha, userDb.senhaHash);
+      if (!senhaCorreta) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "Palavra-passe incorreta. Não foi possível desativar o 2FA.",
+        });
+      }
+
+      usersRepo.desativar2fa(usuario.id);
+
+      auditoriaRepo.registar({
+        autorId: usuario.id,
+        autorNome: usuario.nome,
+        acao: "DESATIVAR_2FA_ADMIN",
+        recurso: "usuarios",
+        recursoId: usuario.id,
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação de dois factores desativada.",
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/auth/2fa/validar",
+    async (request, reply) => {
+      const Schema = z.object({
+        preAuthToken: z.string().min(10),
+        codigo: z.string().min(6),
+      });
+      const { preAuthToken, codigo } = Schema.parse(request.body);
+
+      let payload: { usuarioId: string; email: string; exp: number };
+      try {
+        payload = JSON.parse(Buffer.from(preAuthToken, "base64url").toString("utf-8"));
+      } catch {
+        return reply.status(401).send({
+          sucesso: false,
+          erro: "Token de pré-autenticação inválido.",
+        });
+      }
+
+      if (Date.now() > payload.exp) {
+        return reply.status(401).send({
+          sucesso: false,
+          erro: "Sessão de validação 2FA expirada.",
+        });
+      }
+
+      const userDb = usersRepo.buscarPorId(payload.usuarioId);
+      if (!userDb || !userDb.doisFatoresAtivo || !userDb.doisFatoresSegredo) {
+        return reply.status(401).send({
+          sucesso: false,
+          erro: "2FA não configurado nesta conta.",
+        });
+      }
+
+      let valido = false;
+      if (codigo.length === 6) {
+        valido = verificarCodigoTotp(userDb.doisFatoresSegredo, codigo);
+      }
+
+      if (!valido && userDb.doisFatoresBackupCodigos) {
+        try {
+          const hashes: string[] = JSON.parse(userDb.doisFatoresBackupCodigos);
+          const verifBackup = verificarCodigoRecuperacao(codigo, hashes);
+          if (verifBackup.valido && verifBackup.hashUsado) {
+            valido = true;
+            usersRepo.consumirCodigoBackup(payload.usuarioId, verifBackup.hashUsado);
+          }
+        } catch {}
+      }
+
+      if (!valido) {
+        return reply.status(400).send({
+          sucesso: false,
+          erro: "Código de autenticação 2FA incorreto.",
+        });
+      }
+
+      // Login aprovado com 2FA: emitir sessão
+      const sessao = sessionsRepo.criarSessao(userDb.id, sessionTtlHoras, request.ip, request.headers["user-agent"] ?? null);
+      usersRepo.atualizarUltimoLogin(userDb.id);
+
+      const ehProducao = process.env["NODE_ENV"] === "production";
+      reply.setCookie("nzaidi_sessao", sessao.id, {
+        path: "/",
+        httpOnly: true,
+        secure: ehProducao,
+        sameSite: "lax",
+        maxAge: sessionTtlHoras * 3600,
+        signed: false,
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação 2FA bem-sucedida.",
+        usuario: {
+          id: userDb.id,
+          nome: userDb.nome,
+          email: userDb.email,
+          funcao: userDb.funcao,
+          permissoes: MATRIZ_PERMISSOES[userDb.funcao] || [],
+        },
+      });
+    }
+  );
+
 }

@@ -1,3 +1,4 @@
+import { renderizarSuporteAdmin } from "./views/suporte.view.js";
 import "./estilo.css";
 import { authState } from "./state/auth.state.js";
 import { renderizarCabecalho } from "./components/cabecalho.js";
@@ -126,6 +127,10 @@ async function renderizarAplicacao(): Promise<void> {
             <div class="alert-box alert-error">Acesso não autorizado aos Reportes Regulamentares do BNA.</div>
           `;
         }
+        break;
+
+      case "#suporte":
+        await renderizarSuporteAdmin(viewContainer);
         break;
 
       case "#clientes":

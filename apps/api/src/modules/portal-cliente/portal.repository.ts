@@ -371,5 +371,180 @@ export class PortalClienteRepository {
       atualizadoEm: r.atualizado_em,
     };
   }
-}
+  // --- Permissões de Sessão ---
 
+  public obterPermissoesSessao(clienteId: string): {
+    permitirCambioOnline: boolean;
+    permitirRemessasOnline: boolean;
+    exigir2faOperacoes: boolean;
+    notificarLoginNovoDispositivo: boolean;
+    manterSessaoAtiva: boolean;
+  } {
+    const stmt = this.db.prepare("SELECT * FROM clientes_permissoes_sessao WHERE cliente_id = ?;");
+    const row = stmt.get(clienteId) as any;
+    if (!row) {
+      return {
+        permitirCambioOnline: true,
+        permitirRemessasOnline: true,
+        exigir2faOperacoes: false,
+        notificarLoginNovoDispositivo: true,
+        manterSessaoAtiva: true,
+      };
+    }
+
+    return {
+      permitirCambioOnline: Boolean(row.permitir_cambio_online),
+      permitirRemessasOnline: Boolean(row.permitir_remessas_online),
+      exigir2faOperacoes: Boolean(row.exigir_2fa_operacoes),
+      notificarLoginNovoDispositivo: Boolean(row.notificar_login_novo_dispositivo),
+      manterSessaoAtiva: Boolean(row.manter_sessao_ativa),
+    };
+  }
+
+  public salvarPermissoesSessao(
+    clienteId: string,
+    permissoes: {
+      permitirCambioOnline?: boolean | undefined;
+      permitirRemessasOnline?: boolean | undefined;
+      exigir2faOperacoes?: boolean | undefined;
+      notificarLoginNovoDispositivo?: boolean | undefined;
+      manterSessaoAtiva?: boolean | undefined;
+    }
+  ): void {
+    const atual = this.obterPermissoesSessao(clienteId);
+    const novo = { ...atual, ...permissoes };
+    const agora = new Date().toISOString();
+
+    const stmt = this.db.prepare(`
+      INSERT INTO clientes_permissoes_sessao (
+        cliente_id, permitir_cambio_online, permitir_remessas_online,
+        exigir_2fa_operacoes, notificar_login_novo_dispositivo, manter_sessao_ativa, atualizado_em
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(cliente_id) DO UPDATE SET
+        permitir_cambio_online = excluded.permitir_cambio_online,
+        permitir_remessas_online = excluded.permitir_remessas_online,
+        exigir_2fa_operacoes = excluded.exigir_2fa_operacoes,
+        notificar_login_novo_dispositivo = excluded.notificar_login_novo_dispositivo,
+        manter_sessao_ativa = excluded.manter_sessao_ativa,
+        atualizado_em = excluded.atualizado_em;
+    `);
+
+    stmt.run(
+      clienteId,
+      novo.permitirCambioOnline ? 1 : 0,
+      novo.permitirRemessasOnline ? 1 : 0,
+      novo.exigir2faOperacoes ? 1 : 0,
+      novo.notificarLoginNovoDispositivo ? 1 : 0,
+      novo.manterSessaoAtiva ? 1 : 0,
+      agora
+    );
+  }
+
+  public terminarOutrasSessoes(clienteId: string, tokenAtualRaw: string): number {
+    const tokenHashAtual = this.hashToken(tokenAtualRaw);
+    const stmt = this.db.prepare(`
+      DELETE FROM sessoes_clientes
+      WHERE cliente_id = ? AND token_hash != ?;
+    `);
+    const info = stmt.run(clienteId, tokenHashAtual);
+
+    // Também revogar sessões móveis
+    try {
+      this.db.prepare("UPDATE sessoes_mobile SET revogado_em = ? WHERE cliente_id = ? AND revogado_em IS NULL;")
+        .run(new Date().toISOString(), clienteId);
+    } catch (e) {
+      // Ignorar se tabela móvel não estiver presente
+    }
+
+    return Number(info.changes);
+  }
+
+  public atualizarAvatarCliente(clienteId: string, avatarUrl: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare("UPDATE clientes SET avatar_url = ?, atualizado_em = ? WHERE id = ?;").run(avatarUrl, agora, clienteId);
+  }
+
+  // --- 2FA do Cliente ---
+
+  public buscarCredencialCompletaPorEmail(email: string): any {
+    const stmt = this.db.prepare("SELECT * FROM clientes_credenciais WHERE email = ? COLLATE NOCASE;");
+    return stmt.get(email.trim().toLowerCase()) as any;
+  }
+
+  public buscarCredencialCompletaPorId(clienteId: string): any {
+    const stmt = this.db.prepare("SELECT * FROM clientes_credenciais WHERE cliente_id = ?;");
+    return stmt.get(clienteId) as any;
+  }
+
+  public salvarConfiguracao2fa(clienteId: string, segredoBase32: string, backupHashes: string[]): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE clientes_credenciais
+      SET dois_fatores_segredo = ?, dois_fatores_backup_codigos = ?, atualizado_em = ?
+      WHERE cliente_id = ?;
+    `).run(segredoBase32, JSON.stringify(backupHashes), agora, clienteId);
+  }
+
+  public ativar2fa(clienteId: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE clientes_credenciais
+      SET dois_fatores_ativo = 1, dois_fatores_ativado_em = ?, atualizado_em = ?
+      WHERE cliente_id = ?;
+    `).run(agora, agora, clienteId);
+  }
+
+  public desativar2fa(clienteId: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE clientes_credenciais
+      SET dois_fatores_ativo = 0, dois_fatores_segredo = NULL, dois_fatores_backup_codigos = NULL, atualizado_em = ?
+      WHERE cliente_id = ?;
+    `).run(agora, clienteId);
+  }
+
+  public consumirCodigoBackup(clienteId: string, hashConsumido: string): void {
+    const cred = this.buscarCredencialCompletaPorId(clienteId);
+    if (!cred || !cred.dois_fatores_backup_codigos) return;
+
+    try {
+      const hashes: string[] = JSON.parse(cred.dois_fatores_backup_codigos);
+      const restantes = hashes.filter((h) => h !== hashConsumido);
+      this.db.prepare("UPDATE clientes_credenciais SET dois_fatores_backup_codigos = ? WHERE cliente_id = ?;")
+        .run(JSON.stringify(restantes), clienteId);
+    } catch {
+      // Ignorar erro de parse
+    }
+  }
+
+  // --- Notificações do Cliente ---
+
+  public listarNotificacoesCliente(clienteId: string, limite: number = 20): any[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM notificacoes_sistema
+      WHERE destinatario_tipo = 'cliente' AND (destinatario_id = ? OR destinatario_id IS NULL)
+      ORDER BY criado_em DESC
+      LIMIT ?;
+    `);
+    return stmt.all(clienteId, limite) as any[];
+  }
+
+  public marcarNotificacaoLida(notificacaoId: string, clienteId: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE notificacoes_sistema
+      SET lida = 1, lida_em = ?
+      WHERE id = ? AND destinatario_tipo = 'cliente' AND (destinatario_id = ? OR destinatario_id IS NULL);
+    `).run(agora, notificacaoId, clienteId);
+  }
+
+  public marcarTodasNotificacoesLidas(clienteId: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE notificacoes_sistema
+      SET lida = 1, lida_em = ?
+      WHERE destinatario_tipo = 'cliente' AND (destinatario_id = ? OR destinatario_id IS NULL) AND lida = 0;
+    `).run(agora, clienteId);
+  }
+
+}

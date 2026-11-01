@@ -1,3 +1,4 @@
+import { renderizarCentroSuporte } from "./views/suporte.view.js";
 import "./styles.css";
 import { authState } from "./auth.state.js";
 import { api } from "./api.js";
@@ -504,7 +505,7 @@ function inicializarUploadDocumentos() {
    ROTEAMENTO POR HASH E MONTAGEM DO PORTAL
    ========================================================================== */
 
-const rotasValidas = ["dashboard", "cambio", "remessas", "cartoes", "documentos", "perfil"];
+const rotasValidas = ["dashboard", "cambio", "remessas", "cartoes", "documentos", "perfil", "suporte"];
 
 const fazerLogout = async () => {
   await authState.logout();
@@ -525,6 +526,13 @@ function alternarVista(rotaNome: string) {
     void vistaAlvo.offsetWidth;
     vistaAlvo.classList.add("entra");
     animarContadores(vistaAlvo);
+
+        if (r === "suporte") {
+      const containerSuporte = document.getElementById("suporte-view-container");
+      if (containerSuporte) {
+        renderizarCentroSuporte(containerSuporte);
+      }
+    }
 
     if (r === "perfil") {
       const containerPerfil = document.getElementById("perfil-view-container");
@@ -616,7 +624,7 @@ function renderizarAppShell() {
           <a href="#cartoes" class="sidebar-nav-link"><svg><use href="#i-cartao"/></svg><span>Cartões Visa</span></a>
           <a href="#documentos" class="sidebar-nav-link"><svg><use href="#i-doc"/></svg><span>Documentos KYC</span></a>
           <a href="#perfil" class="sidebar-nav-link"><svg><use href="#i-pessoa"/></svg><span>Minha conta</span></a>
-          <button type="button" id="sidebar-link-suporte" class="sidebar-nav-link" style="background:transparent;border:0;width:100%;text-align:left;cursor:pointer;"><svg><use href="#i-ajuda"/></svg><span>Apoio e Suporte</span></button>
+          <a href="#suporte" id="sidebar-link-suporte" class="sidebar-nav-link"><svg><use href="#i-ajuda"/></svg><span>Apoio e Suporte</span></a>
         </nav>
 
         <div class="sidebar-footer">
@@ -671,6 +679,25 @@ function renderizarAppShell() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               <span>Apoio ao Cliente</span>
             </button>
+            
+            <!-- Botão e Dropdown de Notificações -->
+            <div class="notificacoes-topo-wrapper" style="position: relative;">
+              <button id="btn-notificacoes-topo" class="btn-notificacao-sino" type="button" aria-label="Notificações" style="position: relative; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #08264F;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span id="badge-notificacoes" style="display: none; position: absolute; top: -4px; right: -4px; background: #b42318; color: #ffffff; font-size: 0.65rem; font-weight: 800; border-radius: 99px; min-width: 18px; height: 18px; padding: 0 4px; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff;">0</span>
+              </button>
+
+              <div id="dropdown-notificacoes" style="display: none; position: absolute; right: 0; top: 48px; width: 340px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 12px 30px rgba(8,38,79,0.12); z-index: 1000; overflow: hidden;">
+                <div style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+                  <strong style="color: #08264F; font-size: 0.85rem;">Notificações</strong>
+                  <button id="btn-marcar-todas-lidas" type="button" style="border: 0; background: transparent; color: #0e8f6e; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Marcar todas como lidas</button>
+                </div>
+                <div id="lista-notificacoes-topo" style="max-height: 320px; overflow-y: auto; padding: 6px 0;">
+                  <div style="padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.8rem;">A carregar notificações...</div>
+                </div>
+              </div>
+            </div>
+
             <button id="btn-toggle-theme" class="btn-tema-toggle" type="button"></button>
           </div>
         </header>
@@ -681,7 +708,7 @@ function renderizarAppShell() {
   <div class="heroi">
     <div>
       <span class="selo" style="--i:0"><svg width="16" height="16"><use href="#i-escudo"/></svg>Conta verificada</span>
-      <h1 id="t-dash" style="--i:1"><span id="saudacao">Olá</span>, ${clienteNome}</h1>
+      <h1 id="t-dash" style="--i:1"><span id="saudacao">Olá</span>, <span id="dash-cliente-nome">${clienteNome}</span></h1>
       <p style="--i:2">O que quer fazer hoje? Troque moeda ou envie dinheiro para quem gosta, com a taxa à vista antes de confirmar.</p>
       <div class="acoes" style="--i:3">
         <a class="btn btn-ouro" href="#cambio"><svg><use href="#i-troca"/></svg>Trocar moeda</a>
@@ -903,6 +930,11 @@ function renderizarAppShell() {
           <section class="vista" id="v-perfil" aria-labelledby="t-perf">
             <div id="perfil-view-container"></div>
           </section>
+        
+          <!-- VIEW 6: CENTRO DE SUPORTE -->
+          <section class="vista" id="v-suporte" aria-label="Centro de Suporte" style="padding: 1.5rem 0;">
+            <div id="suporte-view-container"></div>
+          </section>
         </main>
       </div>
 
@@ -940,6 +972,89 @@ function renderizarAppShell() {
   if (elSaudacao) elSaudacao.textContent = saudacao;
 
   // Alternador de Tema
+  
+  // Atualizar nome no banner caso necessário
+  const elNome = document.getElementById("dash-cliente-nome");
+  if (elNome && authState.cliente?.nome) {
+    elNome.textContent = authState.cliente.nome;
+  }
+
+  // --- Centro de Notificações e Sincronização em Tempo Real ---
+  async function atualizarNotificacoesTopo() {
+    try {
+      const res = await api.obterNotificacoesApi();
+      const badge = document.getElementById("badge-notificacoes");
+      const lista = document.getElementById("lista-notificacoes-topo");
+
+      if (badge) {
+        if (res.naoLidas > 0) {
+          badge.textContent = String(res.naoLidas);
+          badge.style.display = "flex";
+        } else {
+          badge.style.display = "none";
+        }
+      }
+
+      if (lista) {
+        if (res.dados.length === 0) {
+          lista.innerHTML = '<div style="padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.8rem;">Não tem notificações de momento.</div>';
+        } else {
+          lista.innerHTML = res.dados.map((n: any) => `
+            <div class="item-notif ${n.lida ? '' : 'nao-lida'}" data-id="${n.id}" style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; cursor: pointer; background: ${n.lida ? '#ffffff' : '#f0fdf4'};">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">
+                <strong style="font-size: 0.8rem; color: #08264F;">${n.titulo}</strong>
+                <span style="font-size: 0.65rem; color: #94a3b8;">${new Date(n.criado_em).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
+              <div style="font-size: 0.75rem; color: #64748b; line-height: 1.3;">${n.mensagem}</div>
+            </div>
+          `).join("");
+
+          lista.querySelectorAll(".item-notif").forEach((item) => {
+            item.addEventListener("click", async () => {
+              const id = item.getAttribute("data-id");
+              if (id) {
+                await api.marcarNotificacaoApiLida(id);
+                atualizarNotificacoesTopo();
+              }
+            });
+          });
+        }
+      }
+    } catch {}
+  }
+
+  // Toggle dropdown de notificações
+  const btnNotif = document.getElementById("btn-notificacoes-topo");
+  const dropdownNotif = document.getElementById("dropdown-notificacoes");
+  btnNotif?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (dropdownNotif) {
+      dropdownNotif.style.display = dropdownNotif.style.display === "block" ? "none" : "block";
+    }
+  });
+
+  document.addEventListener("click", () => {
+    if (dropdownNotif) dropdownNotif.style.display = "none";
+  });
+
+  document.getElementById("btn-marcar-todas-lidas")?.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    await api.marcarTodasNotificacoesApiLidas();
+    atualizarNotificacoesTopo();
+  });
+
+  atualizarNotificacoesTopo();
+
+  // Escutar evento de atualização de avatar em tempo real
+  window.addEventListener("nzaidi-avatar-atualizado", (e: any) => {
+    const novaUrl = e.detail?.avatarUrl;
+    if (novaUrl) {
+      document.querySelectorAll(".sidebar-user-card .avatar, .topo-mobile-avatar, .header-user-avatar").forEach((el) => {
+        el.innerHTML = `<img src="${novaUrl}" alt="Avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
+      });
+    }
+  });
+
   document.getElementById("btn-toggle-theme")?.addEventListener("click", alternarTema);
   atualizarBotaoTema();
 

@@ -173,15 +173,17 @@ class ApiService {
 
   // --- Auth ---
 
-  public async login(email: string, senha: string): Promise<{ cliente: Cliente; token: string }> {
-    const res = await this.request<{ sucesso: boolean; dados: { cliente: Cliente; token: string } }>(
+  public async login(email: string, senha: string): Promise<{ cliente?: Cliente; token?: string; requer2fa?: boolean; preAuthToken?: string }> {
+    const res = await this.request<{ sucesso: boolean; dados: { cliente?: Cliente; token?: string; requer2fa?: boolean; preAuthToken?: string } }>(
       "/api/v1/portal/auth/login",
       {
         method: "POST",
         body: JSON.stringify({ email, senha }),
       }
     );
-    this.setToken(res.dados.token);
+    if (res.dados?.token) {
+      this.setToken(res.dados.token);
+    }
     return res.dados;
   }
 
@@ -545,8 +547,174 @@ class ApiService {
       body: JSON.stringify(dados),
     });
   }
-}
+  // --- Permissões de Sessão e Dispositivos ---
 
+  public async obterPermissoesSessao(): Promise<{
+    permitirCambioOnline: boolean;
+    permitirRemessasOnline: boolean;
+    exigir2faOperacoes: boolean;
+    notificarLoginNovoDispositivo: boolean;
+    manterSessaoAtiva: boolean;
+  }> {
+    try {
+      const res = await this.request<{ sucesso: boolean; dados: any }>("/api/v1/portal/perfil/permissoes");
+      return res.dados;
+    } catch {
+      return {
+        permitirCambioOnline: true,
+        permitirRemessasOnline: true,
+        exigir2faOperacoes: false,
+        notificarLoginNovoDispositivo: true,
+        manterSessaoAtiva: true,
+      };
+    }
+  }
+
+  public async salvarPermissoesSessao(dados: {
+    permitirCambioOnline?: boolean;
+    permitirRemessasOnline?: boolean;
+    exigir2faOperacoes?: boolean;
+    notificarLoginNovoDispositivo?: boolean;
+    manterSessaoAtiva?: boolean;
+  }): Promise<{ sucesso: boolean; mensagem: string }> {
+    return this.request("/api/v1/portal/perfil/permissoes", {
+      method: "PUT",
+      body: JSON.stringify(dados),
+    });
+  }
+
+  public async terminarOutrasSessoes(): Promise<{ sucesso: boolean; mensagem: string; dados: { totalEncerradas: number } }> {
+    return this.request("/api/v1/portal/auth/terminar-outras-sessoes", {
+      method: "POST",
+    });
+  }
+
+  // --- Fotografia de Perfil (Avatar) ---
+
+  public async atualizarAvatar(imagemBase64: string, tipoMime: string = "image/png"): Promise<{ sucesso: boolean; dados: { avatarUrl: string } }> {
+    const res = await this.request<{ sucesso: boolean; dados: { avatarUrl: string } }>("/api/v1/portal/perfil/avatar", {
+      method: "POST",
+      body: JSON.stringify({ imagemBase64, tipoMime }),
+    });
+    localStorage.setItem("nzaidi_avatar_url", res.dados.avatarUrl);
+    window.dispatchEvent(new CustomEvent("nzaidi-avatar-atualizado", { detail: { avatarUrl: res.dados.avatarUrl } }));
+    return res;
+  }
+
+  // --- Autenticação de Dois Factores (2FA) ---
+
+  public async configurar2fa(): Promise<{
+    sucesso: boolean;
+    dados: {
+      segredoBase32: string;
+      uri: string;
+      qrCodeSvg: string;
+      codigosRecuperacao: string[];
+    };
+  }> {
+    return this.request("/api/v1/portal/auth/2fa/configurar", {
+      method: "POST",
+    });
+  }
+
+  public async ativar2fa(codigoTotp: string): Promise<{ sucesso: boolean; mensagem: string }> {
+    return this.request("/api/v1/portal/auth/2fa/ativar", {
+      method: "POST",
+      body: JSON.stringify({ codigoTotp }),
+    });
+  }
+
+  public async desativar2fa(senha: string): Promise<{ sucesso: boolean; mensagem: string }> {
+    return this.request("/api/v1/portal/auth/2fa/desativar", {
+      method: "POST",
+      body: JSON.stringify({ senha }),
+    });
+  }
+
+  public async validar2fa(preAuthToken: string, codigo: string): Promise<{ sucesso: boolean; dados: { token: string } }> {
+    const res = await this.request<{ sucesso: boolean; dados: { token: string } }>("/api/v1/portal/auth/2fa/validar", {
+      method: "POST",
+      body: JSON.stringify({ preAuthToken, codigo }),
+    });
+    if (res.dados?.token) {
+      this.setToken(res.dados.token);
+    }
+    return res;
+  }
+
+  // --- Notificações Reais da API ---
+
+  public async obterNotificacoesApi(): Promise<{ total: number; naoLidas: number; dados: any[] }> {
+    try {
+      const res = await this.request<{ sucesso: boolean; total: number; naoLidas: number; dados: any[] }>("/api/v1/portal/notificacoes");
+      return { total: res.total, naoLidas: res.naoLidas, dados: res.dados };
+    } catch {
+      return { total: 0, naoLidas: 0, dados: [] };
+    }
+  }
+
+  public async marcarNotificacaoApiLida(id: string): Promise<void> {
+    await this.request(`/api/v1/portal/notificacoes/${id}/lida`, { method: "PUT" });
+  }
+
+  public async marcarTodasNotificacoesApiLidas(): Promise<void> {
+    await this.request("/api/v1/portal/notificacoes/todas-lidas", { method: "PUT" });
+  }
+
+  // --- Centro de Suporte & Chat ---
+
+  public async listarAtendimentosSuporte(): Promise<any[]> {
+    try {
+      const res = await this.request<{ sucesso: boolean; total: number; dados: any[] }>("/api/v1/portal/suporte/atendimentos");
+      return res.dados || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async criarAtendimentoSuporte(dados: {
+    assunto: string;
+    categoria: string;
+    mensagemInicial: string;
+    anexoNome?: string;
+    anexoTipo?: string;
+    anexoBase64?: string;
+  }): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>("/api/v1/portal/suporte/atendimentos", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async listarMensagensSuporte(atendimentoId: string): Promise<any[]> {
+    try {
+      const res = await this.request<{ sucesso: boolean; total: number; dados: any[] }>(
+        `/api/v1/portal/suporte/atendimentos/${atendimentoId}/mensagens`
+      );
+      return res.dados || [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async enviarMensagemSuporte(atendimentoId: string, dados: {
+    mensagem: string;
+    anexoNome?: string;
+    anexoTipo?: string;
+    anexoBase64?: string;
+  }): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>(
+      `/api/v1/portal/suporte/atendimentos/${atendimentoId}/mensagens`,
+      {
+        method: "POST",
+        body: JSON.stringify(dados),
+      }
+    );
+    return res.dados;
+  }
+
+}
 
 export const api = new ApiService();
 

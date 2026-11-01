@@ -37,10 +37,20 @@ class AuthState {
     }
   }
 
-  public async login(email: string, senha: string): Promise<void> {
+  public async login(email: string, senha: string): Promise<{ requer2fa?: boolean | undefined; preAuthToken?: string | undefined }> {
     const res = await api.login(email, senha);
-    this.cliente = res.cliente;
+    if (res.requer2fa) {
+      return { requer2fa: true, preAuthToken: res.preAuthToken };
+    }
+    this.cliente = res.cliente || null;
     await this.recarregarPerfil();
+    return {};
+  }
+
+  public async validar2faLogin(preAuthToken: string, codigo: string): Promise<void> {
+    await api.validar2fa(preAuthToken, codigo);
+    await this.recarregarPerfil();
+    this.notificar();
   }
 
   public async registo(dados: any): Promise<void> {

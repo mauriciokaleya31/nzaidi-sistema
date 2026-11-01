@@ -66,6 +66,10 @@ import { MobileRepository } from "./modules/mobile/mobile.repository.js";
 import { MobileService } from "./modules/mobile/mobile.service.js";
 import { registrarRotasMobile } from "./modules/mobile/mobile.routes.js";
 import { registrarRotasMobileAdmin } from "./modules/mobile/mobile-admin.routes.js";
+import { SuporteRepository } from "./modules/suporte/suporte.repository.js";
+import { SuporteService } from "./modules/suporte/suporte.service.js";
+import { registrarRotasSuporte } from "./modules/suporte/suporte.routes.js";
+
 
 export interface CriarAppOpcoes {
   db: DatabaseSync;
@@ -228,6 +232,11 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   );
   registrarRotasMobile(app, mobileService, mobileRepo, portalService);
   registrarRotasMobileAdmin(app, mobileRepo, mobileService, auditoriaRepo, db);
+  // Módulo de Suporte & Chat em Tempo Real
+  const suporteRepo = new SuporteRepository(db);
+  const suporteService = new SuporteService(suporteRepo, clientesRepo, auditoriaRepo, db);
+  registrarRotasSuporte(app, suporteService, portalRepo);
+
 
 
   // 6. Ao arrancar o servidor, recupera dias passados sem reporte BNA

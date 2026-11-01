@@ -16,6 +16,9 @@ export interface Usuario {
   criadoEm: string;
   atualizadoEm: string;
   ultimoLoginEm?: string | null | undefined;
+  doisFatoresAtivo?: boolean | undefined;
+  doisFatoresSegredo?: string | null | undefined;
+  doisFatoresBackupCodigos?: string | null | undefined;
 }
 
 export interface CriarUsuarioDTO {
@@ -73,7 +76,7 @@ export class UsersRepository {
         ativo, telefone, avatar_url as avatarUrl,
         bloqueado_em as bloqueadoEm, bloqueado_motivo as bloqueadoMotivo,
         criado_em as criadoEm, atualizado_em as atualizadoEm,
-        ultimo_login_em as ultimoLoginEm
+        ultimo_login_em as ultimoLoginEm, dois_fatores_ativo as doisFatoresAtivo, dois_fatores_segredo as doisFatoresSegredo, dois_fatores_backup_codigos as doisFatoresBackupCodigos
       FROM usuarios
       WHERE email = ? COLLATE NOCASE
     `);
@@ -94,7 +97,7 @@ export class UsersRepository {
         ativo, telefone, avatar_url as avatarUrl,
         bloqueado_em as bloqueadoEm, bloqueado_motivo as bloqueadoMotivo,
         criado_em as criadoEm, atualizado_em as atualizadoEm,
-        ultimo_login_em as ultimoLoginEm
+        ultimo_login_em as ultimoLoginEm, dois_fatores_ativo as doisFatoresAtivo, dois_fatores_segredo as doisFatoresSegredo, dois_fatores_backup_codigos as doisFatoresBackupCodigos
       FROM usuarios
       WHERE id = ?
     `);
@@ -226,4 +229,43 @@ export class UsersRepository {
       },
     };
   }
+  public salvarConfiguracao2fa(usuarioId: string, segredoBase32: string, backupHashes: string[]): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE usuarios
+      SET dois_fatores_segredo = ?, dois_fatores_backup_codigos = ?, atualizado_em = ?
+      WHERE id = ?;
+    `).run(segredoBase32, JSON.stringify(backupHashes), agora, usuarioId);
+  }
+
+  public ativar2fa(usuarioId: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE usuarios
+      SET dois_fatores_ativo = 1, dois_fatores_ativado_em = ?, atualizado_em = ?
+      WHERE id = ?;
+    `).run(agora, agora, usuarioId);
+  }
+
+  public desativar2fa(usuarioId: string): void {
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      UPDATE usuarios
+      SET dois_fatores_ativo = 0, dois_fatores_segredo = NULL, dois_fatores_backup_codigos = NULL, atualizado_em = ?
+      WHERE id = ?;
+    `).run(agora, usuarioId);
+  }
+
+  public consumirCodigoBackup(usuarioId: string, hashConsumido: string): void {
+    const user = this.buscarPorId(usuarioId);
+    if (!user || !user.doisFatoresBackupCodigos) return;
+
+    try {
+      const hashes: string[] = JSON.parse(user.doisFatoresBackupCodigos);
+      const restantes = hashes.filter((h) => h !== hashConsumido);
+      this.db.prepare("UPDATE usuarios SET dois_fatores_backup_codigos = ? WHERE id = ?;")
+        .run(JSON.stringify(restantes), usuarioId);
+    } catch {}
+  }
+
 }

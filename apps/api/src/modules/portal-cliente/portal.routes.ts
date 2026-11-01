@@ -1,3 +1,12 @@
+import {
+  gerarSegredoBase32,
+  gerarUriTotp,
+  gerarSvgQrCode,
+  verificarCodigoTotp,
+  gerarCodigosRecuperacao,
+  verificarCodigoRecuperacao,
+} from "../autenticacao/totp.js";
+import { verificarSenha } from "../autenticacao/hash.js";
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 import type { PortalClienteService } from "./portal.service.js";
@@ -111,23 +120,41 @@ export function registrarRotasPortalCliente(
     const ip = request.ip;
     const userAgent = request.headers["user-agent"];
 
-    const resultado = await portalService.loginCliente(dados, ip, userAgent);
+    // Verificar se a conta tem 2FA ativado
+    const cred = portalRepo.buscarCredencialCompletaPorEmail(dados.email);
+    if (cred && cred.dois_fatores_ativo === 1) {
+      const senhaValida = await verificarSenha(dados.senha, cred.senha_hash);
+      if (!senhaValida) {
+        throw new ErroAutenticacao("Credenciais inválidas. Verifique o e-mail e a palavra-passe.");
+      }
+      // Gerar preAuthToken temporário (5 minutos)
+      const preAuthToken = Buffer.from(JSON.stringify({
+        clienteId: cred.cliente_id,
+        email: cred.email,
+        exp: Date.now() + 5 * 60 * 1000
+      })).toString("base64url");
 
-    const isSecure = process.env.NODE_ENV === "production" ||
-      request.protocol === "https" ||
-      request.headers["x-forwarded-proto"] === "https";
+      return reply.status(200).send({
+        sucesso: true,
+        requer2fa: true,
+        mensagem: "Autenticação de dois factores necessária. Introduza o código gerado pela sua aplicação.",
+        dados: { preAuthToken },
+      });
+    }
+
+    const resultado = await portalService.loginCliente(dados, ip, userAgent);
 
     reply.setCookie(COOKIE_NOME, resultado.token, {
       path: "/",
       httpOnly: true,
-      secure: isSecure,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 24 * 3600,
+      maxAge: 86400,
     });
 
     return reply.status(200).send({
       sucesso: true,
-      mensagem: "Sessão iniciada com sucesso.",
+      mensagem: "Autenticação bem-sucedida.",
       dados: {
         cliente: resultado.cliente,
         token: resultado.token,
@@ -346,5 +373,314 @@ export function registrarRotasPortalCliente(
     }
   );
 
-}
+  // ========================================================================
+  // PERMISSÕES DE SESSÃO & SEGURANÇA
+  // ========================================================================
 
+  app.get(
+    "/api/v1/portal/perfil/permissoes",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const permissoes = portalRepo.obterPermissoesSessao(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        dados: permissoes,
+      });
+    }
+  );
+
+  app.put(
+    "/api/v1/portal/perfil/permissoes",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const Schema = z.object({
+        permitirCambioOnline: z.boolean().optional(),
+        permitirRemessasOnline: z.boolean().optional(),
+        exigir2faOperacoes: z.boolean().optional(),
+        notificarLoginNovoDispositivo: z.boolean().optional(),
+        manterSessaoAtiva: z.boolean().optional(),
+      });
+      const permissoes = Schema.parse(request.body);
+      portalRepo.salvarPermissoesSessao(clienteId, permissoes);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Permissões de sessão atualizadas e guardadas com sucesso.",
+        dados: portalRepo.obterPermissoesSessao(clienteId),
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/portal/auth/terminar-outras-sessoes",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId, token } = request.clienteSessao!;
+      const totalEncerradas = portalRepo.terminarOutrasSessoes(clienteId, token);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Todas as restantes sessões ativas foram encerradas com sucesso.",
+        dados: { totalEncerradas },
+      });
+    }
+  );
+
+  // ========================================================================
+  // ATUALIZAÇÃO DE FOTOGRAFIA DE PERFIL
+  // ========================================================================
+
+  app.post(
+    "/api/v1/portal/perfil/avatar",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const Schema = z.object({
+        imagemBase64: z.string().min(20, "Imagem inválida"),
+        tipoMime: z.enum(["image/png", "image/jpeg", "image/webp"]),
+      });
+      const { imagemBase64, tipoMime } = Schema.parse(request.body);
+
+      // Validar tamanho máximo (2 MB em base64 ≈ 2.8 MB texto)
+      if (imagemBase64.length > 3_000_000) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "A fotografia não pode exceder 2 MB.",
+        });
+      }
+
+      const avatarUrl = imagemBase64.startsWith("data:")
+        ? imagemBase64
+        : `data:${tipoMime};base64,${imagemBase64}`;
+
+      portalRepo.atualizarAvatarCliente(clienteId, avatarUrl);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Fotografia de perfil atualizada com sucesso.",
+        dados: { avatarUrl },
+      });
+    }
+  );
+
+  // ========================================================================
+  // AUTENTICAÇÃO DE DOIS FACTORES (2FA TOTP)
+  // ========================================================================
+
+  app.post(
+    "/api/v1/portal/auth/2fa/configurar",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const cred = portalRepo.buscarCredencialCompletaPorId(clienteId);
+      if (!cred) throw new ErroAutenticacao("Conta não localizada.");
+
+      const segredoBase32 = gerarSegredoBase32(20);
+      const uri = gerarUriTotp(cred.email, segredoBase32, "NZAIDI Câmbios");
+      const qrCodeSvg = gerarSvgQrCode(uri);
+      const { codigosTexto, hashes } = gerarCodigosRecuperacao(8);
+
+      portalRepo.salvarConfiguracao2fa(clienteId, segredoBase32, hashes);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Configuração de 2FA gerada com sucesso.",
+        dados: {
+          segredoBase32,
+          uri,
+          qrCodeSvg,
+          codigosRecuperacao: codigosTexto,
+        },
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/portal/auth/2fa/ativar",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const { codigoTotp } = z.object({ codigoTotp: z.string().length(6) }).parse(request.body);
+
+      const cred = portalRepo.buscarCredencialCompletaPorId(clienteId);
+      if (!cred || !cred.dois_fatores_segredo) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "Configure primeiro a autenticação de dois factores antes de ativar.",
+        });
+      }
+
+      const valido = verificarCodigoTotp(cred.dois_fatores_segredo, codigoTotp);
+      if (!valido) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "Código de confirmação incorreto ou expirado. Tente novamente.",
+        });
+      }
+
+      portalRepo.ativar2fa(clienteId);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação de dois factores (2FA) ativada com sucesso.",
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/portal/auth/2fa/desativar",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const { senha } = z.object({ senha: z.string().min(1) }).parse(request.body);
+
+      const cred = portalRepo.buscarCredencialCompletaPorId(clienteId);
+      if (!cred) throw new ErroAutenticacao("Conta não localizada.");
+
+      const senhaValida = await verificarSenha(senha, cred.senha_hash);
+      if (!senhaValida) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "Palavra-passe incorreta. Não foi possível desativar o 2FA.",
+        });
+      }
+
+      portalRepo.desativar2fa(clienteId);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação de dois factores desativada.",
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/portal/auth/2fa/validar",
+    async (request, reply) => {
+      const Schema = z.object({
+        preAuthToken: z.string().min(10),
+        codigo: z.string().min(6),
+      });
+      const { preAuthToken, codigo } = Schema.parse(request.body);
+
+      let payload: { clienteId: string; email: string; exp: number };
+      try {
+        payload = JSON.parse(Buffer.from(preAuthToken, "base64url").toString("utf-8"));
+      } catch {
+        throw new ErroAutenticacao("Token de pré-autenticação inválido ou corrompido.");
+      }
+
+      if (Date.now() > payload.exp) {
+        throw new ErroAutenticacao("A validação do 2FA expirou. Inicie sessão novamente.");
+      }
+
+      const cred = portalRepo.buscarCredencialCompletaPorId(payload.clienteId);
+      if (!cred || cred.dois_fatores_ativo !== 1 || !cred.dois_fatores_segredo) {
+        throw new ErroAutenticacao("2FA não está configurado para esta conta.");
+      }
+
+      // 1. Tentar validar via TOTP
+      let valido = false;
+      if (codigo.length === 6) {
+        valido = verificarCodigoTotp(cred.dois_fatores_segredo, codigo);
+      }
+
+      // 2. Se falhar e tiver formato de backup, tentar validar com código de recuperação
+      if (!valido && cred.dois_fatores_backup_codigos) {
+        try {
+          const hashes: string[] = JSON.parse(cred.dois_fatores_backup_codigos);
+          const verifBackup = verificarCodigoRecuperacao(codigo, hashes);
+          if (verifBackup.valido && verifBackup.hashUsado) {
+            valido = true;
+            portalRepo.consumirCodigoBackup(payload.clienteId, verifBackup.hashUsado);
+          }
+        } catch {
+          // Ignorar erro
+        }
+      }
+
+      if (!valido) {
+        return reply.status(400).send({
+          sucesso: false,
+          mensagem: "Código de autenticação ou de recuperação inválido.",
+        });
+      }
+
+      // Emitir sessão definitiva
+      const sessao = portalRepo.criarSessao(
+        payload.clienteId,
+        Buffer.from(crypto.randomUUID()).toString("hex"),
+        24,
+        request.ip,
+        request.headers["user-agent"]
+      );
+
+      reply.setCookie(COOKIE_NOME, sessao.tokenHash, {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 86400,
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação 2FA concluída com sucesso.",
+        dados: { token: sessao.tokenHash },
+      });
+    }
+  );
+
+  // ========================================================================
+  // NOTIFICAÇÕES DO CLIENTE
+  // ========================================================================
+
+  app.get(
+    "/api/v1/portal/notificacoes",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const notificacoes = portalRepo.listarNotificacoesCliente(clienteId, 30);
+      const naoLidas = notificacoes.filter((n) => !n.lida).length;
+
+      return reply.status(200).send({
+        sucesso: true,
+        total: notificacoes.length,
+        naoLidas,
+        dados: notificacoes,
+      });
+    }
+  );
+
+  app.put(
+    "/api/v1/portal/notificacoes/:id/lida",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const { id } = request.params as { id: string };
+      portalRepo.marcarNotificacaoLida(id, clienteId);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Notificação marcada como lida.",
+      });
+    }
+  );
+
+  app.put(
+    "/api/v1/portal/notificacoes/todas-lidas",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      portalRepo.marcarTodasNotificacoesLidas(clienteId);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Todas as notificações foram marcadas como lidas.",
+      });
+    }
+  );
+
+}
