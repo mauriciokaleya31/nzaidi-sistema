@@ -96,6 +96,61 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
       });
     });
 
+    // Listeners de Avatar / Fotografia de Perfil
+    const inputFoto = container.querySelector("#input-foto-avatar") as HTMLInputElement | null;
+    inputFoto?.addEventListener("change", async () => {
+      const f = inputFoto.files?.[0];
+      if (!f) return;
+      if (f.size > 5 * 1024 * 1024) {
+        mensagemErro = "A imagem selecionada deve ter no máximo 5MB.";
+        render();
+        return;
+      }
+      const leitor = new FileReader();
+      leitor.onload = async () => {
+        const base64 = leitor.result as string;
+        try {
+          aGuardar = true;
+          render();
+          await api.atualizarPerfil({ avatarUrl: base64 });
+          if (authState.cliente) authState.cliente.avatarUrl = base64;
+          localStorage.setItem("nzaidi_avatar_url", base64);
+          mensagemSucesso = "Fotografia de perfil atualizada com sucesso.";
+          mensagemErro = "";
+        } catch (err: any) {
+          mensagemErro = err.message || "Erro ao atualizar fotografia de perfil.";
+        } finally {
+          aGuardar = false;
+          render();
+          document.querySelectorAll(".sidebar-user-card .avatar, .header-user-avatar").forEach((el) => {
+            el.innerHTML = `<img src="${base64}" alt="Avatar" class="avatar-img" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
+          });
+        }
+      };
+      leitor.readAsDataURL(f);
+    });
+
+    container.querySelector("#btn-remover-avatar")?.addEventListener("click", async () => {
+      try {
+        aGuardar = true;
+        render();
+        await api.atualizarPerfil({ avatarUrl: "" });
+        if (authState.cliente) authState.cliente.avatarUrl = undefined;
+        localStorage.removeItem("nzaidi_avatar_url");
+        mensagemSucesso = "Fotografia de perfil removida com sucesso.";
+        mensagemErro = "";
+      } catch (err: any) {
+        mensagemErro = err.message || "Erro ao remover fotografia.";
+      } finally {
+        aGuardar = false;
+        render();
+      }
+    });
+
+    container.querySelector("#btn-perfil-logout")?.addEventListener("click", () => {
+      onLogout();
+    });
+
     // Listeners Específicos da Secção de Dados
     if (secaoAtiva === "dados") {
       container.querySelector("#btn-ativar-edicao")?.addEventListener("click", () => {
@@ -243,7 +298,45 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
   }
 
   function renderSecaoDadosPessoais(cliente: Cliente, perfil: any): string {
+    const iniciais = cliente.nome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+    const avatarUrl = cliente.avatarUrl || localStorage.getItem("nzaidi_avatar_url") || "";
     return `
+      <!-- Cartão com Fotografia de Perfil e Informações Rápidas -->
+      <div class="card p-large mb-medium perfil-avatar-card" style="margin-bottom: 24px;">
+        <div class="perfil-avatar-flex" style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+          <div class="perfil-avatar-preview-box" style="position: relative; width: 84px; height: 84px;">
+            ${
+              avatarUrl
+                ? `<img src="${avatarUrl}" alt="${cliente.nome}" class="perfil-avatar-img" style="width: 84px; height: 84px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 14px rgba(0,0,0,0.15); border: 3px solid var(--cartao);" />`
+                : `<div class="perfil-avatar-iniciais" style="width: 84px; height: 84px; border-radius: 50%; background: linear-gradient(135deg, var(--marinho), #1B4E95); color: #fff; font-size: 26px; font-weight: 700; display: grid; place-items: center; border: 3px solid var(--ouro);">${iniciais}</div>`
+            }
+            <label for="input-foto-avatar" style="position: absolute; bottom: 0; right: 0; width: 28px; height: 28px; background: var(--ouro); border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25);" title="Alterar fotografia">
+              ${icone("editar", 14)}
+            </label>
+            <input type="file" id="input-foto-avatar" accept="image/png, image/jpeg, image/webp" hidden />
+          </div>
+          <div class="perfil-avatar-meta" style="flex: 1; min-width: 200px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <h3 style="margin: 0; font-size: 20px; font-weight: 800; font-family: Sora, sans-serif;">${cliente.nome}</h3>
+              <span class="badge badge-${cliente.estadoKyc}" style="font-size: 11px; padding: 4px 10px; border-radius: 99px; font-weight: 700; background: rgba(14, 143, 110, 0.15); color: var(--verde);">
+                ${icone("sucesso", 12)} ${obterRotuloVerificacao(cliente.estadoKyc)}
+              </span>
+            </div>
+            <p class="text-suave" style="margin: 6px 0 12px; font-size: 13.5px; color: var(--suave);">Cliente NZAIDI desde ${formatarDataCurta(cliente.criadoEm)} · NIF: ${cliente.nif}</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <label for="input-foto-avatar" class="btn btn-secondary btn-sm" style="cursor: pointer; padding: 8px 14px; font-size: 13px;">
+                ${icone("enviarFicheiro", 14)} <span style="margin-left: 6px;">Trocar fotografia</span>
+              </label>
+              ${
+                avatarUrl
+                  ? `<button type="button" id="btn-remover-avatar" class="btn btn-claro btn-sm" style="padding: 8px 14px; font-size: 13px; color: var(--vermelho);">Remover fotografia</button>`
+                  : ""
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card p-large">
         <div class="card-header-clean">
           <div>

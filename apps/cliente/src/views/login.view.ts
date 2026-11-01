@@ -1,4 +1,5 @@
 import { authState } from "../auth.state.js";
+import { icone } from "../components/icones.js";
 
 export function renderLoginView(container: HTMLElement, onSucesso: () => void): void {
   let abaAtiva: "login" | "registo" = "login";
@@ -26,39 +27,75 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
         </div>
       `;
     }
-    return `<div class="alert-box alert-error">${msg}</div>`;
+    return `<div class="alert-box alert-error" style="display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 12px; background: rgba(180, 35, 24, 0.1); border: 1px solid rgba(180, 35, 24, 0.3); color: var(--vermelho); margin-bottom: 20px;">
+      ${icone("erro", 18)} <span>${msg}</span>
+    </div>`;
   }
 
   function render() {
     container.innerHTML = `
       <div class="auth-panoramic-wrapper">
-        <div class="auth-bg-photo" aria-hidden="true"></div>
         <div class="auth-bg-overlay" aria-hidden="true"></div>
-        <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
-        <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
 
         <div class="auth-split-shell ${abaAtiva === "registo" ? "modo-registo-amplo" : ""}">
-          <!-- Coluna Esquerda: Vitrine Clean e Profissional -->
+          <!-- Coluna Esquerda: Vitrine Institucional Nobre -->
           <aside class="auth-showcase-panel">
             <div class="auth-showcase-top">
-              <div class="auth-brand-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
-                <img src="/simbolo.png" alt="NZAIDI" style="width: 44px; height: 44px; border-radius: 50%; background: #fff; padding: 2px;" onerror="this.style.display='none'" />
+              <div class="auth-brand-header">
+                <img src="/logotipo.png" alt="NZAIDI" class="auth-brand-logo" />
                 <div>
-                  <div style="font-family: var(--fonte-titulos); font-size: 1.3rem; font-weight: 800; letter-spacing: 0.15em; color: #fff;">NZAIDI</div>
-                  <div style="font-size: 0.7rem; color: #eac172; letter-spacing: 0.18em; text-transform: uppercase;">Casa de Câmbios</div>
+                  <div class="auth-brand-title">NZAIDI</div>
+                  <div class="auth-brand-subtitle">Casa de Câmbios & Transferência, Lda.</div>
                 </div>
+              </div>
+
+              <div class="selo-bna-auth">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span>Licenciada e Supervisionada pelo BNA</span>
               </div>
 
               <h1 class="auth-hero-title">
                 Portal do Cliente
               </h1>
               <p class="auth-hero-subtitle">
-                Aceda com segurança para realizar operações cambiais, enviar remessas e gerir os seus cartões virtuais.
+                Aceda com toda a segurança para realizar operações cambiais a cotações em tempo real, enviar remessas ao exterior e consultar a sua conta.
               </p>
+
+              <div class="auth-features-list">
+                <div class="auth-feature-item">
+                  <div class="auth-feat-icon">${icone("cambio", 18)}</div>
+                  <div>
+                    <strong>Câmbio com Taxa Garantida</strong>
+                    <span>Cotação oficial de compra e venda de Dólares e Euros.</span>
+                  </div>
+                </div>
+
+                <div class="auth-feature-item">
+                  <div class="auth-feat-icon">${icone("remessas", 18)}</div>
+                  <div>
+                    <strong>Remessas Internacionais</strong>
+                    <span>Transferências seguras para apoio familiar e despesas médicas.</span>
+                  </div>
+                </div>
+
+                <div class="auth-feature-item">
+                  <div class="auth-feat-icon">${icone("seguranca", 18)}</div>
+                  <div>
+                    <strong>Conformidade e Sigilo Bancário</strong>
+                    <span>Proteção rigorosa de dados pessoais e borderôs oficiais.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-showcase-footer">
+              <span>Luanda, Angola · Suporte: apoio@nzaidi.ao</span>
             </div>
           </aside>
 
-          <!-- Coluna Direita: Formulário Elegante e Direto -->
+          <!-- Coluna Direita: Formulário Limpo, Espaçoso e Responsivo -->
           <section class="auth-form-panel">
             <div class="auth-form-header">
               <div>
@@ -66,19 +103,20 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
                 <p class="auth-form-subtitle">
                   ${
                     abaAtiva === "login"
-                      ? "Introduza as suas credenciais para aceder à sua conta."
-                      : "Preencha os seus dados oficiais para se registar na plataforma."
+                      ? "Introduza as suas credenciais para aceder ao seu portal seguro."
+                      : "Preencha os seus dados de identificação para abrir a sua conta."
                   }
                 </p>
               </div>
             </div>
 
-            <div class="auth-tabs-modern">
-              <button type="button" class="auth-tab-modern ${abaAtiva === "login" ? "ativo" : ""}" id="tab-login">
-                Iniciar Sessão
+            <!-- Alternador de Abas Moderno -->
+            <div class="auth-tabs-modern" role="tablist">
+              <button type="button" class="auth-tab-modern ${abaAtiva === "login" ? "ativo" : ""}" id="tab-login" role="tab" aria-selected="${abaAtiva === "login"}">
+                ${icone("conta", 16)} <span>Iniciar Sessão</span>
               </button>
-              <button type="button" class="auth-tab-modern ${abaAtiva === "registo" ? "ativo" : ""}" id="tab-registo">
-                Criar Conta Nova
+              <button type="button" class="auth-tab-modern ${abaAtiva === "registo" ? "ativo" : ""}" id="tab-registo" role="tab" aria-selected="${abaAtiva === "registo"}">
+                ${icone("documentos", 16)} <span>Criar Conta Nova</span>
               </button>
             </div>
 
@@ -90,16 +128,24 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
               <form id="form-login" class="auth-form-spacious">
                 <div class="form-group-spacious">
                   <label class="form-label" for="login-email">Endereço de E-mail</label>
-                  <input type="email" id="login-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required autocomplete="email">
+                  <div class="input-with-icon">
+                    <span class="input-icon-box">${icone("conta", 18)}</span>
+                    <input type="email" id="login-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required autocomplete="email" />
+                  </div>
                 </div>
 
                 <div class="form-group-spacious">
-                  <label class="form-label" for="login-senha">Palavra-passe</label>
-                  <input type="password" id="login-senha" class="form-input-spacious" placeholder="Introduza a sua palavra-passe" required autocomplete="current-password">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label class="form-label" for="login-senha" style="margin-bottom: 0;">Palavra-passe</label>
+                  </div>
+                  <div class="input-with-icon">
+                    <span class="input-icon-box">${icone("seguranca", 18)}</span>
+                    <input type="password" id="login-senha" class="form-input-spacious" placeholder="Introduza a sua palavra-passe" required autocomplete="current-password" />
+                  </div>
                 </div>
 
                 <button type="submit" class="btn-auth-submit" ${carregando ? "disabled" : ""}>
-                  <span>${carregando ? "A autenticar sessão..." : "Entrar na Minha Conta"}</span>
+                  <span>${carregando ? "A validar credenciais..." : "Entrar na Minha Conta"}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" style="margin-left: 8px;">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -111,7 +157,7 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
               <form id="form-registo" class="auth-form-spacious">
                 <div class="form-group-spacious">
                   <label class="form-label" for="reg-nome">Nome Completo / Razão Social</label>
-                  <input type="text" id="reg-nome" class="form-input-spacious" placeholder="Nome completo conforme documento" required>
+                  <input type="text" id="reg-nome" class="form-input-spacious" placeholder="Conforme documento de identificação" required />
                 </div>
 
                 <div class="form-row-spacious">
@@ -124,7 +170,7 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
                   </div>
                   <div class="form-group-spacious">
                     <label class="form-label" for="reg-nif">NIF</label>
-                    <input type="text" id="reg-nif" class="form-input-spacious" placeholder="Número de Identificação Fiscal" required>
+                    <input type="text" id="reg-nif" class="form-input-spacious" placeholder="Número de Identificação Fiscal" required />
                   </div>
                 </div>
 
@@ -140,34 +186,34 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
                   </div>
                   <div class="form-group-spacious">
                     <label class="form-label" for="reg-num-doc">Número do Documento</label>
-                    <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Indique o número do documento" required>
+                    <input type="text" id="reg-num-doc" class="form-input-spacious" placeholder="Número do documento" required />
                   </div>
                 </div>
 
                 <div class="form-row-spacious">
                   <div class="form-group-spacious">
                     <label class="form-label" for="reg-telefone">Telefone</label>
-                    <input type="tel" id="reg-telefone" class="form-input-spacious" placeholder="+244 923 000 000" required>
+                    <input type="tel" id="reg-telefone" class="form-input-spacious" placeholder="+244 923 000 000" required />
                   </div>
                   <div class="form-group-spacious">
                     <label class="form-label" for="reg-email">E-mail</label>
-                    <input type="email" id="reg-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required>
+                    <input type="email" id="reg-email" class="form-input-spacious" placeholder="seu.email@exemplo.ao" required />
                   </div>
                 </div>
 
                 <div class="form-row-spacious">
                   <div class="form-group-spacious">
-                    <label class="form-label" for="reg-morada">Morada</label>
-                    <input type="text" id="reg-morada" class="form-input-spacious" placeholder="Rua, Bairro, Província" required>
+                    <label class="form-label" for="reg-morada">Morada Habitual</label>
+                    <input type="text" id="reg-morada" class="form-input-spacious" placeholder="Rua, Bairro, Município, Província" required />
                   </div>
                   <div class="form-group-spacious">
                     <label class="form-label" for="reg-senha">Palavra-passe</label>
-                    <input type="password" id="reg-senha" class="form-input-spacious" placeholder="Mínimo de 8 caracteres" minlength="8" required>
+                    <input type="password" id="reg-senha" class="form-input-spacious" placeholder="Mínimo de 8 caracteres" minlength="8" required />
                   </div>
                 </div>
 
                 <button type="submit" class="btn-auth-submit" ${carregando ? "disabled" : ""}>
-                  <span>${carregando ? "A criar a sua conta..." : "Criar Conta e Aceder"}</span>
+                  <span>${carregando ? "A registar a sua conta..." : "Criar Conta e Aceder"}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18" style="margin-left: 8px;">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -178,7 +224,7 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
             }
 
             <div class="auth-form-footer">
-              <a href="https://nzaidi.ao/" target="_blank" rel="noopener">Voltar ao Website Principal</a>
+              <span>Ao continuar, declara aceitar as políticas de privacidade e termos regulamentares da NZAIDI.</span>
             </div>
           </section>
         </div>

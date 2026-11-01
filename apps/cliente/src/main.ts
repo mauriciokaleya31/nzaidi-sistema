@@ -2,6 +2,8 @@ import "./styles.css";
 import { authState } from "./auth.state.js";
 import { api } from "./api.js";
 import { renderLoginView } from "./views/login.view.js";
+import { renderPerfilView } from "./views/perfil.view.js";
+import { inicializarChatSuporte } from "./components/chat-suporte.js";
 
 const appRoot = document.getElementById("app") as HTMLElement;
 
@@ -33,10 +35,14 @@ function alternarTema(): void {
 }
 
 function atualizarBotaoTema(): void {
-  const btn = document.getElementById("btn-toggle-theme");
-  if (!btn) return;
+  const btns = document.querySelectorAll(".btn-tema-toggle");
   const tema = obterTema();
-  btn.textContent = tema === "dark" ? "☀️ Modo Claro" : "🌙 Modo Escuro";
+  btns.forEach((btn) => {
+    btn.innerHTML =
+      tema === "dark"
+        ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg><span>Modo Claro</span>`
+        : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg><span>Modo Escuro</span>`;
+  });
 }
 
 const fmt = (n: number, d = 2) =>
@@ -458,7 +464,8 @@ function inicializarUploadDocumentos() {
     leitor.onload = async () => {
       const base64: string = (leitor.result as string).split(",")[1] ?? "";
       try {
-        await api.submeterDocumento("BI", f.name || "documento.pdf", base64);
+        const tipoDocSel = (document.getElementById("select-tipo-doc-upload") as HTMLSelectElement)?.value || "bi_frente";
+        await api.submeterDocumento(tipoDocSel, f.name || "documento.pdf", base64);
         if (textoLargar) textoLargar.textContent = `Enviado com sucesso: ${f.name}`;
         alert("Documento submetido para validação da equipa de conformidade!");
       } catch (err: any) {
@@ -499,6 +506,11 @@ function inicializarUploadDocumentos() {
 
 const rotasValidas = ["dashboard", "cambio", "remessas", "cartoes", "documentos", "perfil"];
 
+const fazerLogout = async () => {
+  await authState.logout();
+  renderizarApp();
+};
+
 function alternarVista(rotaNome: string) {
   let r = rotaNome;
   if (!rotasValidas.includes(r)) r = "dashboard";
@@ -513,6 +525,13 @@ function alternarVista(rotaNome: string) {
     void vistaAlvo.offsetWidth;
     vistaAlvo.classList.add("entra");
     animarContadores(vistaAlvo);
+
+    if (r === "perfil") {
+      const containerPerfil = document.getElementById("perfil-view-container");
+      if (containerPerfil) {
+        renderPerfilView(containerPerfil, fazerLogout);
+      }
+    }
   }
 
   // Atualizar links da sidebar desktop, topo e barra mobile
@@ -574,6 +593,7 @@ function renderizarAppShell() {
     <symbol id="i-pessoa" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></symbol>
     <symbol id="i-escudo" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
     <symbol id="i-sino" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M10 21h4"/></symbol>
+    <symbol id="i-ajuda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-nuvem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 16V8m0 0l-3 3m3-3l3 3M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19 10a4 4 0 0 1-1 8"/></symbol>
   </defs>
 </svg>
@@ -596,11 +616,12 @@ function renderizarAppShell() {
           <a href="#cartoes" class="sidebar-nav-link"><svg><use href="#i-cartao"/></svg><span>Cartões Visa</span></a>
           <a href="#documentos" class="sidebar-nav-link"><svg><use href="#i-doc"/></svg><span>Documentos KYC</span></a>
           <a href="#perfil" class="sidebar-nav-link"><svg><use href="#i-pessoa"/></svg><span>Minha conta</span></a>
+          <button type="button" id="sidebar-link-suporte" class="sidebar-nav-link" style="background:transparent;border:0;width:100%;text-align:left;cursor:pointer;"><svg><use href="#i-ajuda"/></svg><span>Apoio e Suporte</span></button>
         </nav>
 
         <div class="sidebar-footer">
           <div class="sidebar-user-card">
-            <div class="avatar">${iniciais}</div>
+            <div class="avatar">${cliente?.avatarUrl || localStorage.getItem("nzaidi_avatar_url") ? `<img src="${cliente?.avatarUrl || localStorage.getItem("nzaidi_avatar_url")}" alt="${clienteNome}" class="avatar-img" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />` : iniciais}</div>
             <div class="sidebar-user-info">
               <div class="u-nome" title="${clienteNome}">${clienteNome}</div>
               <div class="u-estado">Conta Verificada</div>
@@ -618,7 +639,24 @@ function renderizarAppShell() {
 
       <!-- ÁREA DE CONTEÚDO PRINCIPAL (À DIREITA DA SIDEBAR) -->
       <div class="app-main-area">
-        <!-- Topo com Selo BNA, Data e Alternância de Tema -->
+        <!-- Topo Mobile Responsivo (visível em telemóveis e tablets) -->
+        <header class="topo-mobile-bar">
+          <div class="topo-mobile-marca">
+            <img src="/logotipo.png" alt="NZAIDI" width="32" height="32" />
+            <span>NZAIDI</span>
+          </div>
+          <div class="topo-mobile-acoes">
+            <button class="btn-tema-toggle btn-mobile-acao" type="button" aria-label="Alternar tema"></button>
+            <button id="btn-mobile-chat-suporte" class="btn-mobile-acao" type="button" title="Apoio e Suporte">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            </button>
+            <a href="#perfil" class="topo-mobile-avatar" aria-label="Minha conta">
+              ${cliente?.avatarUrl || localStorage.getItem("nzaidi_avatar_url") ? `<img src="${cliente?.avatarUrl || localStorage.getItem("nzaidi_avatar_url")}" alt="Perfil" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />` : iniciais}
+            </a>
+          </div>
+        </header>
+
+        <!-- Topo com Selo BNA, Data e Alternância de Tema (Desktop) -->
         <header class="topo-desktop-bar">
           <div class="bna-indicator-badge">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -629,7 +667,11 @@ function renderizarAppShell() {
 
           <div class="topo-desktop-actions">
             <span style="font-size: 13px; color: var(--suave); font-weight: 600;">${dataHoje}</span>
-            <button id="btn-toggle-theme" class="btn-tema-toggle" type="button">🌙 Modo Escuro</button>
+            <button id="btn-topo-chat-suporte" class="btn-suporte-topo" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <span>Apoio ao Cliente</span>
+            </button>
+            <button id="btn-toggle-theme" class="btn-tema-toggle" type="button"></button>
           </div>
         </header>
 
@@ -639,7 +681,7 @@ function renderizarAppShell() {
   <div class="heroi">
     <div>
       <span class="selo" style="--i:0"><svg width="16" height="16"><use href="#i-escudo"/></svg>Conta verificada</span>
-      <h1 id="t-dash" style="--i:1"><span id="saudacao">Olá</span>, \${clienteNome}</h1>
+      <h1 id="t-dash" style="--i:1"><span id="saudacao">Olá</span>, ${clienteNome}</h1>
       <p style="--i:2">O que quer fazer hoje? Troque moeda ou envie dinheiro para quem gosta, com a taxa à vista antes de confirmar.</p>
       <div class="acoes" style="--i:3">
         <a class="btn btn-ouro" href="#cambio"><svg><use href="#i-troca"/></svg>Trocar moeda</a>
@@ -841,6 +883,17 @@ function renderizarAppShell() {
       <div class="doc"><div class="ic v" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center"><svg width="20" height="20"><use href="#i-doc"/></svg></div><div><b>Bilhete de identidade</b><div class="sub" style="margin:0">Válido até dezembro de 2029</div></div><span class="estado ok">Aprovado</span></div>
       <div class="doc"><div class="ic v" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center"><svg width="20" height="20"><use href="#i-doc"/></svg></div><div><b>NIF</b><div class="sub" style="margin:0">Número de identificação fiscal</div></div><span class="estado ok">Aprovado</span></div>
       <div class="doc"><div class="ic o" style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center"><svg width="20" height="20"><use href="#i-doc"/></svg></div><div><b>Comprovativo de morada</b><div class="sub" style="margin:0">Atualize até março de 2027</div></div><span class="estado and">Atualizar em breve</span></div>
+      <div class="campo mb-3" style="margin-bottom: 14px;">
+        <label for="select-tipo-doc-upload" style="font-size: 13px; font-weight: 700; color: var(--suave); margin-bottom: 6px; display: block;">Tipo de Documento a Enviar</label>
+        <select id="select-tipo-doc-upload" class="ctl" style="width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--borda); background: var(--cartao); font-size: 14px; font-weight: 600;">
+          <option value="bi_frente">Bilhete de Identidade (Frente)</option>
+          <option value="bi_verso">Bilhete de Identidade (Verso)</option>
+          <option value="passaporte">Passaporte (Página Principal)</option>
+          <option value="comprovativo_morada">Comprovativo de Morada / Residência</option>
+          <option value="nif_empresa">Certidão Comercial / Cartão NIF</option>
+          <option value="declaracao_rendimentos">Declaração de Rendimentos / Salário</option>
+        </select>
+      </div>
       <label class="largar" id="largar"><input type="file" hidden id="ficheiro"><svg width="30" height="30" style="color:var(--ouro)"><use href="#i-nuvem"/></svg><b id="largar-t">Arraste um documento para aqui</b><span>ou toque para escolher. PDF, JPG ou PNG.</span></label>
     </article>
   </div>
@@ -848,34 +901,8 @@ function renderizarAppShell() {
 
           <!-- VIEW 5: MINHA CONTA / PERFIL -->
           <section class="vista" id="v-perfil" aria-labelledby="t-perf">
-  <div class="heroi">
-    <div class="perfil-cab">
-      <div class="orbita" style="--i:0"><div class="aro"></div><div class="av">MA</div></div>
-      <div><span class="selo" style="--i:1"><svg width="16" height="16"><use href="#i-escudo"/></svg>Cliente verificado</span>
-        <h1 id="t-perf" style="--i:2">\${clienteNome}</h1><p style="--i:3">Cliente desde outubro de 2026</p></div>
-    </div>
-    <div></div>
-    <div class="faixa"></div>
-  </div>
-  <div class="grelha">
-    <article class="cartao c7" style="--i:0">
-      <h2>Os seus dados</h2><p class="sub">Para alterar o nome ou o documento, fale connosco.</p>
-      <div class="dados">
-        <div class="dado"><small>Telemóvel</small><b class="num">+244 9•• ••• 214</b></div>
-        <div class="dado"><small>Email</small><b>manuel.a@exemplo.ao</b></div>
-        <div class="dado"><small>Documento</small><b>Bilhete de identidade</b></div>
-        <div class="dado"><small>Limite diário</small><b class="num">Kz 5 000 000</b></div>
-      </div>
-    </article>
-    <article class="cartao c5" style="--i:1">
-      <h2>Segurança e avisos</h2><p class="sub">Escolha como protegemos e avisamos.</p>
-      <div class="interruptor"><div><b>Verificação em dois passos</b><small>Pede um código ao entrar</small></div><button class="tog" role="switch" aria-checked="true" aria-label="Verificação em dois passos"></button></div>
-      <div class="interruptor"><div><b>Aviso de cada operação</b><small>Por SMS e email</small></div><button class="tog" role="switch" aria-checked="true" aria-label="Aviso de cada operação"></button></div>
-      <div class="interruptor"><div><b>Novidades da NZAIDI</b><small>No máximo uma vez por mês</small></div><button class="tog" role="switch" aria-checked="false" aria-label="Novidades da NZAIDI"></button></div>
-      <button class="btn btn-claro" type="button" style="width:100%;margin-top:12px">Terminar sessão</button>
-    </article>
-  </div>
-</section>
+            <div id="perfil-view-container"></div>
+          </section>
         </main>
       </div>
 
@@ -916,12 +943,23 @@ function renderizarAppShell() {
   document.getElementById("btn-toggle-theme")?.addEventListener("click", alternarTema);
   atualizarBotaoTema();
 
+  // Inicializar Chat de Suporte
+  inicializarChatSuporte();
+
+  const abrirSuporte = () => {
+    window.dispatchEvent(new CustomEvent("abrir-suporte"));
+  };
+  document.getElementById("sidebar-link-suporte")?.addEventListener("click", abrirSuporte);
+  document.getElementById("btn-topo-chat-suporte")?.addEventListener("click", abrirSuporte);
+  document.getElementById("btn-mobile-chat-suporte")?.addEventListener("click", abrirSuporte);
+
   // Logout
   const fazerLogout = async () => {
     await authState.logout();
     renderizarApp();
   };
   document.getElementById("btn-sidebar-logout")?.addEventListener("click", fazerLogout);
+  document.querySelectorAll(".btn-acao-logout, #btn-perfil-logout").forEach((b) => b.addEventListener("click", fazerLogout));
 
   // Escutar mudança de rota
   window.addEventListener("hashchange", () => {

@@ -166,6 +166,31 @@ export function registrarRotasPortalCliente(
     }
   );
 
+  // 4.1 Atualizar Perfil e Dados de Contacto / Foto
+  app.put(
+    "/api/v1/portal/perfil",
+    { preHandler: [exigirClienteAutenticado] },
+    async (request, reply) => {
+      const { clienteId } = request.clienteSessao!;
+      const Schema = z.object({
+        telefone: z.string().min(6).optional(),
+        email: z.string().email().optional(),
+        morada: z.string().min(3).optional(),
+        profissao: z.string().optional(),
+        entidadeEmpregadora: z.string().optional(),
+        avatarUrl: z.string().optional(),
+      });
+      const dados = Schema.parse(request.body);
+      const clienteAtualizado = portalService.atualizarPerfil(clienteId, dados, request.ip);
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Perfil atualizado com sucesso.",
+        dados: clienteAtualizado,
+      });
+    }
+  );
+
   // 5. Documentos KYC: Listar
   app.get(
     "/api/v1/portal/documentos",
@@ -322,3 +347,4 @@ export function registrarRotasPortalCliente(
   );
 
 }
+

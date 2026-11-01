@@ -15,6 +15,7 @@ export interface Cliente {
   estado: string;
   estadoKyc: "pendente" | "em_analise" | "aprovado" | "rejeitado" | "actualizacao_necessaria";
   nivelRisco: string;
+  avatarUrl?: string | null | undefined;
   criadoEm: string;
   atualizadoEm: string;
 }
@@ -226,6 +227,7 @@ class ApiService {
     morada?: string;
     profissao?: string;
     entidadeEmpregadora?: string;
+    avatarUrl?: string;
   }): Promise<{ sucesso: boolean; mensagem: string }> {
     try {
       // Tenta rota da API caso exista
@@ -547,3 +549,4 @@ class ApiService {
 
 
 export const api = new ApiService();
+

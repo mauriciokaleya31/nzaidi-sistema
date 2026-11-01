@@ -103,6 +103,22 @@ export class PortalClienteRepository {
     };
   }
 
+  public atualizarCredencialContacto(clienteId: string, email?: string, telefone?: string): void {
+    const agora = new Date().toISOString();
+    const campos: string[] = ["atualizado_em = ?"];
+    const valores: any[] = [agora];
+    if (email !== undefined) {
+      campos.push("email = ?");
+      valores.push(email.trim().toLowerCase());
+    }
+    if (telefone !== undefined) {
+      campos.push("telefone = ?");
+      valores.push(telefone.trim());
+    }
+    valores.push(clienteId);
+    this.db.prepare(`UPDATE clientes_credenciais SET ${campos.join(", ")} WHERE cliente_id = ?`).run(...valores);
+  }
+
   public criarCredencial(
     clienteId: string,
     email: string,
@@ -356,3 +372,4 @@ export class PortalClienteRepository {
     };
   }
 }
+

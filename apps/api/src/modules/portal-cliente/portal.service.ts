@@ -214,6 +214,50 @@ export class PortalClienteService {
     };
   }
 
+  public atualizarPerfil(
+    clienteId: string,
+    dados: {
+      telefone?: string | undefined;
+      email?: string | undefined;
+      morada?: string | undefined;
+      profissao?: string | undefined;
+      entidadeEmpregadora?: string | undefined;
+      avatarUrl?: string | undefined;
+    },
+    ip?: string | null
+  ): Cliente {
+    const cliente = this.clientesRepo.buscarPorId(clienteId);
+    if (!cliente) {
+      throw new ErroNaoEncontrado("Cliente n�o encontrado.");
+    }
+
+    this.clientesRepo.atualizarCliente(clienteId, {
+      telefone: dados.telefone?.trim(),
+      email: dados.email?.trim().toLowerCase(),
+      morada: dados.morada?.trim(),
+      profissao: dados.profissao?.trim(),
+      entidadeEmpregadora: dados.entidadeEmpregadora?.trim(),
+      avatarUrl: dados.avatarUrl,
+    });
+
+    if (dados.email || dados.telefone) {
+      this.portalRepo.atualizarCredencialContacto(clienteId, dados.email, dados.telefone);
+    }
+
+    this.auditoriaRepo.registar({
+      autorId: cliente.id,
+      autorNome: cliente.nome,
+      autorFuncao: "cliente",
+      acao: "PORTAL_PERFIL_ATUALIZADO",
+      recurso: "clientes",
+      recursoId: cliente.id,
+      detalhes: dados,
+      ip: ip ?? null,
+    });
+
+    return this.clientesRepo.buscarPorId(clienteId)!;
+  }
+
   // --- Documentos KYC do Cliente ---
 
   public submeterDocumento(
@@ -461,3 +505,4 @@ export class PortalClienteService {
     return { cliente, token: rawToken };
   }
 }
+
