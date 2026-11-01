@@ -74,6 +74,79 @@ paths:
         '200':
           description: Todas as sessões em todos os dispositivos revogadas
 
+  /auth/recuperar-senha:
+    post:
+      summary: Solicitar Recuperação de Palavra-Passe
+      description: Envia código OTP de 6 dígitos para o e-mail cadastrado.
+      operationId: mobileRecuperarSenha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Instruções e OTP despachados
+
+  /auth/redefinir-senha:
+    post:
+      summary: Redefinir Palavra-Passe com OTP
+      description: Valida o código OTP e define uma nova senha forte, invalidando todas as sessões ativas.
+      operationId: mobileRedefinirSenha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, codigoOtp, novaSenha]
+              properties:
+                email:
+                  type: string
+                  format: email
+                codigoOtp:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                novaSenha:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Palavra-passe atualizada com sucesso
+        '400':
+          description: Código inválido ou expirado
+
+  /auth/dispositivos:
+    get:
+      summary: Listar Dispositivos Registados do Cliente
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de telemóveis Android e iOS associados
+
+  /auth/dispositivos/{id}:
+    delete:
+      summary: Revogar Acesso de um Dispositivo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dispositivo revogado com sucesso
+
   /cliente/perfil:
     get:
       summary: Obter Perfil Completo do Cliente

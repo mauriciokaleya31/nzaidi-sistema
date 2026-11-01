@@ -4,6 +4,8 @@ import type { MobileRepository } from "./mobile.repository.js";
 import type { PortalClienteService } from "../portal-cliente/portal.service.js";
 import {
   MobileLoginSchema,
+  MobileRecuperarSenhaSchema,
+  MobileRedefinirSenhaSchema,
   MobileRefreshTokenSchema,
   MobileSimulacaoCambioSchema,
   MobileCriarPedidoCambioSchema,
@@ -133,6 +135,54 @@ export function registrarRotasMobile(
     }
   );
 
+  app.post(
+    "/api/v1/mobile/auth/logout-global",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      mobileService.logoutGlobal(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Todas as sessões em todos os dispositivos móveis foram revogadas.",
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/auth/recuperar-senha",
+    {
+      config: {
+        rateLimit: { max: 3, timeWindow: "1 minute" },
+      },
+    },
+    async (request, reply) => {
+      const dados = MobileRecuperarSenhaSchema.parse(request.body);
+      const res = await mobileService.solicitarRecuperacaoSenha(dados.email, request.ip);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Se o e-mail estiver associado a uma conta NZAIDI, receberá um código de verificação.",
+        dados: res,
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/auth/redefinir-senha",
+    {
+      config: {
+        rateLimit: { max: 5, timeWindow: "1 minute" },
+      },
+    },
+    async (request, reply) => {
+      const dados = MobileRedefinirSenhaSchema.parse(request.body);
+      await mobileService.redefinirSenhaComOtp(dados.email, dados.codigoOtp, dados.novaSenha, request.ip);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Palavra-passe redefinida com sucesso. Pode agora iniciar sessão com a nova credencial.",
+      });
+    }
+  );
+
   app.get(
     "/api/v1/mobile/auth/dispositivos",
     { preHandler: [exigirMobileAuth] },
@@ -192,11 +242,11 @@ export function registrarRotasMobile(
       const dados = MobileAtualizarPerfilSchema.parse(request.body);
       const ip = request.ip;
 
-      const perfil = portalService.obterPerfil(clienteId);
+      const clienteAtualizado = portalService.atualizarPerfil(clienteId, dados, ip);
       return reply.status(200).send({
         sucesso: true,
         mensagem: "Dados de contacto atualizados com sucesso.",
-        dados: perfil.cliente,
+        dados: clienteAtualizado,
       });
     }
   );
@@ -411,6 +461,23 @@ export function registrarRotasMobile(
   // ========================================================================
   // ROTAS DE CARTÕES VISA (STATUS & LISTA DE ESPERA)
   // ========================================================================
+
+  app.get(
+    "/api/v1/mobile/cartoes",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      return reply.status(200).send({
+        sucesso: true,
+        dados: {
+          cartoes: [],
+          servicoAtivo: false,
+          mensagem: "Serviço de cartões virtuais Visa USD em fase de homologação regulamentar BNA.",
+          listaEsperaDisponivel: true,
+        },
+      });
+    }
+  );
 
   app.get(
     "/api/v1/mobile/cartoes/status",

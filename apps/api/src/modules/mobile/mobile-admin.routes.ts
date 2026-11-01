@@ -206,4 +206,47 @@ export function registrarRotasMobileAdmin(
       });
     }
   );
+  // 8. Exportação de Relatórios de Telemetria e Auditoria
+  app.get(
+    "/api/v1/admin/mobile/relatorios/exportar",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (request, reply) => {
+      const query = request.query as any;
+      const formato = (query.formato || "csv").toLowerCase();
+      const res = mobileRepo.listarRequisicoes({ limite: 1000 });
+
+      if (formato === "json") {
+        return reply.status(200).send({
+          sucesso: true,
+          total: res.total,
+          dados: res.logs,
+        });
+      }
+
+      // Gerar CSV padrão
+      const cabecalho = ["ID", "Data/Hora", "Cliente ID", "Cliente Nome", "Dispositivo", "Plataforma", "Versao App", "Endpoint", "Metodo", "Status", "Duracao (ms)", "IP", "Correlation ID"];
+      const linhas = res.logs.map((l) => [
+        l.id,
+        l.criado_em,
+        l.cliente_id || "",
+        `"${(l.cliente_nome || "").replace(/"/g, '""')}"`,
+        `"${(l.dispositivo_nome || "").replace(/"/g, '""')}"`,
+        l.plataforma || "",
+        l.versao_app || "",
+        l.endpoint,
+        l.metodo,
+        l.codigo_status,
+        l.duracao_ms,
+        l.ip || "",
+        l.correlation_id || "",
+      ].join(","));
+
+      const csv = [cabecalho.join(","), ...linhas].join("\n");
+      return reply
+        .header("Content-Type", "text/csv; charset=utf-8")
+        .header("Content-Disposition", 'attachment; filename="nzaidi-mobile-telemetria.csv"')
+        .send(csv);
+    }
+  );
+
 }

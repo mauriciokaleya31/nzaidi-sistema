@@ -424,4 +424,61 @@ export class MobileService {
     }
     return 0;
   }
+  public logoutGlobal(clienteId: string): void {
+    this.mobileRepo.revogarTodasSessoesCliente(clienteId);
+    this.auditoriaRepo.registar({
+      autorId: clienteId,
+      acao: "LOGOUT_GLOBAL_MOBILE",
+      recurso: "clientes",
+      recursoId: clienteId,
+      detalhes: { motivo: "Encerramento de sessões em todos os dispositivos móveis" },
+    });
+  }
+
+  public async solicitarRecuperacaoSenha(email: string, ip?: string | null): Promise<{ codigoOtpSimuladoParaDev?: string }> {
+    const stmtCred = this.db.prepare("SELECT * FROM clientes_credenciais WHERE email = ? COLLATE NOCASE;");
+    const cred = stmtCred.get(email) as any;
+    if (!cred) {
+      // Retorno genérico para segurança contra enumeração
+      return {};
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    this.mobileRepo.criarOtpRecuperacao(cred.cliente_id, email, otp, 15);
+
+    this.auditoriaRepo.registar({
+      autorId: cred.cliente_id,
+      acao: "RECUPERACAO_SENHA_SOLICITADA",
+      recurso: "clientes_credenciais",
+      recursoId: cred.cliente_id,
+      ip: ip || undefined,
+      detalhes: { email, validadeMinutos: 15 },
+    });
+
+    return { codigoOtpSimuladoParaDev: otp };
+  }
+
+  public async redefinirSenhaComOtp(email: string, codigoOtp: string, novaSenha: string, ip?: string | null): Promise<void> {
+    const otpValido = this.mobileRepo.buscarOtpRecuperacaoValido(email, codigoOtp);
+    if (!otpValido) {
+      throw new ErroValidacao("Código de verificação inválido ou expirado.");
+    }
+
+    const novaSenhaHash = await hashSenha(novaSenha);
+    this.mobileRepo.atualizarSenhaHash(otpValido.cliente_id, novaSenhaHash);
+    this.mobileRepo.marcarOtpUsado(otpValido.id);
+
+    // Cancelar todas as sessões anteriores por segurança
+    this.mobileRepo.revogarTodasSessoesCliente(otpValido.cliente_id);
+
+    this.auditoriaRepo.registar({
+      autorId: otpValido.cliente_id,
+      acao: "REDEFINICAO_SENHA_CONCLUIDA",
+      recurso: "clientes_credenciais",
+      recursoId: otpValido.cliente_id,
+      ip: ip || undefined,
+      detalhes: { motivo: "Palavra-passe alterada via OTP mobile com revogação preventiva de sessões" },
+    });
+  }
+
 }

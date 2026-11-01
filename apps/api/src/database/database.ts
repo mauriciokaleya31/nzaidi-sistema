@@ -1324,6 +1324,19 @@ export function inicializarSchema(db: DatabaseSync): void {
       atualizado_por TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS clientes_recuperacao_senha (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      email TEXT NOT NULL,
+      codigo_otp TEXT NOT NULL,
+      expira_em TEXT NOT NULL,
+      usado_em TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_recup_email ON clientes_recuperacao_senha(email);
+
     CREATE TABLE IF NOT EXISTS mobile_alertas (
       id TEXT PRIMARY KEY,
       tipo TEXT NOT NULL,

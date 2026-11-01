@@ -379,6 +379,14 @@ export class MobileRepository {
   // --- Indicadores e Monitorização Administrativa ---
 
   public obterKpis(): {
+    totalClientesGeral: number;
+    clientesRegistadosMobile: number;
+    ativosTempoReal: number;
+    ativos24h: number;
+    ativos7d: number;
+    ativos30d: number;
+    novosRegistosHoje: number;
+    clientesInativos: number;
     totalRequisicoes: number;
     requisicoesSucesso: number;
     requisicoesErro: number;
@@ -386,10 +394,12 @@ export class MobileRepository {
     dispositivosAtivos: number;
     dispositivosAndroid: number;
     dispositivosIos: number;
-    clientesRegistadosMobile: number;
     sessoesAtivas: number;
     latenciaMediaMs: number;
   } {
+    const totalCliStmt = this.db.prepare("SELECT COUNT(*) as total FROM clientes;");
+    const totalCli = totalCliStmt.get() as any;
+
     const reqsStmt = this.db.prepare(`
       SELECT
         COUNT(*) as total,
@@ -420,7 +430,54 @@ export class MobileRepository {
     `);
     const sessoes = sessoesStmt.get(agora) as any;
 
+    // Métricas temporais de utilizadores activos
+    const ativos15mStmt = this.db.prepare(`
+      SELECT COUNT(DISTINCT cliente_id) as total
+      FROM api_requisicoes_log
+      WHERE cliente_id IS NOT NULL AND criado_em >= datetime('now', '-15 minutes');
+    `);
+    const ativos15m = (ativos15mStmt.get() as any)?.total || 0;
+
+    const ativos24hStmt = this.db.prepare(`
+      SELECT COUNT(DISTINCT cliente_id) as total
+      FROM api_requisicoes_log
+      WHERE cliente_id IS NOT NULL AND criado_em >= datetime('now', '-24 hours');
+    `);
+    const ativos24h = (ativos24hStmt.get() as any)?.total || 0;
+
+    const ativos7dStmt = this.db.prepare(`
+      SELECT COUNT(DISTINCT cliente_id) as total
+      FROM api_requisicoes_log
+      WHERE cliente_id IS NOT NULL AND criado_em >= datetime('now', '-7 days');
+    `);
+    const ativos7d = (ativos7dStmt.get() as any)?.total || 0;
+
+    const ativos30dStmt = this.db.prepare(`
+      SELECT COUNT(DISTINCT cliente_id) as total
+      FROM api_requisicoes_log
+      WHERE cliente_id IS NOT NULL AND criado_em >= datetime('now', '-30 days');
+    `);
+    const ativos30d = (ativos30dStmt.get() as any)?.total || 0;
+
+    const novosHojeStmt = this.db.prepare(`
+      SELECT COUNT(*) as total
+      FROM dispositivos_moveis
+      WHERE criado_em >= datetime('now', 'start of day');
+    `);
+    const novosHoje = (novosHojeStmt.get() as any)?.total || 0;
+
+    const totalMobClientes = disp?.total_clientes || 0;
+    const inativos = Math.max(0, totalMobClientes - ativos30d);
+
     return {
+      totalClientesGeral: totalCli?.total || 0,
+      clientesRegistadosMobile: totalMobClientes,
+      ativosTempoReal: Math.max(ativos15m, sessoes?.ativas || 0),
+      ativos24h: Math.max(ativos24h, sessoes?.ativas || 0),
+      ativos7d,
+      ativos30d,
+      novosRegistosHoje: novosHoje,
+      clientesInativos: inativos,
       totalRequisicoes: reqs?.total || 0,
       requisicoesSucesso: reqs?.sucesso || 0,
       requisicoesErro: reqs?.erro || 0,
@@ -428,7 +485,6 @@ export class MobileRepository {
       dispositivosAtivos: disp?.total_ativos || 0,
       dispositivosAndroid: disp?.android || 0,
       dispositivosIos: disp?.ios || 0,
-      clientesRegistadosMobile: disp?.total_clientes || 0,
       sessoesAtivas: sessoes?.ativas || 0,
       latenciaMediaMs: Math.round((reqs?.latencia_media || 0) * 10) / 10,
     };
@@ -478,4 +534,40 @@ export class MobileRepository {
     const stmt = this.db.prepare("SELECT * FROM mobile_alertas ORDER BY criado_em DESC LIMIT 50;");
     return stmt.all() as any[];
   }
+  // --- Recuperação de Senha & OTP ---
+
+  public criarOtpRecuperacao(clienteId: string, email: string, codigoOtp: string, expiraEmMinutos: number = 15): void {
+    const id = crypto.randomUUID();
+    const agora = new Date();
+    const expiraEm = new Date(agora.getTime() + expiraEmMinutos * 60 * 1000).toISOString();
+    const stmt = this.db.prepare(`
+      INSERT INTO clientes_recuperacao_senha (id, cliente_id, email, codigo_otp, expira_em, criado_em)
+      VALUES (?, ?, ?, ?, ?, ?);
+    `);
+    stmt.run(id, clienteId, email.toLowerCase().trim(), codigoOtp, expiraEm, agora.toISOString());
+  }
+
+  public buscarOtpRecuperacaoValido(email: string, codigoOtp: string): { id: string; cliente_id: string } | null {
+    const agora = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      SELECT id, cliente_id FROM clientes_recuperacao_senha
+      WHERE email = ? COLLATE NOCASE AND codigo_otp = ? AND usado_em IS NULL AND expira_em > ?
+      ORDER BY criado_em DESC LIMIT 1;
+    `);
+    const res = stmt.get(email.toLowerCase().trim(), codigoOtp.trim(), agora) as any;
+    return res || null;
+  }
+
+  public marcarOtpUsado(id: string): void {
+    const agora = new Date().toISOString();
+    const stmt = this.db.prepare("UPDATE clientes_recuperacao_senha SET usado_em = ? WHERE id = ?;");
+    stmt.run(agora, id);
+  }
+
+  public atualizarSenhaHash(clienteId: string, novaSenhaHash: string): void {
+    const agora = new Date().toISOString();
+    const stmt = this.db.prepare("UPDATE clientes_credenciais SET senha_hash = ?, atualizado_em = ? WHERE cliente_id = ?;");
+    stmt.run(novaSenhaHash, agora, clienteId);
+  }
+
 }

@@ -1454,6 +1454,14 @@ export class AdminApiClient {
     });
   }
 
+  public async exportarMobileRelatorioCsv(): Promise<Blob> {
+    const res = await fetch("/api/v1/admin/mobile/relatorios/exportar?formato=csv", {
+      credentials: "include",
+    });
+    if (!res.ok) throw new Error("Falha ao exportar relatório CSV.");
+    return await res.blob();
+  }
+
   public async listarMobileAlertas(): Promise<any[]> {
     const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/alertas");
     return res.dados || [];

@@ -96,6 +96,10 @@ export function renderizarApiGestao(container: HTMLElement): void {
           </div>
 
           <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btn-exportar-csv" class="btn btn-secundario" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 0.85rem; border-color: #0e8f6e; color: #0e8f6e;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Exportar Relatório CSV
+            </button>
             <button id="btn-atualizar-dados" class="btn btn-secundario" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 0.85rem;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
               Atualizar Agora
@@ -254,15 +258,45 @@ export function renderizarApiGestao(container: HTMLElement): void {
   function renderizarMonitorizacaoTempoReal(): string {
     const k = kpis || {};
     return `
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
         <div class="cartao" style="background: #fff; padding: 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0;">
           <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Utilizadores Ativos Agora</div>
-          <div style="font-size: 2rem; font-weight: 800; color: #0e8f6e; margin: 4px 0;">${k.sessoesAtivas || 0}</div>
-          <div style="font-size: 0.75rem; color: #64748b;">Com sessão móvel válida</div>
+          <div style="font-size: 2rem; font-weight: 800; color: #0e8f6e; margin: 4px 0;">${k.ativosTempoReal ?? k.sessoesAtivas ?? 0}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Eventos nos últimos 15 min</div>
         </div>
 
         <div class="cartao" style="background: #fff; padding: 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0;">
-          <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Ativos nas Últimas 24h</div>
+          <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Ativos nas últimas 24h</div>
+          <div style="font-size: 2rem; font-weight: 800; color: #08264f; margin: 4px 0;">${k.ativos24h ?? 0}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Clientes únicos em 24h</div>
+        </div>
+
+        <div class="cartao" style="background: #fff; padding: 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Ativos (7d / 30d)</div>
+          <div style="font-size: 1.6rem; font-weight: 800; color: #08264f; margin: 4px 0;">${k.ativos7d ?? 0} <span style="font-size: 1rem; color: #64748b; font-weight: 500;">/ ${k.ativos30d ?? 0}</span></div>
+          <div style="font-size: 0.75rem; color: #64748b;">Semanal e Mensal</div>
+        </div>
+
+        <div class="cartao" style="background: #fff; padding: 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Novos Registos Hoje</div>
+          <div style="font-size: 2rem; font-weight: 800; color: #d9a441; margin: 4px 0;">${k.novosRegistosHoje ?? 0}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Novos terminais móveis</div>
+        </div>
+
+        <div class="cartao" style="background: #fff; padding: 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Clientes Inativos</div>
+          <div style="font-size: 2rem; font-weight: 800; color: #64748b; margin: 4px 0;">${k.clientesInativos ?? 0}</div>
+          <div style="font-size: 0.75rem; color: #64748b;">Sem atividade há 30 dias</div>
+        </div>
+
+        <div class="cartao" style="background: #fff; padding: 1.25rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+          <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Dispositivos Bloqueados</div>
+          <div style="font-size: 2rem; font-weight: 800; color: ${dispositivos.filter((d) => d.status === "bloqueado").length > 0 ? "#b42318" : "#64748b"}; margin: 4px 0;">
+            ${dispositivos.filter((d) => d.status === "bloqueado").length}
+          </div>
+          <div style="font-size: 0.75rem; color: #64748b;">Suspeita de fraude / perda</div>
+        </div>
+      </div>
           <div style="font-size: 2rem; font-weight: 800; color: #08264f; margin: 4px 0;">${dispositivos.filter((d) => d.status === "ativo").length}</div>
           <div style="font-size: 0.75rem; color: #64748b;">Dispositivos com atividade recente</div>
         </div>
