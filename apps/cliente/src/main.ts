@@ -613,6 +613,15 @@ function atualizarSaudacaoENome(nomeParam?: string) {
     elNome.textContent = nomeExibir;
     elNome.title = nomeReal;
   }
+
+  // Garantia absoluta contra qualquer template string residual não interpolada
+  const elTDash = document.getElementById("t-dash");
+  if (elTDash && elTDash.innerHTML.includes("${clienteNome}")) {
+    elTDash.innerHTML = elTDash.innerHTML.replace(/\$\{clienteNome\}/g, nomeExibir);
+  }
+  if (appRoot && appRoot.innerHTML.includes("${clienteNome}")) {
+    appRoot.innerHTML = appRoot.innerHTML.replace(/\$\{clienteNome\}/g, nomeExibir);
+  }
 }
 
 function renderizarAppShell() {

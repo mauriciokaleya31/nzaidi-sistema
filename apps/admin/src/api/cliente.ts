@@ -1462,6 +1462,86 @@ export class AdminApiClient {
     return await res.blob();
   }
 
+  
+  public async obterMobileConfigCompleta(): Promise<{ configs: Record<string, string>; banners: any[]; avisos: any[] }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/config-completa");
+    return res.dados || { configs: {}, banners: [], avisos: [] };
+  }
+
+  public async atualizarMobileConfigSecao(secao: string, configs: Record<string, string>): Promise<void> {
+    await this.requisitar("/api/v1/admin/mobile/config-secao", {
+      method: "PUT",
+      body: JSON.stringify({ secao, configs }),
+    });
+  }
+
+  public async listarMobileBanners(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/banners");
+    return res.dados || [];
+  }
+
+  public async adicionarMobileBanner(dados: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/banners", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async removerMobileBanner(id: string): Promise<void> {
+    await this.requisitar("/api/v1/admin/mobile/banners/" + id, { method: "DELETE" });
+  }
+
+  public async listarMobileAvisos(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/avisos");
+    return res.dados || [];
+  }
+
+  public async criarMobileAviso(dados: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/avisos", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async atualizarMobileAviso(id: string, dados: any): Promise<void> {
+    await this.requisitar("/api/v1/admin/mobile/avisos/" + id, {
+      method: "PUT",
+      body: JSON.stringify(dados),
+    });
+  }
+
+  public async removerMobileAviso(id: string): Promise<void> {
+    await this.requisitar("/api/v1/admin/mobile/avisos/" + id, { method: "DELETE" });
+  }
+
+  public async listarMobileLocalizacoes(filtros?: { clienteId?: string; consentimento?: number }): Promise<any[]> {
+    const q = new URLSearchParams();
+    if (filtros?.clienteId) q.set("clienteId", filtros.clienteId);
+    if (filtros?.consentimento !== undefined) q.set("consentimento", String(filtros.consentimento));
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/localizacoes?" + q.toString());
+    return res.dados || [];
+  }
+
+  public async dispararMobilePush(dados: { titulo: string; mensagem: string; plataformaAlvo?: string; segmento?: string }): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/push", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async listarHistoricoMobilePush(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/push/historico");
+    return res.dados || [];
+  }
+
+  public async listarMobileAuditoria(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/auditoria");
+    return res.dados || [];
+  }
+
   public async listarMobileAlertas(): Promise<any[]> {
     const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/alertas");
     return res.dados || [];

@@ -500,6 +500,8 @@ export class MobileRepository {
     return stmt.all() as unknown as DispositivoMovel[];
   }
 
+  public obterConfiguracoesCompletas(): Record<string, string> { return this.obterConfiguracoes(); }
+
   public obterConfiguracoes(): Record<string, string> {
     const stmt = this.db.prepare("SELECT chave, valor FROM mobile_config;");
     const rows = stmt.all() as unknown as { chave: string; valor: string }[];
@@ -619,4 +621,359 @@ export class MobileRepository {
     stmt.run(new Date().toISOString(), clienteId);
   }
 
+
+  // --- Gestão Remota Avançada (Remote Config, Banners, Avisos, Localização, Push) ---
+
+  public atualizarConfiguracaoAvancada(
+    chave: string,
+    valor: string,
+    adminId: string,
+    adminNome: string,
+    secao: string
+  ): void {
+    const agora = new Date().toISOString();
+    const select = this.db.prepare("SELECT valor FROM mobile_config WHERE chave = ?;").get(chave) as { valor: string } | undefined;
+    const valorAnterior = select?.valor ?? null;
+
+    this.db.prepare(`
+      INSERT INTO mobile_config (chave, valor, atualizado_em, atualizado_por)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor, atualizado_em = excluded.atualizado_em, atualizado_por = excluded.atualizado_por;
+    `).run(chave, valor, agora, adminNome);
+
+    this.db.prepare(`
+      INSERT INTO mobile_auditoria_config (id, administrador_id, administrador_nome, secao, chave, valor_anterior, valor_novo, criado_em)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+    `).run(crypto.randomUUID(), adminId, adminNome, secao, chave, valorAnterior, valor, agora);
+  }
+
+  public atualizarLoteConfiguracoes(
+    secao: string,
+    configs: Record<string, string>,
+    adminId: string,
+    adminNome: string
+  ): void {
+    for (const [chave, valor] of Object.entries(configs)) {
+      this.atualizarConfiguracaoAvancada(chave, valor, adminId, adminNome, secao);
+    }
+  }
+
+  public obterRemoteConfigConsolidado(): any {
+    const conf = this.obterConfiguracoesCompletas();
+    const banners = this.listarBanners(true);
+    const avisos = this.listarAvisos(true);
+
+    let faqs = [];
+    try {
+      faqs = JSON.parse(conf.conteudo_perguntas_frequentes || "[]");
+    } catch {}
+
+    return {
+      sucesso: true,
+      timestamp: new Date().toISOString(),
+      versao_config: Math.floor(Date.now() / 1000),
+      manutencao: {
+        ativa: conf.manutencao_global_ativa === "true",
+        mensagem: conf.manutencao_mensagem || "Sistema em manutenção.",
+        previsao_fim: conf.manutencao_previsao_fim || null,
+      },
+      visual: {
+        logoUrl: conf.visual_logo_url || "/logotipo.png",
+        simboloUrl: conf.visual_simbolo_url || "/simbolo.png",
+        corPrimaria: conf.visual_cor_primaria || "#061A3A",
+        corAcento: conf.visual_cor_acento || "#D5983E",
+        corFundo: conf.visual_cor_fundo || "#F8FAFC",
+        mensagemBoasVindas: conf.visual_msg_boas_vindas || "Bem-vindo à NZAIDI",
+        subtituloBoasVindas: conf.visual_subtitulo_boas_vindas || "Câmbios e transferências seguras.",
+      },
+      contactos: {
+        telefone: conf.contactos_telefone || "+244 923 123 456",
+        whatsapp: conf.contactos_whatsapp || "+244 930 654 321",
+        email: conf.contactos_email || "suporte@nzaidi.ao",
+        endereco: conf.contactos_endereco || "Maianga, Luanda - Angola",
+        horario: conf.contactos_horario || "Seg-Sex 08h-18h",
+      },
+      conteudos: {
+        sobreNzaidi: conf.conteudo_sobre_nzaidi || "",
+        termosCondicoes: conf.conteudo_termos_condicoes || "",
+        politicaPrivacidade: conf.conteudo_politica_privacidade || "",
+        avisosRegulamentares: conf.conteudo_avisos_regulamentares || "",
+        comunicados: conf.conteudo_comunicados || "",
+        perguntasFrequentes: faqs,
+      },
+      funcionalidades: {
+        cambio: { ativa: conf.func_cambio_ativa !== "false", aviso: conf.func_cambio_aviso || "" },
+        remessas: { ativa: conf.func_remessas_ativa !== "false", aviso: conf.func_remessas_aviso || "" },
+        cartoes: { ativa: conf.func_cartoes_ativa !== "false", aviso: conf.func_cartoes_aviso || "" },
+        taxas: { ativa: conf.func_taxas_ativa !== "false", aviso: conf.func_taxas_aviso || "" },
+        uploadDocs: { ativa: conf.func_upload_docs_ativa !== "false", aviso: conf.func_upload_docs_aviso || "" },
+        suporte: { ativa: conf.func_suporte_ativa !== "false", aviso: conf.func_suporte_aviso || "" },
+        notificacoes: { ativa: conf.func_notificacoes_ativa !== "false", aviso: conf.func_notificacoes_aviso || "" },
+      },
+      banners,
+      avisos,
+      versoes: {
+        android: {
+          atual: conf.versao_atual_android || "1.0.4",
+          minima: conf.versao_minima_android || "1.0.0",
+          lojaUrl: conf.loja_google_play_url || "",
+        },
+        ios: {
+          atual: conf.versao_atual_ios || "1.0.4",
+          minima: conf.versao_minima_ios || "1.0.0",
+          lojaUrl: conf.loja_app_store_url || "",
+        },
+        atualizacaoObrigatoria: conf.atualizacao_obrigatoria === "true",
+        notasDaVersao: conf.notas_da_versao || "",
+      },
+    };
+  }
+
+  public listarBanners(apenasAtivos = false): any[] {
+    const sql = apenasAtivos
+      ? "SELECT * FROM mobile_banners WHERE ativo = 1 ORDER BY ordem ASC, criado_em DESC;"
+      : "SELECT * FROM mobile_banners ORDER BY ordem ASC, criado_em DESC;";
+    return this.db.prepare(sql).all();
+  }
+
+  public adicionarBanner(dados: { titulo: string; descricao?: string; imagemUrl: string; linkAcao?: string; ordem?: number; ativo?: number }): any {
+    const id = crypto.randomUUID();
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      INSERT INTO mobile_banners (id, titulo, descricao, imagem_url, link_acao, ordem, ativo, criado_em, atualizado_em)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `).run(
+      id,
+      dados.titulo,
+      dados.descricao ?? null,
+      dados.imagemUrl,
+      dados.linkAcao ?? null,
+      dados.ordem ?? 0,
+      dados.ativo ?? 1,
+      agora,
+      agora
+    );
+    return { id, ...dados, criado_em: agora, atualizado_em: agora };
+  }
+
+  public removerBanner(id: string): void {
+    this.db.prepare("DELETE FROM mobile_banners WHERE id = ?;").run(id);
+  }
+
+  public listarAvisos(apenasAtivos = false): any[] {
+    const sql = apenasAtivos
+      ? "SELECT * FROM mobile_avisos WHERE ativo = 1 ORDER BY prioridade DESC, inicio_em DESC;"
+      : "SELECT * FROM mobile_avisos ORDER BY prioridade DESC, inicio_em DESC;";
+    return this.db.prepare(sql).all();
+  }
+
+  public criarAviso(dados: {
+    titulo: string;
+    mensagem: string;
+    categoria: "informativo" | "importante" | "urgente";
+    posicao: "dashboard" | "ecra_inicial" | "notificacao" | "todos";
+    prioridade?: number;
+    inicioEm?: string;
+    fimEm?: string;
+    ativo?: number;
+    criadoPor?: string;
+  }): any {
+    const id = crypto.randomUUID();
+    const agora = new Date().toISOString();
+    this.db.prepare(`
+      INSERT INTO mobile_avisos (id, titulo, mensagem, categoria, posicao, prioridade, inicio_em, fim_em, ativo, criado_por, criado_em)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `).run(
+      id,
+      dados.titulo,
+      dados.mensagem,
+      dados.categoria,
+      dados.posicao,
+      dados.prioridade ?? 1,
+      dados.inicioEm ?? agora,
+      dados.fimEm ?? new Date(Date.now() + 30 * 86400000).toISOString(),
+      dados.ativo ?? 1,
+      dados.criadoPor ?? "sistema",
+      agora
+    );
+    return { id, ...dados, criado_em: agora };
+  }
+
+  public atualizarAviso(id: string, dados: any): void {
+    this.db.prepare(`
+      UPDATE mobile_avisos
+      SET titulo = COALESCE(?, titulo),
+          mensagem = COALESCE(?, mensagem),
+          categoria = COALESCE(?, categoria),
+          posicao = COALESCE(?, posicao),
+          prioridade = COALESCE(?, prioridade),
+          ativo = COALESCE(?, ativo)
+      WHERE id = ?;
+    `).run(
+      dados.titulo ?? null,
+      dados.mensagem ?? null,
+      dados.categoria ?? null,
+      dados.posicao ?? null,
+      dados.prioridade ?? null,
+      dados.ativo !== undefined ? dados.ativo : null,
+      id
+    );
+  }
+
+  public removerAviso(id: string): void {
+    this.db.prepare("DELETE FROM mobile_avisos WHERE id = ?;").run(id);
+  }
+
+  public registarLocalizacao(dados: {
+    clienteId: string;
+    dispositivoId?: string | null | undefined;
+    consentimento: number;
+    cidade?: string | null | undefined;
+    regiao?: string | null | undefined;
+    pais?: string | null | undefined;
+    latitude?: number | null | undefined;
+    longitude?: number | null | undefined;
+    ip?: string | null | undefined;
+    precisaoMetros?: number | null | undefined;
+  }): any {
+    const id = crypto.randomUUID();
+    const agora = new Date().toISOString();
+
+    const existe = this.db.prepare("SELECT id FROM mobile_localizacoes WHERE cliente_id = ?;").get(dados.clienteId) as { id: string } | undefined;
+    if (existe) {
+      this.db.prepare(`
+        UPDATE mobile_localizacoes
+        SET dispositivo_id = COALESCE(?, dispositivo_id),
+            consentimento = ?,
+            cidade = COALESCE(?, cidade),
+            regiao = COALESCE(?, regiao),
+            pais = COALESCE(?, pais),
+            latitude = COALESCE(?, latitude),
+            longitude = COALESCE(?, longitude),
+            ip = COALESCE(?, ip),
+            precisao_metros = COALESCE(?, precisao_metros),
+            atualizado_em = ?
+        WHERE id = ?;
+      `).run(
+        dados.dispositivoId ?? null,
+        dados.consentimento,
+        dados.cidade ?? null,
+        dados.regiao ?? null,
+        dados.pais ?? "Angola",
+        dados.latitude ?? null,
+        dados.longitude ?? null,
+        dados.ip ?? null,
+        dados.precisaoMetros ?? null,
+        agora,
+        existe.id
+      );
+      return { id: existe.id, ...dados, atualizado_em: agora };
+    }
+
+    this.db.prepare(`
+      INSERT INTO mobile_localizacoes (id, cliente_id, dispositivo_id, consentimento, cidade, regiao, pais, latitude, longitude, ip, precisao_metros, criado_em, atualizado_em)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `).run(
+      id,
+      dados.clienteId,
+      dados.dispositivoId ?? null,
+      dados.consentimento,
+      dados.cidade ?? null,
+      dados.regiao ?? null,
+      dados.pais ?? "Angola",
+      dados.latitude ?? null,
+      dados.longitude ?? null,
+      dados.ip ?? null,
+      dados.precisaoMetros ?? null,
+      agora,
+      agora
+    );
+    return { id, ...dados, criado_em: agora, atualizado_em: agora };
+  }
+
+  public listarLocalizacoes(filtros?: { clienteId?: string | undefined; consentimento?: number | undefined }): any[] {
+    let sql = `
+      SELECT ml.*, c.nome as cliente_nome, c.email as cliente_email, dm.nome_dispositivo, dm.plataforma
+      FROM mobile_localizacoes ml
+      LEFT JOIN clientes c ON ml.cliente_id = c.id
+      LEFT JOIN dispositivos_moveis dm ON ml.dispositivo_id = dm.id
+      WHERE 1=1
+    `;
+    const params = [];
+    if (filtros?.clienteId) {
+      sql += " AND ml.cliente_id = ?";
+      params.push(filtros.clienteId);
+    }
+    if (filtros?.consentimento !== undefined) {
+      sql += " AND ml.consentimento = ?";
+      params.push(filtros.consentimento);
+    }
+    sql += " ORDER BY ml.atualizado_em DESC LIMIT 100;";
+    return this.db.prepare(sql).all(...params);
+  }
+
+  public dispararNotificacaoPush(dados: {
+    titulo: string;
+    mensagem: string;
+    plataformaAlvo: "todas" | "android" | "ios";
+    segmento?: string;
+    adminNome: string;
+  }): any {
+    const id = crypto.randomUUID();
+    const agora = new Date().toISOString();
+
+    let sqlContar = "SELECT COUNT(*) as total FROM dispositivos_moveis WHERE status = 'ativo'";
+    const params = [];
+    if (dados.plataformaAlvo !== "todas") {
+      sqlContar += " AND plataforma = ?";
+      params.push(dados.plataformaAlvo);
+    }
+    const countRow = this.db.prepare(sqlContar).get(...params) as { total: number };
+    const totalDest = countRow?.total || 0;
+
+    this.db.prepare(`
+      INSERT INTO mobile_notificacoes_push (id, titulo, mensagem, plataforma_alvo, segmento, total_destinatarios, total_entregas, total_falhas, status, enviado_por, enviado_em)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'enviado', ?, ?);
+    `).run(
+      id,
+      dados.titulo,
+      dados.mensagem,
+      dados.plataformaAlvo,
+      dados.segmento || "todos",
+      totalDest,
+      totalDest,
+      dados.adminNome,
+      agora
+    );
+
+    return {
+      id,
+      ...dados,
+      total_destinatarios: totalDest,
+      total_entregas: totalDest,
+      status: "enviado",
+      enviado_em: agora,
+    };
+  }
+
+  public listarHistoricoPush(): any[] {
+    return this.db.prepare("SELECT * FROM mobile_notificacoes_push ORDER BY enviado_em DESC LIMIT 50;").all();
+  }
+
+  public listarHistoricoAuditoriaConfig(limite = 100): any[] {
+    return this.db.prepare("SELECT * FROM mobile_auditoria_config ORDER BY criado_em DESC LIMIT ?;").all(limite);
+  }
+
+  public verificarDisponibilidadeModulo(modulo: "cambio" | "remessas" | "cartoes" | "taxas" | "upload_docs" | "suporte"): { disponivel: boolean; motivo?: string } {
+    const conf = this.obterConfiguracoesCompletas();
+    if (conf.manutencao_global_ativa === "true") {
+      return { disponivel: false, motivo: conf.manutencao_mensagem || "Sistema em manutenção geral programada." };
+    }
+    const chaveAtiva = `func_${modulo}_ativa`;
+    const chaveAviso = `func_${modulo}_aviso`;
+    if (conf[chaveAtiva] === "false") {
+      return { disponivel: false, motivo: conf[chaveAviso] || `O serviço de ${modulo} encontra-se temporariamente desativado pela administração.` };
+    }
+    return { disponivel: true };
+  }
 }

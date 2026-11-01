@@ -578,4 +578,42 @@ export function registrarRotasMobile(
     }
   );
 
+
+  // --- REMOTE CONFIG CENTRALIZADO PARA ANDROID & IOS ---
+  app.get("/api/v1/mobile/config", async (_request, reply) => {
+    const config = mobileRepo.obterRemoteConfigConsolidado();
+    return reply.status(200).send(config);
+  });
+
+  // --- REGISTO DE LOCALIZAÇÃO CONSENTIDA PELO UTILIZADOR ---
+  app.post(
+    "/api/v1/mobile/localizacao",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const clienteId = request.mobileSessao!.clienteId;
+      const dispositivoId = request.mobileSessao?.dispositivoId;
+      const body = request.body as any;
+
+      const consentimento = body.consentimento !== undefined ? (body.consentimento ? 1 : 0) : 1;
+      const loc = mobileRepo.registarLocalizacao({
+        clienteId,
+        dispositivoId: dispositivoId || null,
+        consentimento,
+        cidade: consentimento && body.cidade ? String(body.cidade) : null,
+        regiao: consentimento && body.regiao ? String(body.regiao) : null,
+        pais: consentimento ? (body.pais ? String(body.pais) : "Angola") : null,
+        latitude: consentimento && body.latitude !== undefined ? Number(body.latitude) : null,
+        longitude: consentimento && body.longitude !== undefined ? Number(body.longitude) : null,
+        precisaoMetros: consentimento && body.precisaoMetros !== undefined ? Number(body.precisaoMetros) : null,
+        ip: request.ip || null,
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: consentimento ? "Localização autorizada registada com sucesso." : "Consentimento revogado com sucesso.",
+        dados: loc,
+      });
+    }
+  );
+
 }

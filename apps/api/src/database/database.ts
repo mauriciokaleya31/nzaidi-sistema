@@ -1400,14 +1400,128 @@ export function inicializarSchema(db: DatabaseSync): void {
       resolvido_por TEXT
     );
 
-    -- Configurações iniciais da API Mobile
+    -- --- Gestão Avançada da Aplicação Mobile (Remote Config, Banners, Avisos e Localização) ---
+    CREATE TABLE IF NOT EXISTS mobile_banners (
+      id TEXT PRIMARY KEY,
+      titulo TEXT NOT NULL,
+      descricao TEXT,
+      imagem_url TEXT NOT NULL,
+      link_acao TEXT,
+      ordem INTEGER NOT NULL DEFAULT 0,
+      ativo INTEGER NOT NULL DEFAULT 1,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS mobile_avisos (
+      id TEXT PRIMARY KEY,
+      titulo TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      categoria TEXT NOT NULL CHECK(categoria IN ('informativo', 'importante', 'urgente')),
+      posicao TEXT NOT NULL CHECK(posicao IN ('dashboard', 'ecra_inicial', 'notificacao', 'todos')),
+      prioridade INTEGER NOT NULL DEFAULT 1,
+      inicio_em TEXT NOT NULL,
+      fim_em TEXT NOT NULL,
+      ativo INTEGER NOT NULL DEFAULT 1,
+      criado_por TEXT,
+      criado_em TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS mobile_localizacoes (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      dispositivo_id TEXT,
+      consentimento INTEGER NOT NULL DEFAULT 1,
+      cidade TEXT,
+      regiao TEXT,
+      pais TEXT DEFAULT 'Angola',
+      latitude REAL,
+      longitude REAL,
+      ip TEXT,
+      precisao_metros REAL,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_mob_loc_cliente ON mobile_localizacoes(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_mob_loc_data ON mobile_localizacoes(atualizado_em);
+
+    CREATE TABLE IF NOT EXISTS mobile_notificacoes_push (
+      id TEXT PRIMARY KEY,
+      titulo TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      plataforma_alvo TEXT NOT NULL CHECK(plataforma_alvo IN ('todas', 'android', 'ios')),
+      segmento TEXT NOT NULL DEFAULT 'todos',
+      total_destinatarios INTEGER NOT NULL DEFAULT 0,
+      total_entregas INTEGER NOT NULL DEFAULT 0,
+      total_falhas INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL CHECK(status IN ('pendente', 'enviado', 'falha')),
+      enviado_por TEXT NOT NULL,
+      enviado_em TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS mobile_auditoria_config (
+      id TEXT PRIMARY KEY,
+      administrador_id TEXT NOT NULL,
+      administrador_nome TEXT NOT NULL,
+      secao TEXT NOT NULL,
+      chave TEXT NOT NULL,
+      valor_anterior TEXT,
+      valor_novo TEXT,
+      criado_em TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_mob_audit_secao ON mobile_auditoria_config(secao);
+    CREATE INDEX IF NOT EXISTS idx_mob_audit_data ON mobile_auditoria_config(criado_em);
+
+    -- Configurações iniciais da API Mobile e Remote Config Central
     INSERT OR IGNORE INTO mobile_config (chave, valor, descricao, atualizado_em, atualizado_por) VALUES
       ('acesso_movel_ativo', 'true', 'Controlo de disponibilidade global da API móvel', datetime('now'), 'sistema'),
+      ('versao_atual_android', '1.0.4', 'Versão estável atual do aplicativo Android', datetime('now'), 'sistema'),
       ('versao_minima_android', '1.0.0', 'Versão mínima obrigatória da app Android', datetime('now'), 'sistema'),
+      ('versao_atual_ios', '1.0.4', 'Versão estável atual do aplicativo iOS', datetime('now'), 'sistema'),
       ('versao_minima_ios', '1.0.0', 'Versão mínima obrigatória da app iOS', datetime('now'), 'sistema'),
+      ('atualizacao_obrigatoria', 'false', 'Se verdadeiro, bloqueia versões inferiores à mínima', datetime('now'), 'sistema'),
+      ('loja_google_play_url', 'https://play.google.com/store/apps/details?id=ao.nzaidi.app', 'Link oficial na Google Play Store', datetime('now'), 'sistema'),
+      ('loja_app_store_url', 'https://apps.apple.com/app/nzaidi-cambios/id1689000000', 'Link oficial na Apple App Store', datetime('now'), 'sistema'),
+      ('notas_da_versao', 'Novas funcionalidades cambiais, suporte a chat em tempo real e melhorias de segurança.', 'Changelog da versão', datetime('now'), 'sistema'),
       ('rate_limit_por_minuto', '60', 'Limite máximo de requisições por dispositivo por minuto', datetime('now'), 'sistema'),
       ('tempo_expiracao_access_minutos', '15', 'TTL do Access Token móvel em minutos', datetime('now'), 'sistema'),
-      ('tempo_expiracao_refresh_dias', '30', 'TTL do Refresh Token rotativo em dias', datetime('now'), 'sistema');
+      ('tempo_expiracao_refresh_dias', '30', 'TTL do Refresh Token rotativo em dias', datetime('now'), 'sistema'),
+      ('visual_logo_url', '/logotipo.png', 'Logótipo oficial da aplicação', datetime('now'), 'sistema'),
+      ('visual_simbolo_url', '/simbolo.png', 'Ícone/Símbolo institucional', datetime('now'), 'sistema'),
+      ('visual_cor_primaria', '#061A3A', 'Cor primária institucional (Midnight Navy)', datetime('now'), 'sistema'),
+      ('visual_cor_acento', '#D5983E', 'Cor de acento institucional (Gold)', datetime('now'), 'sistema'),
+      ('visual_cor_fundo', '#F8FAFC', 'Cor de fundo base dos ecrãs', datetime('now'), 'sistema'),
+      ('visual_msg_boas_vindas', 'Bem-vindo à NZAIDI', 'Mensagem de saudação do dashboard', datetime('now'), 'sistema'),
+      ('visual_subtitulo_boas_vindas', 'Câmbios oficiais e transferências internacionais seguras.', 'Subtítulo do dashboard', datetime('now'), 'sistema'),
+      ('contactos_telefone', '+244 923 123 456', 'Número de telefone principal de apoio', datetime('now'), 'sistema'),
+      ('contactos_whatsapp', '+244 930 654 321', 'Número WhatsApp institucional', datetime('now'), 'sistema'),
+      ('contactos_email', 'suporte@nzaidi.ao', 'Email de apoio ao cliente', datetime('now'), 'sistema'),
+      ('contactos_endereco', 'Rua Amílcar Cabral, n.º 45, Maianga, Luanda - Angola', 'Endereço da sede', datetime('now'), 'sistema'),
+      ('contactos_horario', 'Segunda a Sexta: 08h00 - 18h00 | Sábados: 08h30 - 13h00', 'Horário de atendimento', datetime('now'), 'sistema'),
+      ('conteudo_sobre_nzaidi', 'A NZAIDI – Casa de Câmbios & Transferência, Lda. é uma instituição financeira não bancária, licenciada pelo Banco Nacional de Angola (BNA). Especializada em operações cambiais e remessas internacionais seguras, rápidas e em conformidade estrita com as normas cambiais vigentes.', 'Texto institucional Sobre', datetime('now'), 'sistema'),
+      ('conteudo_termos_condicoes', 'Termos e Condições Oficiais NZAIDI. O uso desta aplicação móvel pressupõe a aceitação das normas cambiais do BNA e políticas de conformidade AML/CFT.', 'Termos e Condições', datetime('now'), 'sistema'),
+      ('conteudo_politica_privacidade', 'Política de Privacidade e Protecção de Dados da NZAIDI. Os seus dados são tratados com sigilo financeiro rigoroso e integridade criptográfica.', 'Política de Privacidade', datetime('now'), 'sistema'),
+      ('conteudo_perguntas_frequentes', '[{"pergunta":"Como trocar moeda?","resposta":"Simule no aplicativo, solicite a reserva e conclua no balcão ou via transferência bancária autorizada."},{"pergunta":"Quais moedas disponíveis?","resposta":"USD (Dólares americanos) e EUR (Euros) com cotações BNA em tempo real."},{"pergunta":"Quanto tempo demora uma remessa?","resposta":"Remessas com parceiros credenciados são processadas no mesmo dia útil após liquidação."}]', 'FAQ em formato JSON', datetime('now'), 'sistema'),
+      ('conteudo_avisos_regulamentares', 'Operações sujeitas aos limites regulamentares e apuramento documental conforme normativos do BNA.', 'Avisos BNA', datetime('now'), 'sistema'),
+      ('conteudo_comunicados', 'Nova atualização de limites de envio para o exterior disponível no balcão central.', 'Comunicados oficiais', datetime('now'), 'sistema'),
+      ('func_cambio_ativa', 'true', 'Disponibilidade do módulo de Câmbios', datetime('now'), 'sistema'),
+      ('func_cambio_aviso', 'O serviço de câmbio está em atualização periódica. Voltaremos em breve.', 'Aviso de indisponibilidade de Câmbio', datetime('now'), 'sistema'),
+      ('func_remessas_ativa', 'true', 'Disponibilidade do módulo de Remessas', datetime('now'), 'sistema'),
+      ('func_remessas_aviso', 'O serviço de remessas encontra-se em manutenção temporária.', 'Aviso de indisponibilidade de Remessas', datetime('now'), 'sistema'),
+      ('func_cartoes_ativa', 'true', 'Disponibilidade do módulo de Cartões Visa', datetime('now'), 'sistema'),
+      ('func_cartoes_aviso', 'A emissão de cartões virtuais está momentaneamente suspensa.', 'Aviso de indisponibilidade de Cartões', datetime('now'), 'sistema'),
+      ('func_taxas_ativa', 'true', 'Disponibilidade da consulta de Taxas', datetime('now'), 'sistema'),
+      ('func_taxas_aviso', 'As cotações estão a ser atualizadas junto do BNA.', 'Aviso de indisponibilidade de Taxas', datetime('now'), 'sistema'),
+      ('func_upload_docs_ativa', 'true', 'Disponibilidade do envio de Documentos KYC', datetime('now'), 'sistema'),
+      ('func_upload_docs_aviso', 'A receção de documentos online está temporariamente indisponível.', 'Aviso de upload', datetime('now'), 'sistema'),
+      ('func_suporte_ativa', 'true', 'Disponibilidade do Centro de Suporte', datetime('now'), 'sistema'),
+      ('func_suporte_aviso', 'O apoio por chat está fora do horário de expediente.', 'Aviso de suporte', datetime('now'), 'sistema'),
+      ('func_notificacoes_ativa', 'true', 'Disponibilidade de Notificações', datetime('now'), 'sistema'),
+      ('func_notificacoes_aviso', 'Serviço de alertas em manutenção.', 'Aviso de notificações', datetime('now'), 'sistema'),
+      ('manutencao_global_ativa', 'false', 'Ativação do modo manutenção geral de todo o aplicativo móvel', datetime('now'), 'sistema'),
+      ('manutencao_mensagem', 'Estamos a realizar melhorias na infraestrutura NZAIDI Mobile. O serviço será retomado em breve.', 'Mensagem de manutenção geral', datetime('now'), 'sistema'),
+      ('manutencao_previsao_fim', '', 'Previsão de conclusão da manutenção', datetime('now'), 'sistema');
 
     CREATE INDEX IF NOT EXISTS idx_remessas_remetente ON remessas(cliente_remetente_id);
     CREATE INDEX IF NOT EXISTS idx_remessas_estado ON remessas(estado);

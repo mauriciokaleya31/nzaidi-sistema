@@ -249,4 +249,235 @@ export function registrarRotasMobileAdmin(
     }
   );
 
+
+  // 9. Configurações Completas (Remote Config, Personalização, Contactos, Conteúdos, Funcionalidades, Versões)
+  app.get(
+    "/api/v1/admin/mobile/config-completa",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (_request, reply) => {
+      const configs = mobileRepo.obterConfiguracoesCompletas();
+      const banners = mobileRepo.listarBanners();
+      const avisos = mobileRepo.listarAvisos();
+      return reply.status(200).send({
+        sucesso: true,
+        dados: {
+          configs,
+          banners,
+          avisos,
+        },
+      });
+    }
+  );
+
+  app.put(
+    "/api/v1/admin/mobile/config-secao",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const body = request.body as { secao: string; configs: Record<string, string> };
+      if (!body.secao || !body.configs) {
+        return reply.status(400).send({ sucesso: false, erro: "Secao e configs sao obrigatorios." });
+      }
+      const operador = request.usuario!;
+      mobileRepo.atualizarLoteConfiguracoes(body.secao, body.configs, operador.id, operador.nome);
+
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "ATUALIZAR_CONFIG_MOBILE_" + body.secao.toUpperCase(),
+        recurso: "mobile_config",
+        recursoId: body.secao,
+        detalhes: { operador: operador.nome, secao: body.secao, chaves: Object.keys(body.configs) },
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Configurações da seção " + body.secao + " atualizadas com sucesso.",
+        dados: mobileRepo.obterConfiguracoesCompletas(),
+      });
+    }
+  );
+
+  // 10. Gestão de Banners Promocionais
+  app.get(
+    "/api/v1/admin/mobile/banners",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (_request, reply) => {
+      const banners = mobileRepo.listarBanners();
+      return reply.status(200).send({ sucesso: true, dados: banners });
+    }
+  );
+
+  app.post(
+    "/api/v1/admin/mobile/banners",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const body = request.body as any;
+      if (!body.titulo || !body.imagemUrl) {
+        return reply.status(400).send({ sucesso: false, erro: "Titulo e imagemUrl sao obrigatorios." });
+      }
+      const banner = mobileRepo.adicionarBanner(body);
+      const operador = request.usuario!;
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "CRIAR_BANNER_MOBILE",
+        recurso: "mobile_banners",
+        recursoId: banner.id,
+        detalhes: { titulo: body.titulo },
+      });
+      return reply.status(201).send({ sucesso: true, dados: banner });
+    }
+  );
+
+  app.delete(
+    "/api/v1/admin/mobile/banners/:id",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      mobileRepo.removerBanner(id);
+      const operador = request.usuario!;
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "REMOVER_BANNER_MOBILE",
+        recurso: "mobile_banners",
+        recursoId: id,
+        detalhes: {},
+      });
+      return reply.status(200).send({ sucesso: true, mensagem: "Banner removido." });
+    }
+  );
+
+  // 11. Centro de Avisos e Modo de Manutenção
+  app.get(
+    "/api/v1/admin/mobile/avisos",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (_request, reply) => {
+      const avisos = mobileRepo.listarAvisos();
+      return reply.status(200).send({ sucesso: true, dados: avisos });
+    }
+  );
+
+  app.post(
+    "/api/v1/admin/mobile/avisos",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const body = request.body as any;
+      if (!body.titulo || !body.mensagem) {
+        return reply.status(400).send({ sucesso: false, erro: "Titulo e mensagem sao obrigatorios." });
+      }
+      const operador = request.usuario!;
+      const aviso = mobileRepo.criarAviso({
+        ...body,
+        criadoPor: operador.nome,
+      });
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "CRIAR_AVISO_MOBILE",
+        recurso: "mobile_avisos",
+        recursoId: aviso.id,
+        detalhes: { titulo: body.titulo, categoria: body.categoria },
+      });
+      return reply.status(201).send({ sucesso: true, dados: aviso });
+    }
+  );
+
+  app.put(
+    "/api/v1/admin/mobile/avisos/:id",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      mobileRepo.atualizarAviso(id, request.body);
+      return reply.status(200).send({ sucesso: true, mensagem: "Aviso atualizado." });
+    }
+  );
+
+  app.delete(
+    "/api/v1/admin/mobile/avisos/:id",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      mobileRepo.removerAviso(id);
+      return reply.status(200).send({ sucesso: true, mensagem: "Aviso removido." });
+    }
+  );
+
+  // 12. Localizações Autorizadas dos Utilizadores
+  app.get(
+    "/api/v1/admin/mobile/localizacoes",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (request, reply) => {
+      const query = request.query as any;
+      const operador = request.usuario!;
+      const consentimento = query.consentimento !== undefined ? Number(query.consentimento) : undefined;
+      const localizacoes = mobileRepo.listarLocalizacoes({
+        clienteId: query.clienteId ? String(query.clienteId) : undefined,
+        consentimento: consentimento !== undefined && !isNaN(consentimento) ? consentimento : undefined,
+      });
+
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "CONSULTAR_LOCALIZACOES_MOBILE",
+        recurso: "mobile_localizacoes",
+        recursoId: "consulta",
+        detalhes: { operador: operador.nome, totalRetornado: localizacoes.length },
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        total: localizacoes.length,
+        dados: localizacoes,
+      });
+    }
+  );
+
+  // 13. Disparo de Notificações Push e Histórico
+  app.post(
+    "/api/v1/admin/mobile/push",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const body = request.body as any;
+      if (!body.titulo || !body.mensagem) {
+        return reply.status(400).send({ sucesso: false, erro: "Titulo e mensagem sao obrigatorios." });
+      }
+      const operador = request.usuario!;
+      const resultado = mobileRepo.dispararNotificacaoPush({
+        titulo: body.titulo,
+        mensagem: body.mensagem,
+        plataformaAlvo: body.plataformaAlvo || "todas",
+        segmento: body.segmento || "todos",
+        adminNome: operador.nome,
+      });
+
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "ENVIAR_PUSH_MOBILE",
+        recurso: "mobile_notificacoes_push",
+        recursoId: resultado.id,
+        detalhes: { titulo: body.titulo, plataforma: body.plataformaAlvo },
+      });
+
+      return reply.status(201).send({
+        sucesso: true,
+        mensagem: "Notificação push transmitida aos dispositivos elegíveis.",
+        dados: resultado,
+      });
+    }
+  );
+
+  app.get(
+    "/api/v1/admin/mobile/push/historico",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (_request, reply) => {
+      const hist = mobileRepo.listarHistoricoPush();
+      return reply.status(200).send({ sucesso: true, dados: hist });
+    }
+  );
+
+  // 14. Histórico de Alterações de Configuração
+  app.get(
+    "/api/v1/admin/mobile/auditoria",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (_request, reply) => {
+      const logs = mobileRepo.listarHistoricoAuditoriaConfig();
+      return reply.status(200).send({ sucesso: true, dados: logs });
+    }
+  );
 }
