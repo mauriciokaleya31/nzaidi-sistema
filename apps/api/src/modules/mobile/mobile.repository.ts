@@ -672,11 +672,6 @@ export class MobileRepository {
       sucesso: true,
       timestamp: new Date().toISOString(),
       versao_config: Math.floor(Date.now() / 1000),
-      manutencao: {
-        ativa: conf.manutencao_global_ativa === "true",
-        mensagem: conf.manutencao_mensagem || "Sistema em manutenção.",
-        previsao_fim: conf.manutencao_previsao_fim || null,
-      },
       visual: {
         logoUrl: conf.visual_logo_url || "/logotipo.png",
         simboloUrl: conf.visual_simbolo_url || "/simbolo.png",
@@ -685,6 +680,13 @@ export class MobileRepository {
         corFundo: conf.visual_cor_fundo || "#F8FAFC",
         mensagemBoasVindas: conf.visual_msg_boas_vindas || "Bem-vindo à NZAIDI",
         subtituloBoasVindas: conf.visual_subtitulo_boas_vindas || "Câmbios e transferências seguras.",
+        icones: {
+          entrada: conf.visual_icone_entrada || "/icones/entrada.svg",
+          saida: conf.visual_icone_saida || "/icones/saida.svg",
+          cambio: conf.visual_icone_cambio || "/icones/cambio.svg",
+          remessas: conf.visual_icone_remessas || "/icones/remessas.svg",
+          cartoes: conf.visual_icone_cartoes || "/icones/cartoes.svg",
+        },
       },
       contactos: {
         telefone: conf.contactos_telefone || "+244 923 123 456",
@@ -725,6 +727,13 @@ export class MobileRepository {
         },
         atualizacaoObrigatoria: conf.atualizacao_obrigatoria === "true",
         notasDaVersao: conf.notas_da_versao || "",
+        avisoDesatualizada: conf.versao_aviso_desatualizada || "A sua versão da aplicação está desatualizada. Atualize para continuar com segurança.",
+      },
+      manutencao: {
+        ativa: conf.manutencao_global_ativa === "true",
+        mensagem: conf.manutencao_mensagem || "Sistema em manutenção.",
+        previsao_fim: conf.manutencao_previsao_fim || null,
+        ipsAutorizados: conf.manutencao_ips_autorizados ? conf.manutencao_ips_autorizados.split(",").map((s: string) => s.trim()).filter(Boolean) : [],
       },
     };
   }
@@ -964,11 +973,29 @@ export class MobileRepository {
     return this.db.prepare("SELECT * FROM mobile_auditoria_config ORDER BY criado_em DESC LIMIT ?;").all(limite);
   }
 
-  public verificarDisponibilidadeModulo(modulo: "cambio" | "remessas" | "cartoes" | "taxas" | "upload_docs" | "suporte"): { disponivel: boolean; motivo?: string } {
+  public verificarDisponibilidadeModulo(
+    modulo: "cambio" | "remessas" | "cartoes" | "taxas" | "upload_docs" | "suporte",
+    opcoes?: { ip?: string | undefined; bypassAdmin?: boolean | undefined }
+  ): { disponivel: boolean; motivo?: string } {
     const conf = this.obterConfiguracoesCompletas();
+
+    // 1. Exceções Administrativas Autorizadas (Bypass ou IP na whitelist)
+    if (opcoes?.bypassAdmin) {
+      return { disponivel: true };
+    }
+    if (opcoes?.ip && conf.manutencao_ips_autorizados) {
+      const ips = conf.manutencao_ips_autorizados.split(",").map((s: string) => s.trim());
+      if (ips.includes(opcoes.ip)) {
+        return { disponivel: true };
+      }
+    }
+
+    // 2. Modo de Manutenção Geral
     if (conf.manutencao_global_ativa === "true") {
       return { disponivel: false, motivo: conf.manutencao_mensagem || "Sistema em manutenção geral programada." };
     }
+
+    // 3. Manutenção por Módulo Específico
     const chaveAtiva = `func_${modulo}_ativa`;
     const chaveAviso = `func_${modulo}_aviso`;
     if (conf[chaveAtiva] === "false") {

@@ -352,6 +352,17 @@ export function registrarRotasMobile(
   app.post(
     "/api/v1/mobile/cambio/simular",
     async (request, reply) => {
+      const disp = mobileRepo.verificarDisponibilidadeModulo("cambio", {
+        ip: request.ip,
+        bypassAdmin: request.headers["x-admin-bypass"] === "true",
+      });
+      if (!disp.disponivel) {
+        return reply.status(503).send({
+          sucesso: false,
+          erro: disp.motivo,
+          codigo: "FUNCIONALIDADE_DESATIVADA",
+        });
+      }
       const dados = MobileSimulacaoCambioSchema.parse(request.body);
       const sim = mobileService.simularCambio(dados);
       return reply.status(200).send({
@@ -365,6 +376,17 @@ export function registrarRotasMobile(
     "/api/v1/mobile/cambio/pedidos",
     { preHandler: [exigirMobileAuth] },
     async (request, reply) => {
+      const disp = mobileRepo.verificarDisponibilidadeModulo("cambio", {
+        ip: request.ip,
+        bypassAdmin: request.headers["x-admin-bypass"] === "true",
+      });
+      if (!disp.disponivel) {
+        return reply.status(503).send({
+          sucesso: false,
+          erro: disp.motivo,
+          codigo: "FUNCIONALIDADE_DESATIVADA",
+        });
+      }
       const { clienteId } = request.mobileSessao!;
       const dados = MobileCriarPedidoCambioSchema.parse(request.body);
       const ip = request.ip;
@@ -421,6 +443,17 @@ export function registrarRotasMobile(
     "/api/v1/mobile/remessas/pedidos",
     { preHandler: [exigirMobileAuth] },
     async (request, reply) => {
+      const disp = mobileRepo.verificarDisponibilidadeModulo("remessas", {
+        ip: request.ip,
+        bypassAdmin: request.headers["x-admin-bypass"] === "true",
+      });
+      if (!disp.disponivel) {
+        return reply.status(503).send({
+          sucesso: false,
+          erro: disp.motivo,
+          codigo: "FUNCIONALIDADE_DESATIVADA",
+        });
+      }
       const { clienteId } = request.mobileSessao!;
       const dados = MobileCriarPedidoRemessaSchema.parse(request.body);
       const ip = request.ip;
