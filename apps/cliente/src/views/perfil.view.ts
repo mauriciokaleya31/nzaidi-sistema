@@ -666,29 +666,29 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
           </div>
 
           ${modal2faAberto && dadosConfig2fa ? `
-            <div class="modal-backdrop" style="position: fixed; inset: 0; background: rgba(8,38,79,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 1rem;">
-              <div class="modal-card" style="background: #ffffff; border-radius: 16px; padding: 2rem; max-width: 520px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
-                <h3 style="font-size: 1.3rem; font-weight: 800; color: #08264F; margin: 0 0 0.5rem;">Configurar Autenticação de Dois Factores</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.25rem;">
+            <div class="modal-backdrop">
+              <div class="modal-card" style="max-width: 520px;">
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--texto); margin: 0 0 0.5rem;">Configurar Autenticação de Dois Factores</h3>
+                <p style="color: var(--suave); font-size: 0.85rem; margin-bottom: 1.25rem;">
                   1. Abra a sua aplicação de autenticação e leia o código QR abaixo ou insira o código manual.
                 </p>
 
                 <div style="text-align: center; margin-bottom: 1.25rem;">
                   ${dadosConfig2fa.qrCodeSvg}
-                  <div style="margin-top: 8px; font-family: monospace; font-size: 0.85rem; background: #f8fafc; padding: 6px 12px; border-radius: 6px; border: 1px dashed #cbd5e1; user-select: all;">
+                  <div style="margin-top: 8px; font-family: monospace; font-size: 0.85rem; background: var(--pagina); padding: 8px 14px; border-radius: 8px; border: 1px dashed var(--borda); color: var(--texto); user-select: all;">
                     ${dadosConfig2fa.segredoBase32}
                   </div>
                 </div>
 
-                <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 10px 14px; margin-bottom: 1.25rem;">
-                  <strong style="color: #b45309; font-size: 0.8rem; display: block; margin-bottom: 4px;">Códigos de Recuperação (Guarde num local seguro):</strong>
-                  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-family: monospace; font-size: 0.75rem; color: #78350f;">
+                <div style="background: rgba(213, 152, 62, 0.12); border: 1px solid rgba(213, 152, 62, 0.3); border-radius: 10px; padding: 12px 16px; margin-bottom: 1.25rem;">
+                  <strong style="color: var(--ouro); font-size: 0.8rem; display: block; margin-bottom: 6px;">Códigos de Recuperação (Guarde num local seguro):</strong>
+                  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-family: monospace; font-size: 0.8rem; color: var(--texto);">
                     ${dadosConfig2fa.codigosRecuperacao.map((c: string) => `<span>• ${c}</span>`).join("")}
                   </div>
                 </div>
 
                 <form id="form-confirmar-2fa">
-                  <div class="form-group" style="margin-bottom: 1rem;">
+                  <div class="form-group" style="margin-bottom: 1.2rem;">
                     <label class="form-label" for="input-codigo-totp" style="font-weight: 700;">2. Insira o código de 6 dígitos gerado:</label>
                     <input type="text" id="input-codigo-totp" class="form-input" maxlength="6" placeholder="000000" style="text-align: center; font-size: 1.5rem; letter-spacing: 6px; font-weight: 800;" required />
                   </div>
@@ -703,10 +703,10 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
           ` : ""}
 
           ${modalDesativar2faAberto ? `
-            <div class="modal-backdrop" style="position: fixed; inset: 0; background: rgba(8,38,79,0.6); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 1rem;">
-              <div class="modal-card" style="background: #ffffff; border-radius: 16px; padding: 2rem; max-width: 440px; width: 100%;">
+            <div class="modal-backdrop">
+              <div class="modal-card" style="max-width: 440px;">
                 <h3 style="font-size: 1.2rem; font-weight: 800; color: #b42318; margin: 0 0 0.5rem;">Desativar Autenticação 2FA</h3>
-                <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1rem;">
+                <p style="color: var(--suave); font-size: 0.85rem; margin-bottom: 1rem;">
                   Confirme a sua palavra-passe para desativar a proteção de dois factores.
                 </p>
                 <form id="form-confirmar-desativar-2fa">
@@ -716,7 +716,7 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
                   </div>
                   <div style="display: flex; gap: 10px; justify-content: flex-end;">
                     <button type="button" id="btn-fechar-desativar-2fa" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-primary" style="background: #b42318;">Confirmar Desativação</button>
+                    <button type="submit" class="btn btn-primary" style="background: #b42318; color: #fff;">Confirmar Desativação</button>
                   </div>
                 </form>
               </div>
@@ -734,35 +734,35 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
           </p>
 
           <form id="form-permissoes-sessao" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 1.5rem;">
-            <label style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+            <label class="perm-checkbox-item">
               <input type="checkbox" id="chk-perm-cambio" ${p.permitirCambioOnline ? "checked" : ""} style="width: 18px; height: 18px;" />
               <div>
-                <strong style="color: #08264F; font-size: 0.9rem;">Permitir operações de câmbio online</strong>
-                <div style="color: #64748b; font-size: 0.75rem;">Autorizar compra e venda de moeda com liquidação bancária</div>
+                <strong>Permitir operações de câmbio online</strong>
+                <div class="perm-desc">Autorizar compra e venda de moeda com liquidação bancária</div>
               </div>
             </label>
 
-            <label style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+            <label class="perm-checkbox-item">
               <input type="checkbox" id="chk-perm-remessas" ${p.permitirRemessasOnline ? "checked" : ""} style="width: 18px; height: 18px;" />
               <div>
-                <strong style="color: #08264F; font-size: 0.9rem;">Permitir remessas internacionais diretas</strong>
-                <div style="color: #64748b; font-size: 0.75rem;">Permitir transferências para beneficiários no estrangeiro</div>
+                <strong>Permitir remessas internacionais diretas</strong>
+                <div class="perm-desc">Permitir transferências para beneficiários no estrangeiro</div>
               </div>
             </label>
 
-            <label style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+            <label class="perm-checkbox-item">
               <input type="checkbox" id="chk-perm-2fa-ops" ${p.exigir2faOperacoes ? "checked" : ""} style="width: 18px; height: 18px;" />
               <div>
-                <strong style="color: #08264F; font-size: 0.9rem;">Exigir 2FA para operações de valor elevado</strong>
-                <div style="color: #64748b; font-size: 0.75rem;">Solicitar confirmação TOTP para transacções superiores a 500.000 Kz</div>
+                <strong>Exigir 2FA para operações de valor elevado</strong>
+                <div class="perm-desc">Solicitar confirmação TOTP para transacções superiores a 500.000 Kz</div>
               </div>
             </label>
 
-            <label style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer;">
+            <label class="perm-checkbox-item">
               <input type="checkbox" id="chk-perm-notif-login" ${p.notificarLoginNovoDispositivo ? "checked" : ""} style="width: 18px; height: 18px;" />
               <div>
-                <strong style="color: #08264F; font-size: 0.9rem;">Notificar inícios de sessão em novos navegadores</strong>
-                <div style="color: #64748b; font-size: 0.75rem;">Receber alerta imediato de segurança quando aceder a partir de outro terminal</div>
+                <strong>Notificar inícios de sessão em novos navegadores</strong>
+                <div class="perm-desc">Receber alerta imediato de segurança quando aceder a partir de outro terminal</div>
               </div>
             </label>
 
