@@ -475,6 +475,75 @@ class ApiService {
       return { ativo: false };
     }
   }
+
+  public async aderirCartoesPortal(dados?: any): Promise<any> {
+    return this.request("/api/v1/cartoes/portal/aderir", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+  }
+
+  public async registarListaEsperaCartoes(): Promise<any> {
+    return this.request("/api/v1/cartoes/portal/aderir", {
+      method: "POST",
+      body: JSON.stringify({ listaEspera: true }),
+    });
+  }
+
+  public async listarMeusCartoes(): Promise<any[]> {
+    const res = await this.request<{ sucesso: boolean; dados: any[] }>("/api/v1/cartoes/portal/meus-cartoes");
+    return res.dados || [];
+  }
+
+  public async listarTransacoesCartao(cartaoId: string): Promise<any[]> {
+    const res = await this.request<{ sucesso: boolean; dados: any[] }>(`/api/v1/cartoes/portal/${cartaoId}/transacoes`);
+    return res.dados || [];
+  }
+
+  public async revelarDadosCartao(cartaoId: string): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>(`/api/v1/cartoes/portal/${cartaoId}/revelar-dados`, {
+      method: "POST",
+    });
+    return res.dados;
+  }
+
+  public async alterarEstadoCartaoVisa(cartaoId: string, novoEstado: string): Promise<any> {
+    return this.request("/api/v1/cartoes/portal/alterar-estado", {
+      method: "POST",
+      body: JSON.stringify({ cartaoId, novoEstado }),
+    });
+  }
+
+  public async calcularEmissaoCartao(dados: any): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>("/api/v1/cartoes/portal/calcular-emissao", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async solicitarCartaoVisa(dados?: any, extra?: any): Promise<any> {
+    return this.request("/api/v1/cartoes/portal/solicitar", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+  }
+
+  public async calcularCarregamentoCartao(dados: any): Promise<any> {
+    const res = await this.request<{ sucesso: boolean; dados: any }>("/api/v1/cartoes/portal/calcular-carregamento", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async carregarCartaoVisa(dados?: any, extra?: any): Promise<any> {
+    return this.request("/api/v1/cartoes/portal/carregar", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+  }
 }
+
 
 export const api = new ApiService();

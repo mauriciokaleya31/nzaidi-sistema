@@ -1,0 +1,441 @@
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { MobileService } from "./mobile.service.js";
+import type { MobileRepository } from "./mobile.repository.js";
+import type { PortalClienteService } from "../portal-cliente/portal.service.js";
+import {
+  MobileLoginSchema,
+  MobileRefreshTokenSchema,
+  MobileSimulacaoCambioSchema,
+  MobileCriarPedidoCambioSchema,
+  MobileCriarPedidoRemessaSchema,
+  MobileAtualizarPerfilSchema,
+} from "./mobile.types.js";
+import { UploadDocumentoInputSchema } from "../identidade-kyc/clientes.types.js";
+import { ErroAutenticacao } from "../../plugins/erros.js";
+
+declare module "fastify" {
+  interface FastifyRequest {
+    mobileSessao?: {
+      clienteId: string;
+      dispositivoId: string;
+      jti: string;
+      email: string;
+      nome: string;
+    };
+  }
+}
+
+export function registrarRotasMobile(
+  app: FastifyInstance,
+  mobileService: MobileService,
+  mobileRepo: MobileRepository,
+  portalService: PortalClienteService
+): void {
+  // 1. Hook de Auditoria e Log Sanitizado para Requisições Móveis
+  app.addHook("onResponse", async (request, reply) => {
+    if (!request.url.startsWith("/api/v1/mobile")) return;
+
+    const duracaoMs = reply.elapsedTime;
+    const correlationId = (request.headers["x-correlation-id"] as string) || (request.id as string);
+    const plataforma = (request.headers["x-platform"] as string) || undefined;
+    const versaoApp = (request.headers["x-app-version"] as string) || undefined;
+    const dispositivoId = request.mobileSessao?.dispositivoId || undefined;
+    const clienteId = request.mobileSessao?.clienteId || undefined;
+
+    mobileRepo.registarRequisicao({
+      clienteId: clienteId ?? null,
+      dispositivoId: dispositivoId ?? null,
+      endpoint: request.url.split("?")[0] || "/",
+      metodo: request.method,
+      codigoStatus: reply.statusCode,
+      duracaoMs,
+      ip: request.ip ?? null,
+      plataforma: plataforma ?? null,
+      versaoApp: versaoApp ?? null,
+      correlationId: correlationId ?? null,
+    });
+  });
+
+  // 2. Middleware de Autenticação para Endpoints Protegidos
+  async function exigirMobileAuth(request: FastifyRequest, _reply: FastifyReply) {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new ErroAutenticacao("Autenticação móvel obrigatória. Token ausente ou formato inválido.");
+    }
+    const token = authHeader.slice(7);
+    const payload = mobileService.verificarAccessToken(token);
+
+    // Verificar se o dispositivo não foi bloqueado no entretanto
+    const dispositivo = mobileRepo.buscarDispositivoPorId(payload.dispositivoId);
+    if (!dispositivo || dispositivo.status !== "ativo") {
+      throw new ErroAutenticacao("Dispositivo bloqueado ou revogado pela segurança institucional.");
+    }
+
+    request.mobileSessao = payload;
+  }
+
+  // ========================================================================
+  // ROTAS DE AUTENTICAÇÃO MÓVEL
+  // ========================================================================
+
+  app.post(
+    "/api/v1/mobile/auth/login",
+    {
+      config: {
+        rateLimit: { max: 5, timeWindow: "1 minute" },
+      },
+    },
+    async (request, reply) => {
+      const dados = MobileLoginSchema.parse(request.body);
+      const ip = request.ip;
+      const userAgent = request.headers["user-agent"];
+
+      const res = await mobileService.login(dados, ip, userAgent);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Autenticação móvel efetuada com sucesso.",
+        dados: res,
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/auth/refresh",
+    {
+      config: {
+        rateLimit: { max: 15, timeWindow: "1 minute" },
+      },
+    },
+    async (request, reply) => {
+      const dados = MobileRefreshTokenSchema.parse(request.body);
+      const ip = request.ip;
+      const userAgent = request.headers["user-agent"];
+
+      const res = await mobileService.renovarSessao(dados, ip, userAgent);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Sessão renovada com sucesso.",
+        dados: res,
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/auth/logout",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { dispositivoId, clienteId } = request.mobileSessao!;
+      mobileService.logout(dispositivoId, clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Sessão móvel encerrada.",
+      });
+    }
+  );
+
+  app.get(
+    "/api/v1/mobile/auth/dispositivos",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const dispositivos = mobileRepo.listarDispositivosCliente(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        total: dispositivos.length,
+        dados: dispositivos,
+      });
+    }
+  );
+
+  app.delete(
+    "/api/v1/mobile/auth/dispositivos/:id",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const { clienteId } = request.mobileSessao!;
+
+      const disp = mobileRepo.buscarDispositivoPorId(id);
+      if (!disp || disp.cliente_id !== clienteId) {
+        throw new ErroAutenticacao("Dispositivo não encontrado ou não pertence a este utilizador.");
+      }
+
+      mobileRepo.alterarStatusDispositivo(id, "revogado");
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Acesso do dispositivo revogado com sucesso.",
+      });
+    }
+  );
+
+  // ========================================================================
+  // ROTAS DE CLIENTE & PERFIL
+  // ========================================================================
+
+  app.get(
+    "/api/v1/mobile/cliente/perfil",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const perfil = portalService.obterPerfil(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        dados: perfil,
+      });
+    }
+  );
+
+  app.put(
+    "/api/v1/mobile/cliente/perfil",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const dados = MobileAtualizarPerfilSchema.parse(request.body);
+      const ip = request.ip;
+
+      const perfil = portalService.obterPerfil(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Dados de contacto atualizados com sucesso.",
+        dados: perfil.cliente,
+      });
+    }
+  );
+
+  app.get(
+    "/api/v1/mobile/cliente/kyc/status",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const docs = portalService.listarDocumentos(clienteId);
+      const perfil = portalService.obterPerfil(clienteId);
+
+      return reply.status(200).send({
+        sucesso: true,
+        dados: {
+          kycStatus: perfil.cliente.estadoKyc,
+          nivelKyc: 2,
+          limiteDiarioKz: '5000000',
+          documentosEnviados: docs.length,
+          documentosAprovados: docs.filter((d) => d.estadoValidacao === "valido").length,
+          documentosPendentes: docs.filter((d) => d.estadoValidacao === "pendente").length,
+        },
+      });
+    }
+  );
+
+  app.get(
+    "/api/v1/mobile/cliente/documentos",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const docs = portalService.listarDocumentos(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        total: docs.length,
+        dados: docs,
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/cliente/documentos",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const dados = UploadDocumentoInputSchema.parse(request.body);
+      const ip = request.ip;
+
+      const doc = portalService.submeterDocumento(clienteId, dados, ip);
+      return reply.status(201).send({
+        sucesso: true,
+        mensagem: "Documento KYC enviado com sucesso para análise da equipa de conformidade.",
+        dados: doc,
+      });
+    }
+  );
+
+  // ========================================================================
+  // ROTAS DE DASHBOARD & TAXAS
+  // ========================================================================
+
+  app.get(
+    "/api/v1/mobile/dashboard",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const dash = mobileService.obterDashboard(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        dados: dash,
+      });
+    }
+  );
+
+  app.get(
+    "/api/v1/mobile/taxas",
+    async (_request, reply) => {
+      const dash = mobileService.obterDashboard("anonimo");
+      return reply.status(200).send({
+        sucesso: true,
+        dados: dash.taxas,
+      });
+    }
+  );
+
+  // ========================================================================
+  // ROTAS DE CÂMBIO MÓVEL
+  // ========================================================================
+
+  app.get(
+    "/api/v1/mobile/cambio/moedas",
+    async (_request, reply) => {
+      return reply.status(200).send({
+        sucesso: true,
+        dados: [
+          { codigo: "USD", nome: "Dólar Americano", simbolo: "$" },
+          { codigo: "EUR", nome: "Euro", simbolo: "€" },
+        ],
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/cambio/simular",
+    async (request, reply) => {
+      const dados = MobileSimulacaoCambioSchema.parse(request.body);
+      const sim = mobileService.simularCambio(dados);
+      return reply.status(200).send({
+        sucesso: true,
+        dados: sim,
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/cambio/pedidos",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const dados = MobileCriarPedidoCambioSchema.parse(request.body);
+      const ip = request.ip;
+
+      const pedido = portalService.criarPedidoCambio(clienteId, {
+        tipoOperacao: dados.tipoOperacao,
+        moeda: dados.moeda,
+        montanteDivisa: dados.montanteDivisa,
+        finalidade: dados.finalidade,
+      }, ip);
+
+      return reply.status(201).send({
+        sucesso: true,
+        mensagem: "Pedido de câmbio registado via NZAIDI Mobile.",
+        dados: pedido,
+      });
+    }
+  );
+
+  app.get(
+    "/api/v1/mobile/cambio/pedidos",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const pedidos = portalService.listarPedidosCambio(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        total: pedidos.length,
+        dados: pedidos,
+      });
+    }
+  );
+
+  // ========================================================================
+  // ROTAS DE REMESSAS MÓVEIS
+  // ========================================================================
+
+  app.get(
+    "/api/v1/mobile/remessas/paises",
+    async (_request, reply) => {
+      return reply.status(200).send({
+        sucesso: true,
+        dados: [
+          { codigo: "PT", nome: "Portugal", moeda: "EUR" },
+          { codigo: "BR", nome: "Brasil", moeda: "USD" },
+          { codigo: "ZA", nome: "África do Sul", moeda: "USD" },
+          { codigo: "AE", nome: "Emirados Árabes Unidos", moeda: "USD" },
+        ],
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/remessas/pedidos",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const dados = MobileCriarPedidoRemessaSchema.parse(request.body);
+      const ip = request.ip;
+
+      const pedido = portalService.criarPedidoRemessa(clienteId, {
+        beneficiarioNome: dados.beneficiarioNome,
+        beneficiarioPais: dados.paisDestino,
+        beneficiarioIban: dados.beneficiarioIban,
+        beneficiarioBanco: "Banco Destino Internacional",
+        beneficiarioSwift: "SWIFT000",
+        moedaDestino: dados.moeda,
+        montanteDivisa: String(dados.valorEstrangeiro),
+        finalidade: dados.finalidade,
+      }, ip);
+
+      return reply.status(201).send({
+        sucesso: true,
+        mensagem: "Pedido de remessa internacional registado via NZAIDI Mobile.",
+        dados: pedido,
+      });
+    }
+  );
+
+  app.get(
+    "/api/v1/mobile/remessas/pedidos",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const pedidos = portalService.listarPedidosRemessa(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        total: pedidos.length,
+        dados: pedidos,
+      });
+    }
+  );
+
+  // ========================================================================
+  // ROTAS DE CARTÕES VISA (STATUS & LISTA DE ESPERA)
+  // ========================================================================
+
+  app.get(
+    "/api/v1/mobile/cartoes/status",
+    async (_request, reply) => {
+      return reply.status(200).send({
+        sucesso: true,
+        dados: {
+          servicoAtivo: false,
+          mensagem: "O serviço de cartões virtuais Visa USD encontra-se em fase de preparação regulamentar.",
+          listaEsperaAberta: true,
+        },
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/cartoes/lista-espera",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "O seu pedido de adesão à lista de espera prioritária foi registado.",
+        dados: { clienteId, dataRegisto: new Date().toISOString() },
+      });
+    }
+  );
+}

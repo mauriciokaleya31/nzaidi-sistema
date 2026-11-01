@@ -130,7 +130,7 @@ export function renderPerfilView(container: HTMLElement, onLogout: () => void): 
             entidadeEmpregadora,
           });
 
-          await authState.carregarPerfil();
+          await authState.recarregarPerfil();
           modoEdicao = false;
           mensagemSucesso = TEXTOS.sucessos.alteracoesGuardadas;
         } catch (err: any) {

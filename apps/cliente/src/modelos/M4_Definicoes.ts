@@ -15,7 +15,7 @@ export interface M4Config {
 }
 
 export function renderizarM4Definicoes(config: M4Config): string {
-  const secaoAtiva = config.secoes.find((s) => s.id === config.secaoAtivaId) || config.secoes[0];
+  const secaoAtiva = config.secoes.find((s) => s.id === config.secaoAtivaId) ?? config.secoes[0] ?? { id: "", rotulo: "", icone: "conta" as const, renderizar: () => "" };
 
   return `
     <div class="m4-definicoes-container">

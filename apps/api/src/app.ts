@@ -62,6 +62,11 @@ import { registrarRotasCartoes } from "./modules/cartoes-strowallet/cartoes.rout
 import { registrarRotasBna } from "./modules/reportes-bna/bna.routes.js";
 import { registrarRotasRemessas } from "./modules/remessas/remessas.routes.js";
 
+import { MobileRepository } from "./modules/mobile/mobile.repository.js";
+import { MobileService } from "./modules/mobile/mobile.service.js";
+import { registrarRotasMobile } from "./modules/mobile/mobile.routes.js";
+import { registrarRotasMobileAdmin } from "./modules/mobile/mobile-admin.routes.js";
+
 export interface CriarAppOpcoes {
   db: DatabaseSync;
   env?: Env;
@@ -209,6 +214,21 @@ export async function criarApp(opcoes: CriarAppOpcoes): Promise<FastifyInstance>
   // Módulos da Prioridade 1 (Reportes BNA e Remessas Internacionais)
   registrarRotasBna(app, bnaService);
   registrarRotasRemessas(app, remessasService);
+
+  // Módulo NZAIDI Mobile & Gestão de Aplicações
+  const mobileRepo = new MobileRepository(db);
+  const mobileService = new MobileService(
+    db,
+    mobileRepo,
+    clientesRepo,
+    documentosService,
+    taxasService,
+    auditoriaRepo,
+    env.COOKIE_SECRET || "nzaidi-mobile-jwt-secret-default-key-2026"
+  );
+  registrarRotasMobile(app, mobileService, mobileRepo, portalService);
+  registrarRotasMobileAdmin(app, mobileRepo, mobileService, auditoriaRepo, db);
+
 
   // 6. Ao arrancar o servidor, recupera dias passados sem reporte BNA
   if (env.NODE_ENV !== "test") {

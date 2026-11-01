@@ -25,6 +25,7 @@ import { renderCartoesView } from "./views/cartoes.view.js";
 import { renderizarOperacoes } from "./views/operacoes.view.js";
 import { renderizarBna } from "./views/bna.view.js";
 import { renderizarRemessas } from "./views/remessas.view.js";
+import { renderizarApiGestao } from "./views/api-gestao.view.js";
 
 const appRoot = document.getElementById("app");
 
@@ -235,7 +236,17 @@ async function renderizarAplicacao(): Promise<void> {
         await renderizarNotificacoes(viewContainer);
         break;
 
-      case "#perfil":
+            case "#api-gestao":
+      case "#api-gestao/monitorizacao":
+      case "#api-gestao/requisicoes":
+      case "#api-gestao/dispositivos":
+      case "#api-gestao/operacoes":
+      case "#api-gestao/saude":
+      case "#api-gestao/config":
+        renderizarApiGestao(viewContainer);
+        break;
+
+case "#perfil":
         await renderizarPerfil(viewContainer);
         break;
 

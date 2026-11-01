@@ -420,9 +420,10 @@ function inicializarConversorCambio() {
     btnContinuar.textContent = "A processar pedido...";
     try {
       await api.criarPedidoCambio({
-        tipo: operacaoCambio === "comprar" ? "COMPRA" : "VENDA",
-        moedaEstrangeira: divisa,
-        valorEstrangeiro: operacaoCambio === "comprar" ? lerValor(receboInput.value) : valor,
+        tipoOperacao: operacaoCambio === "comprar" ? "compra" : "venda",
+        moeda: divisa as "USD" | "EUR",
+        montanteDivisa: String(operacaoCambio === "comprar" ? lerValor(receboInput.value) : valor),
+        finalidade: "Operação cambial online",
         metodoPagamento: "MULTICAIXA_EXPRESS",
       });
       alert("Pedido de câmbio registado com sucesso! Acompanhe o estado no seu histórico.");
@@ -455,14 +456,9 @@ function inicializarUploadDocumentos() {
     if (textoLargar) textoLargar.textContent = `A enviar: ${f.name}...`;
     const leitor = new FileReader();
     leitor.onload = async () => {
-      const base64 = (leitor.result as string).split(",")[1];
+      const base64: string = (leitor.result as string).split(",")[1] ?? "";
       try {
-        await api.submeterDocumento({
-          tipoDocumento: "BI",
-          nomeArquivo: f.name,
-          mimeType: f.type || "application/pdf",
-          arquivoBase64: base64,
-        });
+        await api.submeterDocumento("BI", f.name || "documento.pdf", base64);
         if (textoLargar) textoLargar.textContent = `Enviado com sucesso: ${f.name}`;
         alert("Documento submetido para validação da equipa de conformidade!");
       } catch (err: any) {

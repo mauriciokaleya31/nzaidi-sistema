@@ -1,0 +1,349 @@
+openapi: 3.1.0
+info:
+  title: NZAIDI Mobile API
+  version: 1.0.0
+  description: >
+    API REST oficial da NZAIDI – Casa de Câmbios & Transferência, Lda.
+    Dedicada à aplicação móvel Android e iOS para clientes em Angola.
+servers:
+  - url: https://homologacao.nzaidi.ao/api/v1/mobile
+    description: Servidor de Homologação / Testes
+  - url: https://app.nzaidi.ao/api/v1/mobile
+    description: Servidor de Produção Oficial (Luanda)
+
+paths:
+  /auth/login:
+    post:
+      summary: Login de Cliente e Registro de Dispositivo
+      description: Autentica o cliente, valida versão mínima da app e emite par de tokens JWT e refresh token rotativo.
+      operationId: mobileLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileLoginInput'
+      responses:
+        '200':
+          description: Autenticação bem-sucedida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileAuthResponse'
+        '401':
+          description: Credenciais incorretas ou conta suspensa
+        '422':
+          description: Versão da aplicação desatualizada
+
+  /auth/refresh:
+    post:
+      summary: Rotação de Sessão (Refresh Token)
+      description: Invalida o refresh token anterior e gera um novo par de tokens. Proteção contra furto e reúso malicioso.
+      operationId: mobileRefreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileRefreshInput'
+      responses:
+        '200':
+          description: Sessão renovada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokens'
+        '401':
+          description: Token inválido, expirado ou detecção de reúso
+
+  /auth/logout:
+    post:
+      summary: Encerramento de Sessão Local
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sessão encerrada e refresh token revogado
+
+  /auth/logout-global:
+    post:
+      summary: Encerramento Global de Sessões
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Todas as sessões em todos os dispositivos revogadas
+
+  /cliente/perfil:
+    get:
+      summary: Obter Perfil Completo do Cliente
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Dados do perfil e compliance
+    put:
+      summary: Atualizar Dados de Contacto
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileAtualizarPerfilInput'
+      responses:
+        '200':
+          description: Perfil atualizado
+
+  /cliente/kyc/status:
+    get:
+      summary: Estado KYC e Limites Regulamentares
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Estado da verificação e limites BNA
+
+  /dashboard:
+    get:
+      summary: Dashboard Unificado da Aplicação Móvel
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cotações oficiais, saldo/limites e operações pendentes
+
+  /taxas:
+    get:
+      summary: Cotações Oficiais em Tempo Real
+      responses:
+        '200':
+          description: Lista de taxas de compra e venda USD e EUR
+
+  /cambio/simular:
+    post:
+      summary: Simulação de Conversão Cambial
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimularCambioInput'
+      responses:
+        '200':
+          description: Montante estimado e cotação congelada por 90s
+
+  /cambio/pedidos:
+    get:
+      summary: Listar Pedidos de Câmbio
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Histórico de pedidos
+    post:
+      summary: Criar Pedido de Câmbio
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarPedidoCambioInput'
+      responses:
+        '201':
+          description: Pedido registado para processamento
+
+  /remessas/pedidos:
+    get:
+      summary: Listar Pedidos de Remessa
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Histórico de remessas
+    post:
+      summary: Criar Pedido de Remessa Internacional
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarPedidoRemessaInput'
+      responses:
+        '201':
+          description: Pedido de remessa registado
+
+  /cartoes:
+    get:
+      summary: Consultar Cartões Visa e Lista de Espera
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cartões activos e dados de fila de espera
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MobileLoginInput:
+      type: object
+      required:
+        - email
+        - senha
+        - deviceId
+        - plataforma
+        - nomeDispositivo
+      properties:
+        email:
+          type: string
+          format: email
+        senha:
+          type: string
+        deviceId:
+          type: string
+        plataforma:
+          type: string
+          enum: [android, ios]
+        nomeDispositivo:
+          type: string
+        versaoSo:
+          type: string
+        versaoApp:
+          type: string
+        tokenPush:
+          type: string
+
+    MobileRefreshInput:
+      type: object
+      required:
+        - refreshToken
+        - deviceId
+      properties:
+        refreshToken:
+          type: string
+        deviceId:
+          type: string
+
+    MobileTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+        expiraEmSegundos:
+          type: integer
+          example: 900
+
+    MobileAuthResponse:
+      type: object
+      properties:
+        sucesso:
+          type: boolean
+        mensagem:
+          type: string
+        dados:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            tokenType:
+              type: string
+            expiraEmSegundos:
+              type: integer
+            cliente:
+              type: object
+            dispositivo:
+              type: object
+
+    MobileAtualizarPerfilInput:
+      type: object
+      properties:
+        telefone:
+          type: string
+        morada:
+          type: string
+        profissao:
+          type: string
+        entidadeEmpregadora:
+          type: string
+
+    SimularCambioInput:
+      type: object
+      required:
+        - tipoOperacao
+        - moeda
+        - montante
+      properties:
+        tipoOperacao:
+          type: string
+          enum: [compra, venda]
+        moeda:
+          type: string
+          enum: [USD, EUR]
+        montante:
+          type: string
+
+    CriarPedidoCambioInput:
+      type: object
+      required:
+        - tipoOperacao
+        - moeda
+        - montanteDivisa
+        - finalidade
+      properties:
+        tipoOperacao:
+          type: string
+          enum: [compra, venda]
+        moeda:
+          type: string
+          enum: [USD, EUR]
+        montanteDivisa:
+          type: string
+        metodoPagamento:
+          type: string
+        finalidade:
+          type: string
+
+    CriarPedidoRemessaInput:
+      type: object
+      required:
+        - beneficiarioNome
+        - beneficiarioPais
+        - beneficiarioIban
+        - beneficiarioBanco
+        - moedaDestino
+        - montanteDivisa
+        - finalidade
+      properties:
+        beneficiarioNome:
+          type: string
+        beneficiarioPais:
+          type: string
+        beneficiarioIban:
+          type: string
+        beneficiarioBanco:
+          type: string
+        beneficiarioSwift:
+          type: string
+        moedaDestino:
+          type: string
+          enum: [USD, EUR]
+        montanteDivisa:
+          type: string
+        finalidade:
+          type: string

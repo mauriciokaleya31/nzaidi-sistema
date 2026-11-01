@@ -1384,6 +1384,81 @@ export class AdminApiClient {
     });
     return res;
   }
+
+  // ========================================================================
+  // MÓDULO GESTÃO DE API E APLICAÇÃO MÓVEL
+  // ========================================================================
+
+  public async obterMobileDashboard(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/dashboard");
+    return res.dados;
+  }
+
+  public async listarMobileRequisicoes(filtros?: {
+    limite?: number | undefined;
+    offset?: number | undefined;
+    endpoint?: string | undefined;
+    metodo?: string | undefined;
+    codigoStatus?: number | undefined;
+    plataforma?: string | undefined;
+  }): Promise<{ total: number; dados: any[] }> {
+    const params = new URLSearchParams();
+    if (filtros?.limite) params.append("limite", String(filtros.limite));
+    if (filtros?.offset) params.append("offset", String(filtros.offset));
+    if (filtros?.endpoint) params.append("endpoint", filtros.endpoint);
+    if (filtros?.metodo) params.append("metodo", filtros.metodo);
+    if (filtros?.codigoStatus) params.append("codigoStatus", String(filtros.codigoStatus));
+    if (filtros?.plataforma) params.append("plataforma", filtros.plataforma);
+
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    const res = await this.requisitar<{ sucesso: boolean; total: number; dados: any[] }>(`/api/v1/admin/mobile/requisicoes${qs}`);
+    return { total: res.total, dados: res.dados || [] };
+  }
+
+  public async listarMobileDispositivos(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/dispositivos");
+    return res.dados || [];
+  }
+
+  public async bloquearMobileDispositivo(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/admin/mobile/dispositivos/${id}/bloquear`, {
+      method: "POST",
+    });
+  }
+
+  public async revogarMobileDispositivo(id: string): Promise<void> {
+    await this.requisitar(`/api/v1/admin/mobile/dispositivos/${id}/revogar`, {
+      method: "POST",
+    });
+  }
+
+  public async obterMobileOperacoes(): Promise<{ cambios: any[]; remessas: any[] }> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/operacoes");
+    return res.dados || { cambios: [], remessas: [] };
+  }
+
+  public async obterMobileSaudeServicos(): Promise<Record<string, any>> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: Record<string, any> }>("/api/v1/admin/mobile/saude");
+    return res.dados || {};
+  }
+
+  public async obterMobileConfig(): Promise<Record<string, string>> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: Record<string, string> }>("/api/v1/admin/mobile/config");
+    return res.dados || {};
+  }
+
+  public async atualizarMobileConfig(config: Record<string, string>): Promise<void> {
+    await this.requisitar("/api/v1/admin/mobile/config", {
+      method: "PUT",
+      body: JSON.stringify(config),
+    });
+  }
+
+  public async listarMobileAlertas(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/alertas");
+    return res.dados || [];
+  }
+
 }
 
 export const api = new AdminApiClient();

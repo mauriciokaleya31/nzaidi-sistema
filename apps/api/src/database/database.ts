@@ -1247,6 +1247,104 @@ export function inicializarSchema(db: DatabaseSync): void {
       FOREIGN KEY (cliente_remetente_id) REFERENCES clientes(id),
       FOREIGN KEY (caixa_id) REFERENCES caixas(id)
     );
+
+    -- ========================================================================
+    -- MÓDULO NZAIDI MOBILE & GESTÃO DE APLICAÇÕES
+    -- ========================================================================
+
+    CREATE TABLE IF NOT EXISTS dispositivos_moveis (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      device_id TEXT NOT NULL,
+      nome_dispositivo TEXT NOT NULL,
+      plataforma TEXT NOT NULL CHECK(plataforma IN ('android', 'ios')),
+      versao_so TEXT NOT NULL,
+      versao_app TEXT NOT NULL,
+      token_push TEXT,
+      status TEXT NOT NULL DEFAULT 'ativo' CHECK(status IN ('ativo', 'bloqueado', 'revogado')),
+      ultimo_ip TEXT,
+      ultimo_acesso TEXT NOT NULL,
+      criado_em TEXT NOT NULL,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+      UNIQUE(cliente_id, device_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_disp_moveis_cliente ON dispositivos_moveis(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_disp_moveis_status ON dispositivos_moveis(status);
+    CREATE INDEX IF NOT EXISTS idx_disp_moveis_device ON dispositivos_moveis(device_id);
+
+    CREATE TABLE IF NOT EXISTS sessoes_mobile (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT NOT NULL,
+      dispositivo_id TEXT NOT NULL,
+      access_token_jti TEXT NOT NULL UNIQUE,
+      refresh_token_hash TEXT NOT NULL UNIQUE,
+      expira_em TEXT NOT NULL,
+      revogado_em TEXT,
+      ip TEXT,
+      user_agent TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+      FOREIGN KEY (dispositivo_id) REFERENCES dispositivos_moveis(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_sessoes_mobile_cliente ON sessoes_mobile(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_sessoes_mobile_disp ON sessoes_mobile(dispositivo_id);
+    CREATE INDEX IF NOT EXISTS idx_sessoes_mobile_refresh ON sessoes_mobile(refresh_token_hash);
+
+    CREATE TABLE IF NOT EXISTS api_requisicoes_log (
+      id TEXT PRIMARY KEY,
+      cliente_id TEXT,
+      dispositivo_id TEXT,
+      endpoint TEXT NOT NULL,
+      metodo TEXT NOT NULL,
+      codigo_status INTEGER NOT NULL,
+      duracao_ms REAL NOT NULL,
+      ip TEXT,
+      plataforma TEXT,
+      versao_app TEXT,
+      correlation_id TEXT,
+      erro_mensagem TEXT,
+      criado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE SET NULL,
+      FOREIGN KEY (dispositivo_id) REFERENCES dispositivos_moveis(id) ON DELETE SET NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_api_log_criado ON api_requisicoes_log(criado_em);
+    CREATE INDEX IF NOT EXISTS idx_api_log_status ON api_requisicoes_log(codigo_status);
+    CREATE INDEX IF NOT EXISTS idx_api_log_endpoint ON api_requisicoes_log(endpoint);
+    CREATE INDEX IF NOT EXISTS idx_api_log_disp ON api_requisicoes_log(dispositivo_id);
+
+    CREATE TABLE IF NOT EXISTS mobile_config (
+      chave TEXT PRIMARY KEY,
+      valor TEXT NOT NULL,
+      descricao TEXT,
+      atualizado_em TEXT NOT NULL,
+      atualizado_por TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS mobile_alertas (
+      id TEXT PRIMARY KEY,
+      tipo TEXT NOT NULL,
+      titulo TEXT NOT NULL,
+      mensagem TEXT NOT NULL,
+      severidade TEXT NOT NULL CHECK(severidade IN ('info', 'aviso', 'erro', 'critico')),
+      resolvido INTEGER NOT NULL DEFAULT 0,
+      criado_em TEXT NOT NULL,
+      resolvido_em TEXT,
+      resolvido_por TEXT
+    );
+
+    -- Configurações iniciais da API Mobile
+    INSERT OR IGNORE INTO mobile_config (chave, valor, descricao, atualizado_em, atualizado_por) VALUES
+      ('acesso_movel_ativo', 'true', 'Controlo de disponibilidade global da API móvel', datetime('now'), 'sistema'),
+      ('versao_minima_android', '1.0.0', 'Versão mínima obrigatória da app Android', datetime('now'), 'sistema'),
+      ('versao_minima_ios', '1.0.0', 'Versão mínima obrigatória da app iOS', datetime('now'), 'sistema'),
+      ('rate_limit_por_minuto', '60', 'Limite máximo de requisições por dispositivo por minuto', datetime('now'), 'sistema'),
+      ('tempo_expiracao_access_minutos', '15', 'TTL do Access Token móvel em minutos', datetime('now'), 'sistema'),
+      ('tempo_expiracao_refresh_dias', '30', 'TTL do Refresh Token rotativo em dias', datetime('now'), 'sistema');
+
     CREATE INDEX IF NOT EXISTS idx_remessas_remetente ON remessas(cliente_remetente_id);
     CREATE INDEX IF NOT EXISTS idx_remessas_estado ON remessas(estado);
     CREATE INDEX IF NOT EXISTS idx_remessas_criado_em ON remessas(criado_em);
