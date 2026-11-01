@@ -505,4 +505,77 @@ export function registrarRotasMobile(
       });
     }
   );
+
+  // ========================================================================
+  // ROTAS DE NOTIFICAÇÕES E PUSH TOKENS (FCM / APNs)
+  // ========================================================================
+
+  app.get(
+    "/api/v1/mobile/notificacoes",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const notificacoes = mobileRepo.listarNotificacoes(clienteId);
+      const totalNaoLidas = mobileRepo.contarNotificacoesNaoLidas(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        naoLidas: totalNaoLidas,
+        total: notificacoes.length,
+        dados: notificacoes,
+      });
+    }
+  );
+
+  app.patch(
+    "/api/v1/mobile/notificacoes/:id/lida",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const { id } = request.params as { id: string };
+      mobileRepo.marcarNotificacaoLida(id, clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Notificação marcada como lida.",
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/notificacoes/ler-todas",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      mobileRepo.marcarTodasNotificacoesLidas(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Todas as notificações foram marcadas como lidas.",
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/mobile/dispositivos/push-token",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { dispositivoId } = request.mobileSessao!;
+      const body = (request.body as { pushToken?: string; token?: string }) || {};
+      const token = body.pushToken || body.token || (request.headers["x-push-token"] as string);
+
+      if (!token) {
+        return reply.status(400).send({
+          sucesso: false,
+          erro: "pushToken é obrigatório no corpo do pedido ou no cabeçalho x-push-token.",
+          codigo: "PUSH_TOKEN_OBRIGATORIO",
+        });
+      }
+
+      mobileRepo.atualizarPushToken(dispositivoId, token);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Token de notificação push (FCM/APNs) atualizado com sucesso.",
+        dados: { dispositivoId, atualizadoEm: new Date().toISOString() },
+      });
+    }
+  );
+
 }

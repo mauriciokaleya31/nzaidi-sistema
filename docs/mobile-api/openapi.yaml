@@ -1,22 +1,36 @@
 openapi: 3.1.0
 info:
   title: NZAIDI Mobile API
-  version: 1.0.0
+  version: 1.1.0
   description: >
     API REST oficial da NZAIDI – Casa de Câmbios & Transferência, Lda.
-    Dedicada à aplicação móvel Android e iOS para clientes em Angola.
+    Desenvolvida para integração da aplicação móvel oficial (Android e iOS).
+    Supervisionada pelo Banco Nacional de Angola (BNA).
 servers:
-  - url: https://homologacao.nzaidi.ao/api/v1/mobile
-    description: Servidor de Homologação / Testes
+  - url: https://homolog-api.nzaidi.ao/api/v1/mobile
+    description: Servidor de Homologação / Testes (Ambiente Seguro)
+  - url: http://127.0.0.1:3000/api/v1/mobile
+    description: Desenvolvimento Local (Desktop / Testes Locais)
+  
   - url: https://app.nzaidi.ao/api/v1/mobile
     description: Servidor de Produção Oficial (Luanda)
 
 paths:
   /auth/login:
     post:
-      summary: Login de Cliente e Registro de Dispositivo
-      description: Autentica o cliente, valida versão mínima da app e emite par de tokens JWT e refresh token rotativo.
+      summary: Login de Cliente e Registo de Dispositivo
+      description: >
+        Autentica o cliente via e-mail e palavra-passe, regista o telemóvel na base de dados,
+        valida bloqueios institucionais de segurança e emite o par Access Token JWT e Refresh Token rotativo.
       operationId: mobileLogin
+      parameters:
+        - $ref: '#/components/parameters/HeaderDeviceId'
+        - $ref: '#/components/parameters/HeaderPlatform'
+        - $ref: '#/components/parameters/HeaderAppVersion'
+        - $ref: '#/components/parameters/HeaderOsVersion'
+        - $ref: '#/components/parameters/HeaderDeviceName'
+        - $ref: '#/components/parameters/HeaderPushToken'
+        - $ref: '#/components/parameters/HeaderCorrelationId'
       requestBody:
         required: true
         content:
@@ -31,15 +45,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/MobileAuthResponse'
         '401':
-          description: Credenciais incorretas ou conta suspensa
-        '422':
-          description: Versão da aplicação desatualizada
+          description: Credenciais inválidas ou conta suspensa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroPadrao'
+        '429':
+          description: Limite de tentativas excedido (Rate limit)
 
   /auth/refresh:
     post:
-      summary: Rotação de Sessão (Refresh Token)
-      description: Invalida o refresh token anterior e gera um novo par de tokens. Proteção contra furto e reúso malicioso.
+      summary: Renovação Atómica de Sessão (Refresh Token Rotativo)
+      description: >
+        Invalida imediatamente o refresh token fornecido (prevenindo reúso e roubo de sessão)
+        e emite um novo par de tokens.
       operationId: mobileRefreshToken
+      parameters:
+        - $ref: '#/components/parameters/HeaderDeviceId'
+        - $ref: '#/components/parameters/HeaderPlatform'
+        - $ref: '#/components/parameters/HeaderAppVersion'
       requestBody:
         required: true
         content:
@@ -52,32 +76,44 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MobileTokens'
+                $ref: '#/components/schemas/MobileRefreshResponse'
         '401':
-          description: Token inválido, expirado ou detecção de reúso
+          description: Refresh token expirado, inválido ou já revogado
 
   /auth/logout:
     post:
-      summary: Encerramento de Sessão Local
+      summary: Terminar Sessão no Dispositivo Atual
+      description: Revoga a sessão móvel activa no dispositivo actual.
+      operationId: mobileLogout
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Sessão encerrada e refresh token revogado
+          description: Sessão terminada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaSucesso'
 
   /auth/logout-global:
     post:
-      summary: Encerramento Global de Sessões
+      summary: Terminar Todas as Sessões Móveis
+      description: Encerra todas as sessões em todos os dispositivos do cliente simultaneamente.
+      operationId: mobileLogoutGlobal
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Todas as sessões em todos os dispositivos revogadas
+          description: Todas as sessões revogadas com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RespostaSucesso'
 
   /auth/recuperar-senha:
     post:
-      summary: Solicitar Recuperação de Palavra-Passe
-      description: Envia código OTP de 6 dígitos para o e-mail cadastrado.
+      summary: Solicitar Código OTP para Recuperação de Palavra-Passe
+      description: Gera e envia um código numérico de 6 dígitos para o e-mail cadastrado.
       operationId: mobileRecuperarSenha
       requestBody:
         required: true
@@ -90,14 +126,15 @@ paths:
                 email:
                   type: string
                   format: email
+                  example: cliente.exemplo@nzaidi.ao
       responses:
         '200':
-          description: Instruções e OTP despachados
+          description: Código OTP gerado e despachado
 
   /auth/redefinir-senha:
     post:
       summary: Redefinir Palavra-Passe com OTP
-      description: Valida o código OTP e define uma nova senha forte, invalidando todas as sessões ativas.
+      description: Valida o código OTP e actualiza a palavra-passe do cliente.
       operationId: mobileRedefinirSenha
       requestBody:
         required: true
@@ -112,29 +149,31 @@ paths:
                   format: email
                 codigoOtp:
                   type: string
-                  minLength: 6
-                  maxLength: 6
+                  example: "123456"
                 novaSenha:
                   type: string
                   minLength: 8
+                  example: "NovaSenhaForte@2026"
       responses:
         '200':
-          description: Palavra-passe atualizada com sucesso
-        '400':
-          description: Código inválido ou expirado
+          description: Palavra-passe redefinida com sucesso
 
   /auth/dispositivos:
     get:
-      summary: Listar Dispositivos Registados do Cliente
+      summary: Listar Dispositivos Autorizados do Cliente
+      description: Devolve a lista de telemóveis Android e iOS associados à conta do cliente.
+      operationId: mobileListarDispositivos
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Lista de telemóveis Android e iOS associados
+          description: Lista de dispositivos recuperada
 
   /auth/dispositivos/{id}:
     delete:
       summary: Revogar Acesso de um Dispositivo
+      description: Bloqueia e revoga o acesso de um telemóvel específico do cliente.
+      operationId: mobileRevogarDispositivo
       security:
         - BearerAuth: []
       parameters:
@@ -147,55 +186,122 @@ paths:
         '200':
           description: Dispositivo revogado com sucesso
 
+  /dispositivos/push-token:
+    post:
+      summary: Atualizar Token Push (FCM / APNs)
+      description: Permite ao aplicativo móvel registar ou renovar o token de notificações push.
+      operationId: mobileAtualizarPushToken
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pushToken]
+              properties:
+                pushToken:
+                  type: string
+                  example: "fcm_token_ou_apns_device_token_aqui"
+      responses:
+        '200':
+          description: Token push actualizado com sucesso
+
   /cliente/perfil:
     get:
-      summary: Obter Perfil Completo do Cliente
+      summary: Consultar Perfil Cadastral e Estatísticas
+      operationId: mobileConsultarPerfil
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Dados do perfil e compliance
+          description: Dados cadastrais completos
     put:
-      summary: Atualizar Dados de Contacto
+      summary: Actualizar Dados Pessoais Permitidos
+      operationId: mobileAtualizarPerfil
       security:
         - BearerAuth: []
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/MobileAtualizarPerfilInput'
       responses:
         '200':
-          description: Perfil atualizado
+          description: Perfil actualizado com sucesso
 
   /cliente/kyc/status:
     get:
-      summary: Estado KYC e Limites Regulamentares
+      summary: Consultar Estado de Verificação KYC e Limites
+      operationId: mobileConsultarKycStatus
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Estado da verificação e limites BNA
+          description: Nível KYC, limites diários/anuais e estado da conta
+
+  /cliente/documentos:
+    get:
+      summary: Listar Documentos KYC Submetidos
+      operationId: mobileListarDocumentos
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Histórico de documentos e parecer de validação
+    post:
+      summary: Carregar Documento de Identificação Oficial
+      description: >
+        Suporta envio via JSON com arquivoBase64 ou Multipart.
+        Formatos aceites: PDF, PNG, JPEG. Limite estrito de 5 MB com validação de magic bytes.
+      operationId: mobileCarregarDocumento
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarregarDocumentoInput'
+      responses:
+        '201':
+          description: Documento submetido para validação de conformidade
 
   /dashboard:
     get:
-      summary: Dashboard Unificado da Aplicação Móvel
+      summary: Dashboard Inicial Consolidado
+      description: Informação agregada para a página principal da app (taxas, estado KYC, atalhos, anúncios).
+      operationId: mobileObterDashboard
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Cotações oficiais, saldo/limites e operações pendentes
+          description: Dados consolidados do dashboard
 
   /taxas:
     get:
-      summary: Cotações Oficiais em Tempo Real
+      summary: Consultar Taxas de Câmbio Oficiais em Tempo Real
+      description: Taxas de compra, venda e referência do BNA para USD e EUR com moeda base AOA.
+      operationId: mobileObterTaxas
       responses:
         '200':
-          description: Lista de taxas de compra e venda USD e EUR
+          description: Cotações oficiais e carimbo de actualização
+
+  /cambio/moedas:
+    get:
+      summary: Moedas Disponíveis para Operação
+      operationId: mobileListarMoedas
+      responses:
+        '200':
+          description: Lista de moedas autorizadas (USD, EUR, AOA)
 
   /cambio/simular:
     post:
-      summary: Simulação de Conversão Cambial
+      summary: Simulação Instantânea de Câmbio
+      description: Calcula o contravalor e limites sem gravar na base de dados.
+      operationId: mobileSimularCambio
       requestBody:
         required: true
         content:
@@ -204,18 +310,20 @@ paths:
               $ref: '#/components/schemas/SimularCambioInput'
       responses:
         '200':
-          description: Montante estimado e cotação congelada por 90s
+          description: Cálculo de simulação com taxa garantida
 
   /cambio/pedidos:
     get:
-      summary: Listar Pedidos de Câmbio
+      summary: Listar Pedidos de Câmbio do Cliente
+      operationId: mobileListarPedidosCambio
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Histórico de pedidos
+          description: Histórico de pedidos cambiais
     post:
-      summary: Criar Pedido de Câmbio
+      summary: Registar Pedido de Câmbio
+      operationId: mobileCriarPedidoCambio
       security:
         - BearerAuth: []
       requestBody:
@@ -226,18 +334,28 @@ paths:
               $ref: '#/components/schemas/CriarPedidoCambioInput'
       responses:
         '201':
-          description: Pedido registado para processamento
+          description: Pedido de câmbio registado com sucesso
+
+  /remessas/paises:
+    get:
+      summary: Listar Países e Corredores de Remessas
+      operationId: mobileListarPaisesRemessas
+      responses:
+        '200':
+          description: Países habilitados e respetivas moedas de entrega
 
   /remessas/pedidos:
     get:
-      summary: Listar Pedidos de Remessa
+      summary: Listar Pedidos de Remessa Internacional
+      operationId: mobileListarPedidosRemessa
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Histórico de remessas
+          description: Histórico de transferências para o exterior
     post:
-      summary: Criar Pedido de Remessa Internacional
+      summary: Registar Pedido de Remessa Internacional
+      operationId: mobileCriarPedidoRemessa
       security:
         - BearerAuth: []
       requestBody:
@@ -248,16 +366,71 @@ paths:
               $ref: '#/components/schemas/CriarPedidoRemessaInput'
       responses:
         '201':
-          description: Pedido de remessa registado
+          description: Pedido de remessa registado com sucesso
 
   /cartoes:
     get:
-      summary: Consultar Cartões Visa e Lista de Espera
+      summary: Consultar Cartões Visa e Estado da Fila
+      operationId: mobileConsultarCartoes
       security:
         - BearerAuth: []
       responses:
         '200':
-          description: Cartões activos e dados de fila de espera
+          description: Estado do serviço de cartões virtuais
+
+  /cartoes/status:
+    get:
+      summary: Estado Geral do Serviço de Cartões Visa
+      operationId: mobileConsultarStatusCartoes
+      responses:
+        '200':
+          description: Informação sobre preparação do serviço StroWallet
+
+  /cartoes/lista-espera:
+    post:
+      summary: Aderir à Lista de Espera de Cartões Visa
+      operationId: mobileAderirListaEsperaCartoes
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Adesão confirmada
+
+  /notificacoes:
+    get:
+      summary: Listar Notificações do Cliente
+      operationId: mobileListarNotificacoes
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de alertas, avisos e comunicações com contador de não lidas
+
+  /notificacoes/{id}/lida:
+    patch:
+      summary: Marcar Notificação como Lida
+      operationId: mobileMarcarNotificacaoLida
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notificação actualizada
+
+  /notificacoes/ler-todas:
+    post:
+      summary: Marcar Todas as Notificações como Lidas
+      operationId: mobileMarcarTodasNotificacoesLidas
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Todas as notificações marcadas como lidas
 
 components:
   securitySchemes:
@@ -266,7 +439,96 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  parameters:
+    HeaderDeviceId:
+      name: x-device-id
+      in: header
+      required: true
+      description: Identificador único e persistente do telemóvel (ex: android_id ou identifierForVendor).
+      schema:
+        type: string
+        example: "d41d8cd98f00b204e9800998ecf8427e"
+
+    HeaderPlatform:
+      name: x-platform
+      in: header
+      required: true
+      description: Plataforma do sistema operativo em minúsculas (android ou ios).
+      schema:
+        type: string
+        enum: [android, ios]
+        example: "android"
+
+    HeaderAppVersion:
+      name: x-app-version
+      in: header
+      required: true
+      description: Versão semântica da aplicação instalada.
+      schema:
+        type: string
+        example: "1.0.0"
+
+    HeaderOsVersion:
+      name: x-os-version
+      in: header
+      required: false
+      description: Versão do sistema operativo do telemóvel.
+      schema:
+        type: string
+        example: "14.0"
+
+    HeaderDeviceName:
+      name: x-device-name
+      in: header
+      required: false
+      description: Modelo legível do dispositivo.
+      schema:
+        type: string
+        example: "Samsung Galaxy S24"
+
+    HeaderPushToken:
+      name: x-push-token
+      in: header
+      required: false
+      description: Token FCM (Firebase) ou APNs (Apple) para envio de push notifications.
+      schema:
+        type: string
+        example: "eK3x9z_ABC123..."
+
+    HeaderCorrelationId:
+      name: x-correlation-id
+      in: header
+      required: false
+      description: UUID gerado pelo app móvel para rastreamento de ponta a ponta.
+      schema:
+        type: string
+        format: uuid
+        example: "7b4e09cb-1b2c-4e8f-9a1d-2f0e4b8a1c9e"
+
   schemas:
+    RespostaSucesso:
+      type: object
+      properties:
+        sucesso:
+          type: boolean
+          example: true
+        mensagem:
+          type: string
+          example: "Operação executada com sucesso."
+
+    ErroPadrao:
+      type: object
+      properties:
+        sucesso:
+          type: boolean
+          example: false
+        erro:
+          type: string
+          example: "Credenciais inválidas. Verifique o seu e-mail e palavra-passe."
+        codigo:
+          type: string
+          example: "AUTH_CREDENCIAIS_INVALIDAS"
+
     MobileLoginInput:
       type: object
       required:
@@ -279,21 +541,91 @@ components:
         email:
           type: string
           format: email
+          example: "cliente@exemplo.ao"
         senha:
           type: string
+          format: password
+          example: "PalavraPasseSegura@2026"
         deviceId:
           type: string
+          example: "d41d8cd98f00b204e9800998ecf8427e"
         plataforma:
           type: string
           enum: [android, ios]
+          example: "android"
         nomeDispositivo:
           type: string
+          example: "Samsung Galaxy S24"
         versaoSo:
           type: string
+          example: "14.0"
         versaoApp:
           type: string
+          example: "1.0.0"
         tokenPush:
           type: string
+          example: "fcm_token_exemplo"
+
+    MobileAuthResponse:
+      type: object
+      properties:
+        sucesso:
+          type: boolean
+          example: true
+        mensagem:
+          type: string
+          example: "Autenticação móvel efetuada com sucesso."
+        dados:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            tokenType:
+              type: string
+              example: "Bearer"
+            expiresInSeconds:
+              type: integer
+              example: 900
+            refreshToken:
+              type: string
+              example: "nzaidi_rt_a1b2c3d4e5f6..."
+            cliente:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: "cli_10293847"
+                nome:
+                  type: string
+                  example: "Manuel Domingos Ferreira"
+                email:
+                  type: string
+                  example: "cliente@exemplo.ao"
+                telefone:
+                  type: string
+                  example: "+244 923 000 000"
+                kycStatus:
+                  type: string
+                  example: "aprovado"
+                nivelKyc:
+                  type: integer
+                  example: 2
+            dispositivo:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: "disp_87654321"
+                deviceId:
+                  type: string
+                  example: "d41d8cd98f00b204e9800998ecf8427e"
+                plataforma:
+                  type: string
+                  example: "android"
+                status:
+                  type: string
+                  example: "ativo"
 
     MobileRefreshInput:
       type: object
@@ -303,57 +635,82 @@ components:
       properties:
         refreshToken:
           type: string
+          example: "nzaidi_rt_a1b2c3d4e5f6..."
         deviceId:
           type: string
+          example: "d41d8cd98f00b204e9800998ecf8427e"
 
-    MobileTokens:
-      type: object
-      properties:
-        accessToken:
-          type: string
-        refreshToken:
-          type: string
-        tokenType:
-          type: string
-          example: Bearer
-        expiraEmSegundos:
-          type: integer
-          example: 900
-
-    MobileAuthResponse:
+    MobileRefreshResponse:
       type: object
       properties:
         sucesso:
           type: boolean
+          example: true
         mensagem:
           type: string
+          example: "Sessão renovada com sucesso."
         dados:
           type: object
           properties:
             accessToken:
               type: string
-            refreshToken:
-              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
             tokenType:
               type: string
-            expiraEmSegundos:
+              example: "Bearer"
+            expiresInSeconds:
               type: integer
-            cliente:
-              type: object
-            dispositivo:
-              type: object
+              example: 900
+            refreshToken:
+              type: string
+              example: "nzaidi_rt_f6e5d4c3b2a1..."
 
     MobileAtualizarPerfilInput:
       type: object
       properties:
         telefone:
           type: string
+          example: "+244 923 111 222"
+        email:
+          type: string
+          example: "novo.email@exemplo.ao"
         morada:
           type: string
+          example: "Rua Rainha Ginga, Edifício NZAIDI, Luanda"
         profissao:
           type: string
+          example: "Engenheiro de Software"
         entidadeEmpregadora:
           type: string
+          example: "NZAIDI Tecnologias"
+
+    CarregarDocumentoInput:
+      type: object
+      required:
+        - tipoDocumento
+        - numeroDocumento
+        - nomeArquivo
+        - mimeType
+        - arquivoBase64
+      properties:
+        tipoDocumento:
+          type: string
+          enum: [bi, passaporte, cartao_residente, nif_empresa]
+          example: "bi"
+        numeroDocumento:
+          type: string
+          example: "DOC-EXEMPLO-001"
+        nomeArquivo:
+          type: string
+          example: "bilhete_identidade_frente_verso.pdf"
+        mimeType:
+          type: string
+          enum: [application/pdf, image/png, image/jpeg]
+          example: "application/pdf"
+        arquivoBase64:
+          type: string
+          description: Ficheiro codificado em Base64 (máximo 5 MB)
+          example: "JVBERi0xLjQKJ..."
 
     SimularCambioInput:
       type: object
@@ -365,11 +722,14 @@ components:
         tipoOperacao:
           type: string
           enum: [compra, venda]
+          example: "compra"
         moeda:
           type: string
           enum: [USD, EUR]
+          example: "USD"
         montante:
           type: string
+          example: "500"
 
     CriarPedidoCambioInput:
       type: object
@@ -382,41 +742,52 @@ components:
         tipoOperacao:
           type: string
           enum: [compra, venda]
+          example: "compra"
         moeda:
           type: string
           enum: [USD, EUR]
+          example: "USD"
         montanteDivisa:
           type: string
+          example: "500"
         metodoPagamento:
           type: string
+          enum: [MULTICAIXA_EXPRESS, REFERENCIA_MULTICAIXA, TRANSFERENCIA_BANCARIA, BALCAO]
+          example: "MULTICAIXA_EXPRESS"
         finalidade:
           type: string
+          example: "Viagem de negócios ao exterior"
 
     CriarPedidoRemessaInput:
       type: object
       required:
+        - paisDestino
+        - moeda
+        - valorEstrangeiro
         - beneficiarioNome
-        - beneficiarioPais
         - beneficiarioIban
-        - beneficiarioBanco
-        - moedaDestino
-        - montanteDivisa
         - finalidade
       properties:
+        paisDestino:
+          type: string
+          example: "Portugal"
+        moeda:
+          type: string
+          enum: [EUR, USD]
+          example: "EUR"
+        valorEstrangeiro:
+          type: number
+          example: 1000
         beneficiarioNome:
           type: string
-        beneficiarioPais:
-          type: string
+          example: "Ana Ferreira"
         beneficiarioIban:
           type: string
-        beneficiarioBanco:
-          type: string
-        beneficiarioSwift:
-          type: string
-        moedaDestino:
-          type: string
-          enum: [USD, EUR]
-        montanteDivisa:
-          type: string
+          example: "PT50003506512345678901234"
         finalidade:
           type: string
+          example: "Apoio familiar mensal"
+        metodoPagamento:
+          type: string
+          enum: [MULTICAIXA_EXPRESS, REFERENCIA_MULTICAIXA, TRANSFERENCIA_BANCARIA, BALCAO]
+          example: "MULTICAIXA_EXPRESS"

@@ -570,4 +570,53 @@ export class MobileRepository {
     stmt.run(novaSenhaHash, agora, clienteId);
   }
 
+
+  public atualizarPushToken(dispositivoId: string, tokenPush: string): void {
+    const stmt = this.db.prepare(`
+      UPDATE dispositivos_moveis
+      SET token_push = ?, atualizado_em = ?
+      WHERE id = ?;
+    `);
+    stmt.run(tokenPush, new Date().toISOString(), dispositivoId);
+  }
+
+  public listarNotificacoes(clienteId: string): any[] {
+    const stmt = this.db.prepare(`
+      SELECT id, titulo, mensagem, categoria, prioridade, lida, criado_em, link_acao
+      FROM notificacoes_sistema
+      WHERE destinatario_tipo = 'cliente' AND (destinatario_id = ? OR destinatario_id IS NULL)
+      ORDER BY criado_em DESC
+      LIMIT 50;
+    `);
+    return stmt.all(clienteId);
+  }
+
+  public contarNotificacoesNaoLidas(clienteId: string): number {
+    const stmt = this.db.prepare(`
+      SELECT COUNT(*) as total
+      FROM notificacoes_sistema
+      WHERE destinatario_tipo = 'cliente' AND (destinatario_id = ? OR destinatario_id IS NULL) AND lida = 0;
+    `);
+    const row = stmt.get(clienteId) as { total: number } | undefined;
+    return row?.total ?? 0;
+  }
+
+  public marcarNotificacaoLida(id: string, clienteId: string): void {
+    const stmt = this.db.prepare(`
+      UPDATE notificacoes_sistema
+      SET lida = 1, lida_em = ?
+      WHERE id = ? AND destinatario_tipo = 'cliente' AND (destinatario_id = ? OR destinatario_id IS NULL);
+    `);
+    stmt.run(new Date().toISOString(), id, clienteId);
+  }
+
+  public marcarTodasNotificacoesLidas(clienteId: string): void {
+    const stmt = this.db.prepare(`
+      UPDATE notificacoes_sistema
+      SET lida = 1, lida_em = ?
+      WHERE destinatario_tipo = 'cliente' AND (destinatario_id = ? OR destinatario_id IS NULL) AND lida = 0;
+    `);
+    stmt.run(new Date().toISOString(), clienteId);
+  }
+
 }
