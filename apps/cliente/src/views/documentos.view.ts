@@ -1,15 +1,21 @@
 import { api, type DocumentoKyc } from "../api.js";
 import { authState } from "../auth.state.js";
+import { icone } from "../components/icones.js";
+import { TEXTOS, obterRotuloEstadoDocumento, obterRotuloVerificacao } from "../textos/pt-AO.js";
+import { formatarDataHora } from "../formatadores/moeda.js";
 
 export function renderDocumentosView(container: HTMLElement): void {
   let documentos: DocumentoKyc[] = [];
   let carregando = true;
-  let submetendo = false;
-  let erroMsg = "";
-  let sucessoMsg = "";
+  let aSubmeter = false;
+  let ficheiroPreview: string | null = null;
+  let nomeFicheiroPreview = "";
+  let mensagemSucesso = "";
+  let mensagemErro = "";
 
   async function carregarDados() {
     try {
+      carregando = true;
       documentos = await api.listarDocumentos();
     } catch (e) {
       console.error("Erro ao carregar documentos:", e);
@@ -24,8 +30,8 @@ export function renderDocumentosView(container: HTMLElement): void {
       bi_frente: "Bilhete de Identidade (Frente)",
       bi_verso: "Bilhete de Identidade (Verso)",
       passaporte: "Passaporte (Página Principal)",
-      nif_empresa: "Certidão Comercial / Cartão NIF",
       comprovativo_morada: "Comprovativo de Morada / Residência",
+      nif_empresa: "Certidão Comercial / Cartão NIF",
       declaracao_rendimentos: "Declaração de Rendimentos / Salário",
     };
     return mapa[tipo] || tipo;
@@ -35,105 +41,142 @@ export function renderDocumentosView(container: HTMLElement): void {
     const cliente = authState.cliente;
     if (!cliente) return;
 
+    if (carregando) {
+      container.innerHTML = `
+        <div class="skeleton-card" style="height: 380px;"></div>
+      `;
+      return;
+    }
+
     container.innerHTML = `
-      <div>
-        <div style="margin-bottom: 1.5rem;">
-          <h1 style="font-size: 1.5rem; font-weight: 700;">Documentação de Identificação (KYC)</h1>
-          <p style="color: var(--cor-texto-mutado); font-size: 0.9rem;">
-            Mantenha a sua identificação atualizada para operar com limites plenos em câmbios e remessas.
+      <div class="dashboard-section">
+        <div class="section-header">
+          <h1 class="title">${TEXTOS.navegacao.documentos}</h1>
+          <p class="subtitle">Mantenha a sua verificação de identidade em conformidade com as normas regulamentares do BNA.</p>
+        </div>
+
+        ${
+          mensagemSucesso
+            ? `<div class="alert-box alert-success">${icone("sucesso", 18)} <span>${mensagemSucesso}</span></div>`
+            : ""
+        }
+        ${
+          mensagemErro
+            ? `<div class="alert-box alert-error">${icone("erro", 18)} <span>${mensagemErro}</span></div>`
+            : ""
+        }
+
+        <!-- Estado Geral da Verificação -->
+        <div class="card p-large mb-large">
+          <div class="card-header-clean">
+            <div>
+              <span class="field-label">Estado da sua Verificação de Identidade</span>
+              <h2 class="card-title-lg mt-small">${obterRotuloVerificacao(cliente.estadoKyc)}</h2>
+            </div>
+            <span class="badge badge-${cliente.estadoKyc}">
+              ${obterRotuloVerificacao(cliente.estadoKyc)}
+            </span>
+          </div>
+          <p class="text-suave mt-small">
+            A aprovação documental confere limites plenos para compras e vendas de moeda estrangeira e remessas internacionais.
           </p>
         </div>
 
-        ${sucessoMsg ? `<div class="alert-box alert-success">${sucessoMsg}</div>` : ""}
-        ${erroMsg ? `<div class="alert-box alert-error">${erroMsg}</div>` : ""}
+        <div class="grid-cards">
+          <!-- Formulário com Arrastar/Escolher e Pré-visualização -->
+          <div class="card p-large">
+            <h2 class="card-title-md">Enviar Documento</h2>
+            <p class="text-suave mb-medium">Carregue ficheiros nítidos nos formatos PDF, PNG ou JPEG.</p>
 
-        <!-- Estado Geral da Conta -->
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-          <div>
-            <div style="font-size: 0.85rem; color: var(--cor-texto-mutado);">Estado Atual da sua Conta:</div>
-            <div style="font-size: 1.25rem; font-weight: 700; color: var(--cor-texto-forte); margin-top: 0.2rem;">
-              ${
-                cliente.estadoKyc === "aprovado"
-                  ? "Identidade Verificada & Aprovada"
-                  : cliente.estadoKyc === "em_analise"
-                  ? "Em Análise pela Equipa de Conformidade"
-                  : cliente.estadoKyc === "rejeitado" || cliente.estadoKyc === "actualizacao_necessaria"
-                  ? "Reenvio de Documentos Necessário"
-                  : "Aguardando Envio de Documentos"
-              }
-            </div>
-          </div>
-          <span class="badge badge-${cliente.estadoKyc}">
-            ${cliente.estadoKyc}
-          </span>
-        </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-          <!-- Formulário de Upload -->
-          <div class="card">
-            <h2 class="card-title" style="margin-bottom: 1rem;">Submeter Novo Documento</h2>
-
-            <form id="form-upload-doc">
+            <form id="form-upload-doc" class="form-layout">
               <div class="form-group">
-                <label class="form-label">Tipo de Documento</label>
-                <select id="doc-tipo" class="form-select" required>
+                <label class="form-label" for="select-tipo-doc">Tipo de Documento</label>
+                <select id="select-tipo-doc" class="form-select" required>
                   <option value="bi_frente">Bilhete de Identidade (Frente)</option>
                   <option value="bi_verso">Bilhete de Identidade (Verso)</option>
                   <option value="passaporte">Passaporte (Página Principal)</option>
-                  <option value="comprovativo_morada">Comprovativo de Morada (Factura de Água/Luz/Atestado)</option>
-                  <option value="nif_empresa">Certidão Comercial / Cartão NIF de Empresa</option>
-                  <option value="declaracao_rendimentos">Declaração de Rendimentos / Extracto Bancário</option>
+                  <option value="comprovativo_morada">Comprovativo de Morada (Água, Luz ou Atestado)</option>
+                  <option value="nif_empresa">Certidão Comercial / Cartão NIF</option>
+                  <option value="declaracao_rendimentos">Declaração de Rendimentos / Salário</option>
                 </select>
               </div>
 
-              <div class="form-group">
-                <label class="form-label">Ficheiro (PDF, PNG ou JPEG — máx. 5 MB)</label>
-                <input type="file" id="doc-ficheiro" class="form-input" accept=".pdf,image/png,image/jpeg" required>
-                <small style="display: block; margin-top: 0.35rem; color: var(--cor-texto-mutado); font-size: 0.75rem;">
-                  Apenas imagens ou PDFs legíveis e genuínos são aceites. Ficheiros adulterados são rejeitados pelo sistema.
-                </small>
+              <!-- Zona de Arraste (Dropzone) -->
+              <div class="dropzone-box" id="dropzone-documento">
+                <input type="file" id="input-file-doc" class="file-input-hidden" accept=".pdf,image/png,image/jpeg" />
+                <div class="dropzone-content">
+                  <div class="dropzone-icon">${icone("enviarFicheiro", 32)}</div>
+                  <strong>Arraste o documento ou clique para escolher</strong>
+                  <span class="dropzone-hint">Formatos: PDF, PNG, JPEG (Tamanho máx. 5 MB)</span>
+                </div>
               </div>
 
-              <button type="submit" class="btn btn-primary btn-block" ${submetendo ? "disabled" : ""}>
-                ${submetendo ? "A carregar e verificar..." : "Enviar Documento"}
+              <!-- Pré-visualização -->
+              ${
+                ficheiroPreview
+                  ? `
+                <div class="preview-box mt-small">
+                  <div class="preview-info">
+                    ${icone("documentos", 18)}
+                    <span>${nomeFicheiroPreview}</span>
+                  </div>
+                  <button type="button" id="btn-remover-preview" class="btn-link-action text-erro">
+                    ${icone("fechar", 14)} Remover
+                  </button>
+                </div>
+              `
+                  : ""
+              }
+
+              <button
+                type="submit"
+                class="btn btn-primary btn-block mt-medium"
+                ${aSubmeter || !ficheiroPreview ? "disabled" : ""}
+              >
+                ${
+                  aSubmeter
+                    ? `${icone("relogio", 16)} A enviar e verificar integridade...`
+                    : `${icone("enviarFicheiro", 16)} ${TEXTOS.botoes.enviarDocumento}`
+                }
               </button>
             </form>
           </div>
 
-          <!-- Requisitos e Normas de Aceitação -->
-          <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <h2 class="card-title" style="margin-bottom: 1rem;">Requisitos de Aceitação</h2>
-              <ul style="color: var(--cor-texto-mutado); font-size: 0.85rem; line-height: 1.6; margin-left: 1.25rem;">
-                <li><strong>Legibilidade:</strong> Os 4 cantos do documento devem estar visíveis e o texto nítido.</li>
-                <li><strong>Validade:</strong> O documento não pode estar expirado à data da apresentação.</li>
-                <li><strong>Formatos Suportados:</strong> PDF (.pdf), Imagem PNG (.png) ou JPEG (.jpg, .jpeg).</li>
-                <li><strong>Segurança:</strong> Todos os ficheiros são armazenados em cofre seguro fora da Internet pública com assinatura SHA-256 de integridade.</li>
-              </ul>
-            </div>
+          <!-- Requisitos e Instruções -->
+          <div class="card p-large">
+            <h2 class="card-title-md">Critérios de Aceitação BNA</h2>
+            <ul class="info-list mt-medium">
+              <li><strong>Legibilidade Integral:</strong> As 4 extremidades do documento devem estar visíveis e os caracteres legíveis sem reflexos.</li>
+              <li><strong>Prazo de Validade:</strong> O documento deve encontrar-se em vigor à data de apresentação.</li>
+              <li><strong>Assinatura Digital de Integridade:</strong> Cada ficheiro é encriptado com cálculo do hash SHA-256 no momento do envio.</li>
+            </ul>
 
-            <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(196, 155, 69, 0.1); border-left: 3px solid var(--cor-primaria); border-radius: 4px; font-size: 0.8rem; color: #fde047;">
-              Em conformidade com a Lei de Prevenção e Combate ao Branqueamento de Capitais e Financiamento do Terrorismo (Lei n.º 5/20).
+            <div class="note note-success mt-large">
+              ${icone("seguranca", 14)} Os seus dados são confidenciais e protegidos pela legislação de segurança bancária e PLD/CFT.
             </div>
           </div>
         </div>
 
-        <!-- Tabela de Documentos Enviados -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Documentos Submetidos</h2>
-            <span style="font-size: 0.85rem; color: var(--cor-texto-mutado);">${documentos.length} documento(s)</span>
+        <!-- Tabela de Documentos Submetidos -->
+        <div class="card p-large mt-large">
+          <div class="card-header-clean">
+            <h2 class="card-title-md">Documentos Submetidos</h2>
+            <span class="activity-counter">${documentos.length} documento(s)</span>
           </div>
 
           ${
             documentos.length === 0
-              ? `<div style="text-align: center; padding: 2.5rem 1rem; color: var(--cor-texto-mutado);">Nenhum documento submetido até ao momento. Utilize o formulário acima para enviar a sua identificação.</div>`
+              ? `
+            <div class="m1-empty-state">
+              <p>${TEXTOS.vazios.semDocumentos}</p>
+            </div>
+          `
               : `
-            <div class="table-responsive">
+            <div class="table-responsive mt-medium">
               <table class="table-custom">
                 <thead>
                   <tr>
-                    <th>Tipo</th>
+                    <th>Tipo de Documento</th>
                     <th>Nome do Ficheiro</th>
                     <th>Tamanho</th>
                     <th>Data de Envio</th>
@@ -142,20 +185,24 @@ export function renderDocumentosView(container: HTMLElement): void {
                   </tr>
                 </thead>
                 <tbody>
-                  ${documentos.map((d) => `
+                  ${documentos
+                    .map(
+                      (d) => `
                     <tr>
                       <td><strong>${formatarTipoDocumento(d.tipoDocumento)}</strong></td>
                       <td>${d.nomeArquivo}</td>
                       <td>${(d.tamanhoBytes / 1024).toFixed(1)} KB</td>
-                      <td>${new Date(d.enviadoEm).toLocaleString("pt-AO")}</td>
-                      <td><span class="badge badge-${d.estadoValidacao}">${d.estadoValidacao === "valido" ? "Validado" : d.estadoValidacao}</span></td>
+                      <td>${formatarDataHora(d.enviadoEm)}</td>
+                      <td><span class="badge badge-${d.estadoValidacao}">${obterRotuloEstadoDocumento(d.estadoValidacao)}</span></td>
                       <td>
-                        <a href="${api.obterUrlDownload(d.id)}" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">
-                          Visualizar
+                        <a href="${api.obterUrlDownload(d.id)}" target="_blank" class="btn btn-secondary btn-sm" rel="noopener">
+                          ${icone("ver", 14)} Visualizar
                         </a>
                       </td>
                     </tr>
-                  `).join("")}
+                  `
+                    )
+                    .join("")}
                 </tbody>
               </table>
             </div>
@@ -165,58 +212,82 @@ export function renderDocumentosView(container: HTMLElement): void {
       </div>
     `;
 
-    // Listener de Upload
+    // Dropzone e Seleção de Ficheiro
+    const dropzone = container.querySelector("#dropzone-documento") as HTMLElement;
+    const fileInput = container.querySelector("#input-file-doc") as HTMLInputElement;
+
+    dropzone?.addEventListener("click", () => fileInput?.click());
+
+    dropzone?.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+
+    dropzone?.addEventListener("dragleave", () => {
+      dropzone.classList.remove("dragover");
+    });
+
+    dropzone?.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+      if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+        processarFicheiro(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput?.addEventListener("change", () => {
+      if (fileInput.files && fileInput.files[0]) {
+        processarFicheiro(fileInput.files[0]);
+      }
+    });
+
+    container.querySelector("#btn-remover-preview")?.addEventListener("click", () => {
+      ficheiroPreview = null;
+      nomeFicheiroPreview = "";
+      render();
+    });
+
     container.querySelector("#form-upload-doc")?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const tipo = (container.querySelector("#doc-tipo") as HTMLSelectElement).value;
-      const fileInput = container.querySelector("#doc-ficheiro") as HTMLInputElement;
-
-      if (!fileInput.files || fileInput.files.length === 0 || !fileInput.files[0]) {
-        erroMsg = "Por favor seleccione um ficheiro para enviar.";
-        render();
-        return;
-      }
-
-      const file = fileInput.files[0];
-      const nomeFicheiro = file.name;
-
-      // Validação de Tamanho Frontend (5 MB)
-      if (file.size > 5 * 1024 * 1024) {
-        erroMsg = `O ficheiro seleccionado excede o tamanho máximo de 5 MB (${(file.size / (1024 * 1024)).toFixed(2)} MB).`;
-        render();
-        return;
-      }
+      if (!ficheiroPreview) return;
+      const tipo = (container.querySelector("#select-tipo-doc") as HTMLSelectElement).value;
 
       try {
-        submetendo = true;
-        erroMsg = "";
-        sucessoMsg = "";
+        aSubmeter = true;
+        mensagemSucesso = "";
+        mensagemErro = "";
         render();
 
-        // Leitura em Base64
-        const reader = new FileReader();
-        reader.onload = async () => {
-          try {
-            const rawBase64 = (reader.result as string).split(",")[1] ?? "";
-            await api.submeterDocumento(tipo, nomeFicheiro, rawBase64);
-            sucessoMsg = `Documento "${nomeFicheiro}" submetido com sucesso e integrado para análise!`;
-            await carregarDados();
-          } catch (err: any) {
-            erroMsg = err.message || "Erro ao enviar o documento.";
-          } finally {
-            submetendo = false;
-            render();
-          }
-        };
-        reader.readAsDataURL(file);
+        await api.submeterDocumento(tipo, nomeFicheiroPreview, ficheiroPreview);
+        ficheiroPreview = null;
+        nomeFicheiroPreview = "";
+        mensagemSucesso = TEXTOS.sucessos.documentoEnviado;
+        await carregarDados();
       } catch (err: any) {
-        submetendo = false;
-        erroMsg = err.message || "Erro ao processar o ficheiro.";
+        mensagemErro = err.message || TEXTOS.erros.generico;
+      } finally {
+        aSubmeter = false;
         render();
       }
     });
   }
 
-  render();
+  function processarFicheiro(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      mensagemErro = TEXTOS.erros.ficheiroDemasiadoGrande;
+      render();
+      return;
+    }
+
+    nomeFicheiroPreview = file.name;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      ficheiroPreview = result.split(",")[1] || "";
+      render();
+    };
+    reader.readAsDataURL(file);
+  }
+
   carregarDados();
 }

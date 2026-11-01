@@ -131,7 +131,51 @@ async function carregarEstadoCartoes(container: HTMLElement): Promise<void> {
     loading.style.display = "none";
     content.style.display = "block";
 
-    // 1. Verificação de Modo Manutenção
+    // 1. Verificação de Interruptor do Serviço na Administração
+    if (!statusPortal || !statusPortal.servico_ativo) {
+      const jaInscrito = localStorage.getItem("nzaidi_cartoes_lista_espera") === "true";
+      mainArea.innerHTML = `
+        <div class="card p-large text-center" style="max-width: 620px; margin: 40px auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 40px 28px;">
+          <div style="width: 64px; height: 64px; background: rgba(204,150,56,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: #cc9638;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+          </div>
+          <span class="badge badge-em_analise" style="margin-bottom: 12px; display: inline-block;">Em breve</span>
+          <h2 class="card-title-lg" style="margin-bottom: 8px; font-size: 22px; font-weight: 700; color: #0f172a;">NZAIDI Cartões Visa Virtuais</h2>
+          <p class="text-suave" style="margin-bottom: 24px; line-height: 1.6; color: #64748b; font-size: 14px;">
+            O serviço de emissão de cartões virtuais internacionais pré-pagos em Dólares (USD) encontra-se em fase final de homologação técnica e regulamentar junto do Banco Nacional de Angola (BNA).
+          </p>
+
+          ${
+            jaInscrito
+              ? `
+            <div class="alert-box alert-success" style="justify-content: center; background: #e6f5ee; border: 1px solid #a7e3c8; color: #13734b; padding: 12px; border-radius: 8px;">
+              <strong>Já se encontra registado na lista de espera prioritária.</strong>
+            </div>
+            <p class="text-suave" style="font-size: 13px; margin-top: 12px; color: #64748b;">
+              Assim que o serviço for ativado pela administração, a sua conta terá acesso imediato à emissão e gestão de cartões.
+            </p>
+          `
+              : `
+            <button id="btn-aderir-lista-espera" class="btn btn-primary" style="width: 100%; background: #052d62; color: #fff; padding: 12px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+              Entrar na Lista de Espera Prioritária
+            </button>
+            <small class="text-suave" style="display: block; margin-top: 12px; color: #64748b; font-size: 12px;">
+              Notificaremos o seu telemóvel e email no momento da ativação oficial pelo regulador.
+            </small>
+          `
+          }
+        </div>
+      `;
+
+      container.querySelector("#btn-aderir-lista-espera")?.addEventListener("click", () => {
+        localStorage.setItem("nzaidi_cartoes_lista_espera", "true");
+        mostrarNotificacaoCartao("Inscrição na lista de espera registada com sucesso!", "sucesso");
+        carregarEstadoCartoes(container);
+      });
+      return;
+    }
+
+    // 1.1 Verificação de Modo Manutenção
     if (statusPortal.modo_manutencao) {
       banner.style.display = "block";
       banner.style.background = "#fef2f2";

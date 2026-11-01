@@ -1,14 +1,21 @@
 import { api, type TaxaItem, type PedidoCambio, type PedidoRemessa } from "../api.js";
 import { authState } from "../auth.state.js";
+import { icone } from "../components/icones.js";
+import { TEXTOS, obterRotuloVerificacao, obterRotuloEstadoCambio, obterRotuloEstadoRemessa } from "../textos/pt-AO.js";
+import { formatarMontante, formatarTaxa, formatarDataHora } from "../formatadores/moeda.js";
 
 export function renderDashboardView(container: HTMLElement): () => void {
   let taxas: TaxaItem[] = [];
   let pedidosCambio: PedidoCambio[] = [];
   let pedidosRemessa: PedidoRemessa[] = [];
   let carregando = true;
-  let intervaloAtualizacao: any = null;
+  let atualizandoTaxas = false;
+  let intervaloTimer: any = null;
 
-  async function carregarDados() {
+  async function carregarDados(silencioso = false) {
+    if (!silencioso) carregando = true;
+    else atualizandoTaxas = true;
+
     try {
       const [listaTaxas, listaCambios, listaRemessas] = await Promise.all([
         api.obterTaxas(),
@@ -22,176 +29,285 @@ export function renderDashboardView(container: HTMLElement): () => void {
       console.error("Erro ao carregar dados do dashboard:", e);
     } finally {
       carregando = false;
+      atualizandoTaxas = false;
       render();
     }
+  }
+
+  function obterSaudacao(): string {
+    const hora = new Date().getHours();
+    if (hora >= 5 && hora < 12) return "Bom dia";
+    if (hora >= 12 && hora < 19) return "Boa tarde";
+    return "Boa noite";
   }
 
   function render() {
     const cliente = authState.cliente;
     if (!cliente) return;
 
-    let bannerKyc = "";
-    if (cliente.estadoKyc === "aprovado") {
-      bannerKyc = `
-        <div class="kyc-banner kyc-banner-aprovado">
-          <div>
-            <strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"></polyline></svg>Conta Verificada (KYC Aprovado)</strong>
-            <p style="font-size: 0.85rem; margin-top: 0.2rem;">A sua identidade foi conferida e validada pela equipa de conformidade. Todos os limites de câmbio e remessas estão disponíveis.</p>
+    if (carregando) {
+      container.innerHTML = `
+        <div class="skeleton-dashboard">
+          <div class="skeleton-header"></div>
+          <div class="skeleton-grid-cards">
+            <div class="skeleton-card" style="height: 220px;"></div>
+            <div class="skeleton-card" style="height: 220px;"></div>
           </div>
-          <span class="badge badge-aprovado">Aprovado</span>
+          <div class="skeleton-card" style="height: 280px; margin-top: 1.5rem;"></div>
         </div>
       `;
-    } else if (cliente.estadoKyc === "em_analise") {
-      bannerKyc = `
-        <div class="kyc-banner" style="background: rgba(2, 132, 199, 0.1); border: 1px solid rgba(2, 132, 199, 0.3); color: #7dd3fc;">
-          <div>
-            <strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Documentos em Análise de Conformidade</strong>
-            <p style="font-size: 0.85rem; margin-top: 0.2rem;">Os seus documentos foram submetidos e estão a ser verificados pela equipa de conformidade do NZAIDI.</p>
-          </div>
-          <a href="#/documentos" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">Ver Documentos</a>
-        </div>
-      `;
-    } else if (cliente.estadoKyc === "rejeitado" || cliente.estadoKyc === "actualizacao_necessaria") {
-      bannerKyc = `
-        <div class="kyc-banner kyc-banner-rejeitado">
-          <div>
-            <strong><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>Atenção: Atualização de Documentos Necessária</strong>
-            <p style="font-size: 0.85rem; margin-top: 0.2rem;">A verificação da sua conta necessita de reenvio de documentos. Por favor consulte a área documental para regularizar.</p>
-          </div>
-          <a href="#/documentos" class="btn btn-danger" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">Submeter Novamente</a>
-        </div>
-      `;
-    } else {
-      bannerKyc = `
-        <div class="kyc-banner kyc-banner-pendente">
-          <div>
-            <strong>Verificação de Identidade Pendente</strong>
-            <p style="font-size: 0.85rem; margin-top: 0.2rem;">Para desbloquear transações cambiais e envio de remessas sem restrições, submeta o seu documento de identificação.</p>
-          </div>
-          <a href="#/documentos" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">Enviar Documentos</a>
-        </div>
-      `;
+      return;
     }
 
+    const primeiroNome = cliente.nome.split(" ")[0];
+    const kycAprovado = cliente.estadoKyc === "aprovado";
+    const horaAtualizacao = new Date().toLocaleTimeString("pt-AO", { hour: "2-digit", minute: "2-digit" });
+
+    // Moedas USD e EUR
+    const taxaUsd = taxas.find((t) => t.moeda === "USD");
+    const taxaEur = taxas.find((t) => t.moeda === "EUR");
+
+    // Atividades combinadas
+    const atividades = [
+      ...pedidosCambio.map((p) => ({
+        id: p.id,
+        tipo: "Câmbio",
+        descricao: p.tipoOperacao === "compra" ? `Compra de ${p.moeda}` : `Venda de ${p.moeda}`,
+        montante: formatarMontante(p.montanteDivisa, p.moeda),
+        contravalor: formatarMontante(p.totalAoaEstimado, "AOA"),
+        data: p.criadoEm,
+        estado: obterRotuloEstadoCambio(p.estado),
+        estadoClasse: p.estado,
+        link: `#/cambio/${p.id}`,
+      })),
+      ...pedidosRemessa.map((r) => ({
+        id: r.id,
+        tipo: "Remessa",
+        descricao: `Envio para ${r.beneficiarioPais || "Exterior"}`,
+        montante: formatarMontante(r.montanteDivisa, r.moedaDestino),
+        contravalor: formatarMontante(r.totalAoa, "AOA"),
+        data: r.criadoEm,
+        estado: obterRotuloEstadoRemessa(r.estado),
+        estadoClasse: r.estado,
+        link: `#/remessas/${r.id}`,
+      })),
+    ].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()).slice(0, 5);
+
+    const totalOperacoes = pedidosCambio.length + pedidosRemessa.length;
+
     container.innerHTML = `
-      <div>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-          <div>
-            <h1 style="font-size: 1.5rem; font-weight: 700;">Olá, ${cliente.nome.split(" ")[0]}!</h1>
-            <p style="color: var(--cor-texto-mutado); font-size: 0.9rem;">Bem-vindo ao seu portal financeiro NZAIDI.</p>
+      <div class="dashboard-wrapper">
+        <!-- Hero Oficial com Saudação e Data -->
+        <div class="dashboard-greeting-header">
+          <div class="greeting-content">
+            <h1 class="greeting-title">${obterSaudacao()}, ${primeiroNome}!</h1>
+            <p class="greeting-subtitle">Consulte as cotações oficiais e gira as suas operações financeiras com rigor.</p>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: var(--cor-texto-mutado);">
-            <span class="pulse-indicator"></span>
-            <span>Cotações em tempo real</span>
-          </div>
-        </div>
-
-        ${bannerKyc}
-
-        <!-- Grelha de Cotações Oficiais -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Câmbio Oficial do Dia (Moeda Base: Kwanza - AOA)</h2>
-            <button id="btn-atualizar-taxas" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;">
-              ↻ Atualizar
+          <div class="header-refresh-pill">
+            <span class="live-dot"></span>
+            <span>Taxas atualizadas às ${horaAtualizacao}</span>
+            <button id="btn-atualizar-taxas-dash" class="btn-icon-refresh" title="${TEXTOS.botoes.atualizarTaxas}">
+              ${icone("trocar", 14, atualizandoTaxas ? "girando" : "")}
             </button>
           </div>
-
-          <div class="grid-cotacoes">
-            ${
-              taxas.length === 0
-                ? `<div style="grid-column: 1 / -1; text-align: center; color: var(--cor-texto-mutado);">A carregar cotações oficiais...</div>`
-                : taxas
-                    .map(
-                      (t) => `
-              <div class="card-taxa">
-                <div class="card-taxa-header">
-                  <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="moeda-tag">${t.moeda}</span>
-                    <span style="font-size: 0.8rem; color: var(--cor-texto-mutado);">${t.moeda === "USD" ? "Dólar Americano" : "Euro"}</span>
-                  </div>
-                  <span class="badge ${t.fonte === "oficial" ? "badge-aprovado" : "badge-em_analise"}" style="font-size: 0.65rem;">
-                    ${t.fonte === "oficial" ? "BNA Oficial" : "Referência NZAIDI"}
-                  </span>
-                </div>
-                <div class="taxas-valores">
-                  <div class="taxa-col">
-                    <div class="taxa-label">Compramos a</div>
-                    <div class="taxa-preco">${Number(t.compra).toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} <span style="font-size: 0.8rem; font-weight: normal; color: var(--cor-texto-mutado);">AOA</span></div>
-                  </div>
-                  <div class="taxa-col" style="text-align: right;">
-                    <div class="taxa-label">Vendemos a</div>
-                    <div class="taxa-preco">${Number(t.venda).toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} <span style="font-size: 0.8rem; font-weight: normal; color: var(--cor-texto-mutado);">AOA</span></div>
-                  </div>
-                </div>
-                <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--cor-texto-mutado); text-align: right;">
-                  Taxa Ref: ${t.referencia} AOA
-                </div>
-              </div>
-            `
-                    )
-                    .join("")
-            }
-          </div>
-
-          <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
-            <a href="#/cambio" class="btn btn-primary" style="flex: 1;">
-              Pedir Operação Cambial
-            </a>
-            <a href="#/remessas" class="btn btn-secondary" style="flex: 1;">
-              Enviar Remessa ao Exterior
-            </a>
-          </div>
         </div>
 
-        <!-- Pedidos Recentes -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">As Suas Atividades Recentes</h2>
-            <div style="display: flex; gap: 0.5rem;">
-              <a href="#/cambio" style="color: var(--cor-primaria); font-size: 0.85rem; text-decoration: none;">Ver Câmbios</a>
-              <span style="color: var(--cor-texto-mutado);">•</span>
-              <a href="#/remessas" style="color: var(--cor-primaria); font-size: 0.85rem; text-decoration: none;">Ver Remessas</a>
+        <!-- Aviso KYC caso não aprovado -->
+        ${
+          !kycAprovado
+            ? `
+          <div class="card kyc-alert-banner">
+            <div class="kyc-alert-icon">${icone("aviso", 24)}</div>
+            <div class="kyc-alert-content">
+              <strong>${TEXTOS.termos.verificacaoIdentidade}: ${obterRotuloVerificacao(cliente.estadoKyc)}</strong>
+              <p>Envie os seus documentos de identificação para desbloquear as operações cambiais e remessas internacionais.</p>
+            </div>
+            <a href="#/documentos" class="btn btn-primary btn-sm">
+              ${icone("enviarFicheiro", 16)} ${TEXTOS.botoes.enviarDocumento}
+            </a>
+          </div>
+        `
+            : ""
+        }
+
+        <!-- Grelha Principal: Taxas de Hoje e A Sua Conta -->
+        <div class="dashboard-two-columns">
+          <!-- Coluna 1: Cartão Taxas de Hoje -->
+          <div class="card taxas-card">
+            <div class="card-header-clean">
+              <div>
+                <h2 class="card-title-lg">Taxas de hoje</h2>
+                <span class="card-subtitle-sm">Cotações oficiais publicadas com supervisão do BNA</span>
+              </div>
+            </div>
+
+            <div class="taxas-grid">
+              <!-- USD -->
+              <div class="taxa-box">
+                <div class="taxa-box-header">
+                  <div class="taxa-coin-badge">USD</div>
+                  <div>
+                    <span class="taxa-coin-name">Dólar Americano</span>
+                    <small class="taxa-bna-ref">${TEXTOS.termos.taxaRefBna}: ${formatarTaxa(taxaUsd?.referencia || "0", 2)}</small>
+                  </div>
+                </div>
+                <div class="taxa-rates-pair">
+                  <div class="rate-subbox">
+                    <span class="rate-sublabel">${TEXTOS.termos.voceVende}</span>
+                    <strong class="rate-value">${formatarTaxa(taxaUsd?.compra || "0", 2)}</strong>
+                  </div>
+                  <div class="rate-subbox">
+                    <span class="rate-sublabel">${TEXTOS.termos.voceCompra}</span>
+                    <strong class="rate-value text-primario">${formatarTaxa(taxaUsd?.venda || "0", 2)}</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- EUR -->
+              <div class="taxa-box">
+                <div class="taxa-box-header">
+                  <div class="taxa-coin-badge">EUR</div>
+                  <div>
+                    <span class="taxa-coin-name">Euro Europeu</span>
+                    <small class="taxa-bna-ref">${TEXTOS.termos.taxaRefBna}: ${formatarTaxa(taxaEur?.referencia || "0", 2)}</small>
+                  </div>
+                </div>
+                <div class="taxa-rates-pair">
+                  <div class="rate-subbox">
+                    <span class="rate-sublabel">${TEXTOS.termos.voceVende}</span>
+                    <strong class="rate-value">${formatarTaxa(taxaEur?.compra || "0", 2)}</strong>
+                  </div>
+                  <div class="rate-subbox">
+                    <span class="rate-sublabel">${TEXTOS.termos.voceCompra}</span>
+                    <strong class="rate-value text-primario">${formatarTaxa(taxaEur?.venda || "0", 2)}</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botões Principais de Ação -->
+            <div class="taxas-actions-footer">
+              <a href="#/cambio/novo" class="btn btn-primary ${!kycAprovado ? "btn-disabled" : ""}">
+                ${icone("cambio", 18)}
+                <span>${TEXTOS.botoes.trocarMoeda}</span>
+              </a>
+              <a href="#/remessas/nova" class="btn btn-secondary ${!kycAprovado ? "btn-disabled" : ""}">
+                ${icone("remessas", 18)}
+                <span>${TEXTOS.botoes.enviarRemessa}</span>
+              </a>
             </div>
           </div>
 
+          <!-- Coluna 2: A sua conta -->
+          <div class="card account-summary-card">
+            <div class="card-header-clean">
+              <h2 class="card-title-lg">A sua conta</h2>
+              <span class="badge badge-${kycAprovado ? "aprovado" : "pendente"}">
+                ${kycAprovado ? icone("seguranca", 14) : icone("relogio", 14)}
+                ${obterRotuloVerificacao(cliente.estadoKyc)}
+              </span>
+            </div>
+
+            <div class="account-profile-snippet">
+              <div class="account-avatar-large">${cliente.nome.slice(0, 2).toUpperCase()}</div>
+              <div>
+                <strong class="account-name">${cliente.nome}</strong>
+                <span class="account-email">${cliente.email || cliente.telefone}</span>
+              </div>
+            </div>
+
+            <div class="account-metrics-list">
+              <div class="account-metric-item">
+                <span class="metric-desc">Total de operações realizadas</span>
+                <strong class="metric-num">${totalOperacoes}</strong>
+              </div>
+              <div class="account-metric-item">
+                <span class="metric-desc">Documentos verificados</span>
+                <strong class="metric-num">${kycAprovado ? "Conforme" : "Pendente"}</strong>
+              </div>
+              <div class="account-metric-item">
+                <span class="metric-desc">Limite de câmbio regulamentar</span>
+                <strong class="metric-num">Normativo BNA</strong>
+              </div>
+            </div>
+
+            <div class="account-footer-links">
+              <a href="#/perfil" class="link-action">
+                ${icone("conta", 16)} <span>Gerir minha conta</span>
+              </a>
+              <a href="#/documentos" class="link-action">
+                ${icone("documentos", 16)} <span>Ver documentos</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secção Inferior: Atividade Recente -->
+        <div class="card recent-activity-card mt-large">
+          <div class="card-header-clean">
+            <h2 class="card-title-lg">Atividade recente</h2>
+            ${atividades.length > 0 ? `<span class="activity-counter">${totalOperacoes} registo(s)</span>` : ""}
+          </div>
+
           ${
-            pedidosCambio.length === 0 && pedidosRemessa.length === 0
-              ? `<div style="text-align: center; padding: 2rem 1rem; color: var(--cor-texto-mutado);">Ainda não realizou nenhum pedido. Simule um câmbio ou envie uma remessa nos botões acima.</div>`
+            atividades.length === 0
+              ? `
+            <!-- Estado Vazio com 3 Passos Educativos -->
+            <div class="empty-state-steps">
+              <p class="empty-main-hint">${TEXTOS.vazios.semAtividade}</p>
+              <div class="empty-steps-grid">
+                <div class="step-card">
+                  <div class="step-circle">1</div>
+                  <strong>Escolha a operação</strong>
+                  <span>Simule câmbio com taxas do BNA ou envie remessa internacional.</span>
+                </div>
+                <div class="step-card">
+                  <div class="step-circle">2</div>
+                  <strong>Efetue o pagamento</strong>
+                  <span>Pague por Multicaixa Express, referência ou balcão oficial.</span>
+                </div>
+                <div class="step-card">
+                  <div class="step-circle">3</div>
+                  <strong>Acompanhe o estado</strong>
+                  <span>Receba comprovativos digitais com certificação do regulador.</span>
+                </div>
+              </div>
+            </div>
+          `
               : `
             <div class="table-responsive">
               <table class="table-custom">
                 <thead>
                   <tr>
                     <th>Referência</th>
-                    <th>Tipo</th>
-                    <th>Moeda & Montante</th>
-                    <th>Total Estimado (AOA)</th>
+                    <th>Operação</th>
+                    <th>Montante</th>
+                    <th>Contravalor</th>
                     <th>Data</th>
                     <th>Estado</th>
+                    <th>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${pedidosCambio.slice(0, 3).map((p) => `
+                  ${atividades
+                    .map(
+                      (a) => `
                     <tr>
-                      <td><code>${p.id}</code></td>
-                      <td>${p.tipoOperacao === "compra" ? "Compra de Divisa" : "Venda de Divisa"}</td>
-                      <td><strong>${p.montanteDivisa} ${p.moeda}</strong></td>
-                      <td>${Number(p.totalAoaEstimado).toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA</td>
-                      <td>${new Date(p.criadoEm).toLocaleDateString("pt-AO")}</td>
-                      <td><span class="badge badge-${p.estado}">${p.estado}</span></td>
+                      <td><code>${a.id}</code></td>
+                      <td><strong>${a.descricao}</strong></td>
+                      <td>${a.montante}</td>
+                      <td>${a.contravalor}</td>
+                      <td>${formatarDataHora(a.data)}</td>
+                      <td><span class="badge badge-${a.estadoClasse}">${a.estado}</span></td>
+                      <td>
+                        <a href="${a.link}" class="btn btn-secondary btn-sm">
+                          ${TEXTOS.botoes.verDetalhes}
+                        </a>
+                      </td>
                     </tr>
-                  `).join("")}
-                  ${pedidosRemessa.slice(0, 3).map((r) => `
-                    <tr>
-                      <td><code>${r.id}</code></td>
-                      <td>Remessa (${r.beneficiarioPais})</td>
-                      <td><strong>${r.montanteDivisa} ${r.moedaDestino}</strong></td>
-                      <td>${Number(r.totalAoa).toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA</td>
-                      <td>${new Date(r.criadoEm).toLocaleDateString("pt-AO")}</td>
-                      <td><span class="badge badge-${r.estado}">${r.estado}</span></td>
-                    </tr>
-                  `).join("")}
+                  `
+                    )
+                    .join("")}
                 </tbody>
               </table>
             </div>
@@ -201,23 +317,15 @@ export function renderDashboardView(container: HTMLElement): () => void {
       </div>
     `;
 
-    container.querySelector("#btn-atualizar-taxas")?.addEventListener("click", () => {
-      carregarDados();
+    container.querySelector("#btn-atualizar-taxas-dash")?.addEventListener("click", () => {
+      carregarDados(true);
     });
   }
 
-  // Carregamento inicial
   carregarDados();
+  intervaloTimer = setInterval(() => carregarDados(true), 60000);
 
-  // Auto-refresh das cotações a cada 30 segundos
-  intervaloAtualizacao = setInterval(() => {
-    carregarDados();
-  }, 30000);
-
-  // Função de limpeza do temporizador quando a vista for destruída
   return () => {
-    if (intervaloAtualizacao) {
-      clearInterval(intervaloAtualizacao);
-    }
+    if (intervaloTimer) clearInterval(intervaloTimer);
   };
 }

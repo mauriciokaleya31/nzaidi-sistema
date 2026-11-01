@@ -1,22 +1,37 @@
 import { api, type TaxaItem, type PedidoCambio } from "../api.js";
-import { authState } from "../auth.state.js";
+import { icone } from "../components/icones.js";
+import { TEXTOS, obterRotuloEstadoCambio } from "../textos/pt-AO.js";
+import { formatarMontante, formatarTaxa, formatarDataHora } from "../formatadores/moeda.js";
+import { renderizarM2Assistente } from "../modelos/M2_Assistente.js";
+import { renderizarM3Detalhe } from "../modelos/M3_Detalhe.js";
 
-export function renderCambioView(container: HTMLElement): void {
+export function renderCambioView(container: HTMLElement, subRota: string = ""): () => void {
   let taxas: TaxaItem[] = [];
   let pedidos: PedidoCambio[] = [];
   let carregando = true;
-  let submetendo = false;
-  let erroMsg = "";
-  let sucessoMsg = "";
+  let timerIntervalo: any = null;
 
-  // Estado da simulação
+  // Estado da Lista
+  let filtroTexto = "";
+  let filtroMoeda = "todas";
+  let filtroEstado = "todos";
+
+  // Estado do Assistente Novo Pedido
+  let passoAtual = 1;
   let tipoOperacao: "compra" | "venda" = "compra";
   let moeda: "USD" | "EUR" = "USD";
   let montanteDivisa: string = "500.00";
-  let finalidade: string = "Despesas de viagem pessoal / turismo";
+  let finalidade = "Despesas de viagem pessoal / turismo";
+  let metodoPagamento = "mcx";
+  let telefoneMcx = "";
+  let segundosRestantes = 90;
+  let pedidoCriadoSucesso: PedidoCambio | null = null;
+  let aSubmeter = false;
+  let erroFormulario = "";
 
   async function carregarDados() {
     try {
+      carregando = true;
       const [listaTaxas, listaPedidos] = await Promise.all([
         api.obterTaxas(),
         api.listarPedidosCambio(),
@@ -31,141 +46,124 @@ export function renderCambioView(container: HTMLElement): void {
     }
   }
 
-  function calcularEstimativa(): { taxa: number; totalAoa: number } {
-    const itemTaxa = taxas.find((t) => t.moeda === moeda);
-    if (!itemTaxa) return { taxa: 0, totalAoa: 0 };
-
-    const taxaStr = tipoOperacao === "compra" ? itemTaxa.compra : itemTaxa.venda;
-    const taxa = parseFloat(taxaStr) || 0;
+  function calcularSimulacao() {
+    const item = taxas.find((t) => t.moeda === moeda);
+    const taxaAplicada = item ? (tipoOperacao === "compra" ? parseFloat(item.venda) : parseFloat(item.compra)) : 0;
     const montante = parseFloat(montanteDivisa) || 0;
-    const totalAoa = montante * taxa;
+    const totalAoa = montante * taxaAplicada;
+    return { taxaAplicada, montante, totalAoa };
+  }
 
-    return { taxa, totalAoa };
+  function iniciarTimerCotacao() {
+    if (timerIntervalo) clearInterval(timerIntervalo);
+    segundosRestantes = 90;
+    timerIntervalo = setInterval(() => {
+      segundosRestantes--;
+      const elTimer = container.querySelector("#countdown-cotacao-badge");
+      if (elTimer) {
+        elTimer.innerHTML = `${icone("relogio", 14)} <span>Cotação válida: ${segundosRestantes}s</span>`;
+        if (segundosRestantes <= 15) {
+          elTimer.classList.add("expirando");
+        }
+      }
+      if (segundosRestantes <= 0) {
+        clearInterval(timerIntervalo);
+        if (passoAtual < 4) {
+          erroFormulario = TEXTOS.erros.cotacaoExpirada;
+          render();
+        }
+      }
+    }, 1000);
   }
 
   function render() {
-    const { taxa, totalAoa } = calcularEstimativa();
+    // 1. Rota de Detalhe: #/cambio/:id
+    if (subRota && subRota !== "novo") {
+      renderDetalhe(subRota);
+      return;
+    }
+
+    // 2. Rota de Novo Pedido: #/cambio/novo
+    if (subRota === "novo") {
+      renderNovoAssistente();
+      return;
+    }
+
+    // 3. Rota de Lista: #/cambio
+    renderLista();
+  }
+
+  function renderLista() {
+    const pedidosFiltrados = pedidos.filter((p) => {
+      const bateTexto =
+        !filtroTexto ||
+        p.id.toLowerCase().includes(filtroTexto.toLowerCase()) ||
+        p.finalidade.toLowerCase().includes(filtroTexto.toLowerCase());
+      const bateMoeda = filtroMoeda === "todas" || p.moeda === filtroMoeda;
+      const bateEstado = filtroEstado === "todos" || p.estado === filtroEstado;
+      return bateTexto && bateMoeda && bateEstado;
+    });
 
     container.innerHTML = `
-      <div>
-        <div style="margin-bottom: 1.5rem;">
-          <h1 style="font-size: 1.5rem; font-weight: 700;">Operações de Câmbio de Divisas</h1>
-          <p style="color: var(--cor-texto-mutado); font-size: 0.9rem;">
-            Simule e solicite a sua operação cambial com taxas oficiais transparentes.
-          </p>
+      <div class="m1-lista-container">
+        <div class="m1-header">
+          <div>
+            <h1 class="m1-title">Operações de Câmbio</h1>
+            <p class="m1-subtitle">Consulte o histórico ou inicie um novo pedido de câmbio de moeda estrangeira.</p>
+          </div>
+          <a href="#/cambio/novo" class="btn btn-primary">
+            ${icone("cambio", 18)}
+            <span>${TEXTOS.botoes.trocarMoeda}</span>
+          </a>
         </div>
 
-        ${sucessoMsg ? `<div class="alert-box alert-success">${sucessoMsg}</div>` : ""}
-        ${erroMsg ? `<div class="alert-box alert-error">${erroMsg}</div>` : ""}
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-          <!-- Simulador & Formulário -->
-          <div class="card">
-            <h2 class="card-title" style="margin-bottom: 1rem;">Simulador & Pedido de Câmbio</h2>
-
-            <form id="form-cambio">
-              <div class="form-group">
-                <label class="form-label">Tipo de Transação Cambial</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-                  <button type="button" id="btn-op-compra" class="btn ${tipoOperacao === "compra" ? "btn-primary" : "btn-secondary"}" style="padding: 0.6rem;">
-                    Quero Comprar Divisa
-                  </button>
-                  <button type="button" id="btn-op-venda" class="btn ${tipoOperacao === "venda" ? "btn-primary" : "btn-secondary"}" style="padding: 0.6rem;">
-                    Quero Vender Divisa
-                  </button>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label class="form-label">Moeda Estrangeira</label>
-                  <select id="select-moeda" class="form-select">
-                    <option value="USD" ${moeda === "USD" ? "selected" : ""}>USD — Dólar Americano</option>
-                    <option value="EUR" ${moeda === "EUR" ? "selected" : ""}>EUR — Euro Europeu</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Montante em Divisa</label>
-                  <input type="number" id="input-montante" class="form-input" min="10" step="10" value="${montanteDivisa}" required>
-                </div>
-              </div>
-
-              <!-- Caixa de Resumo e Taxa -->
-              <div style="background: #0f172a; border: 1px solid var(--cor-borda); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem; color: var(--cor-texto-mutado);">
-                  <span>Taxa Aplicada (${tipoOperacao === "compra" ? "Compra" : "Venda"}):</span>
-                  <strong style="color: var(--cor-texto-forte);">${taxa.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} AOA</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--cor-borda); padding-top: 0.5rem;">
-                  <span style="font-weight: 600; font-size: 0.95rem;">Contravalor Estimado:</span>
-                  <span style="font-size: 1.35rem; font-weight: 800; color: var(--cor-primaria);">
-                    ${totalAoa.toLocaleString("pt-AO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} AOA
-                  </span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label">Finalidade da Operação</label>
-                <select id="select-finalidade" class="form-select">
-                  <option value="Despesas de viagem pessoal / turismo">Despesas de viagem pessoal / turismo</option>
-                  <option value="Tratamento médico / saúde no exterior">Tratamento médico / saúde no exterior</option>
-                  <option value="Educação e formação internacional">Educação e formação internacional</option>
-                  <option value="Importação de mercadorias / serviços comerciais">Importação de mercadorias / serviços comerciais</option>
-                  <option value="Outras operações autorizadas pelo BNA">Outras operações autorizadas pelo BNA</option>
-                </select>
-              </div>
-
-              <button type="submit" class="btn btn-primary btn-block" ${submetendo ? "disabled" : ""}>
-                ${submetendo ? "A registar pedido..." : "Confirmar e Registar Pedido de Câmbio"}
-              </button>
-            </form>
+        <div class="m1-toolbar">
+          <div class="m1-search-box">
+            <span class="m1-search-icon">${icone("pesquisar", 18)}</span>
+            <input
+              type="text"
+              id="input-pesquisa-cambio"
+              class="m1-search-input"
+              placeholder="Pesquisar por referência ou finalidade..."
+              value="${filtroTexto}"
+            />
           </div>
 
-          <!-- Informações e Normas BNA -->
-          <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-            <div>
-              <h2 class="card-title" style="margin-bottom: 1rem;">Como funciona o seu pedido?</h2>
-              <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; color: var(--cor-texto-mutado);">
-                <div style="display: flex; gap: 0.75rem;">
-                  <span style="background: var(--nz-azul-claro-100); color: var(--nz-azul-800); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</span>
-                  <div>
-                    <strong style="color: var(--cor-texto-forte);">Registo Digital da Intenção:</strong><br>
-                    O seu pedido é gravado de imediato nos nossos sistemas com o código único de rastreio e cotação oficial fixada.
-                  </div>
-                </div>
-                <div style="display: flex; gap: 0.75rem;">
-                  <span style="background: var(--nz-azul-claro-100); color: var(--nz-azul-800); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</span>
-                  <div>
-                    <strong style="color: var(--cor-texto-forte);">Conferência Documental (KYC):</strong><br>
-                    Para operações cambiais, assegure-se de que os seus documentos estão aprovados na área de documentos.
-                  </div>
-                </div>
-                <div style="display: flex; gap: 0.75rem;">
-                  <span style="background: var(--nz-azul-claro-100); color: var(--nz-azul-800); font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</span>
-                  <div>
-                    <strong style="color: var(--cor-texto-forte);">Levantamento no Balcão:</strong><br>
-                    Apresente a referência do pedido em qualquer dos nossos balcões autorizados para liquidação e emissão do Borderô oficial com selo BNA.
-                  </div>
-                </div>
-              </div>
+          <div class="m1-filters-row">
+            <div class="m1-filter-group">
+              <label for="filtro-moeda-cambio">Moeda</label>
+              <select id="filtro-moeda-cambio" class="m1-filter-select">
+                <option value="todas" ${filtroMoeda === "todas" ? "selected" : ""}>Todas as moedas</option>
+                <option value="USD" ${filtroMoeda === "USD" ? "selected" : ""}>USD — Dólar Americano</option>
+                <option value="EUR" ${filtroMoeda === "EUR" ? "selected" : ""}>EUR — Euro</option>
+              </select>
             </div>
 
-            <div style="margin-top: 1.5rem; padding: 0.85rem; background: rgba(2, 132, 199, 0.1); border-left: 3px solid var(--cor-secundaria); border-radius: 4px; font-size: 0.8rem; color: #7dd3fc;">
-              Operações sujeitas aos normativos cambiais em vigor do Banco Nacional de Angola (BNA).
+            <div class="m1-filter-group">
+              <label for="filtro-estado-cambio">Estado</label>
+              <select id="filtro-estado-cambio" class="m1-filter-select">
+                <option value="todos" ${filtroEstado === "todos" ? "selected" : ""}>Todos os estados</option>
+                <option value="pendente" ${filtroEstado === "pendente" ? "selected" : ""}>Aguarda pagamento</option>
+                <option value="em_analise" ${filtroEstado === "em_analise" ? "selected" : ""}>Em análise</option>
+                <option value="concluido" ${filtroEstado === "concluido" ? "selected" : ""}>Concluído</option>
+                <option value="cancelado" ${filtroEstado === "cancelado" ? "selected" : ""}>Cancelado</option>
+              </select>
             </div>
           </div>
         </div>
 
-        <!-- Histórico de Pedidos de Câmbio -->
-        <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">Histórico de Pedidos de Câmbio</h2>
-            <span style="font-size: 0.85rem; color: var(--cor-texto-mutado);">${pedidos.length} registo(s)</span>
-          </div>
-
+        <div class="card m1-table-card">
           ${
-            pedidos.length === 0
-              ? `<div style="text-align: center; padding: 2rem 1rem; color: var(--cor-texto-mutado);">Nenhum pedido de câmbio registado até ao momento.</div>`
+            pedidosFiltrados.length === 0
+              ? `
+            <div class="m1-empty-state">
+              <div class="m1-empty-icon">${icone("cambio", 32)}</div>
+              <p class="m1-empty-text">${TEXTOS.vazios.semCambio}</p>
+              <a href="#/cambio/novo" class="btn btn-primary mt-medium">
+                ${TEXTOS.botoes.trocarMoeda}
+              </a>
+            </div>
+          `
               : `
             <div class="table-responsive">
               <table class="table-custom">
@@ -174,28 +172,39 @@ export function renderCambioView(container: HTMLElement): void {
                     <th>Ref. Pedido</th>
                     <th>Operação</th>
                     <th>Montante</th>
-                    <th>Taxa Fixada</th>
-                    <th>Total Estimado</th>
-                    <th>Finalidade</th>
+                    <th>Taxa Aplicada</th>
+                    <th>Total em Kwanzas</th>
                     <th>Data</th>
                     <th>Estado</th>
+                    <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  ${pedidos.map((p) => `
+                  ${pedidosFiltrados
+                    .map(
+                      (p) => `
                     <tr>
                       <td><code>${p.id}</code></td>
-                      <td>${p.tipoOperacao === "compra" ? "Compra" : "Venda"}</td>
-                      <td><strong>${p.montanteDivisa} ${p.moeda}</strong></td>
-                      <td>${p.taxaProposta} AOA</td>
-                      <td>${Number(p.totalAoaEstimado).toLocaleString("pt-AO", { minimumFractionDigits: 2 })} AOA</td>
-                      <td><small>${p.finalidade}</small></td>
-                      <td>${new Date(p.criadoEm).toLocaleDateString("pt-AO")}</td>
-                      <td><span class="badge badge-${p.estado}">${p.estado}</span></td>
+                      <td><strong>${p.tipoOperacao === "compra" ? "Compra de Divisa" : "Venda de Divisa"}</strong></td>
+                      <td><strong>${formatarMontante(p.montanteDivisa, p.moeda)}</strong></td>
+                      <td>${formatarTaxa(p.taxaProposta, 4)}</td>
+                      <td>${formatarMontante(p.totalAoaEstimado, "AOA")}</td>
+                      <td>${formatarDataHora(p.criadoEm)}</td>
+                      <td><span class="badge badge-${p.estado}">${obterRotuloEstadoCambio(p.estado)}</span></td>
+                      <td>
+                        <a href="#/cambio/${p.id}" class="btn btn-secondary btn-sm">
+                          ${TEXTOS.botoes.verDetalhes}
+                        </a>
+                      </td>
                     </tr>
-                  `).join("")}
+                  `
+                    )
+                    .join("")}
                 </tbody>
               </table>
+            </div>
+            <div class="m1-pagination-footer">
+              <span>Total: <strong>${pedidosFiltrados.length}</strong> registo(s)</span>
             </div>
           `
           }
@@ -203,58 +212,386 @@ export function renderCambioView(container: HTMLElement): void {
       </div>
     `;
 
-    // Listeners Interativos
-    container.querySelector("#btn-op-compra")?.addEventListener("click", () => {
+    // Listeners da Lista
+    container.querySelector("#input-pesquisa-cambio")?.addEventListener("input", (e) => {
+      filtroTexto = (e.target as HTMLInputElement).value;
+      render();
+    });
+
+    container.querySelector("#filtro-moeda-cambio")?.addEventListener("change", (e) => {
+      filtroMoeda = (e.target as HTMLSelectElement).value;
+      render();
+    });
+
+    container.querySelector("#filtro-estado-cambio")?.addEventListener("change", (e) => {
+      filtroEstado = (e.target as HTMLSelectElement).value;
+      render();
+    });
+  }
+
+  function renderNovoAssistente() {
+    const { taxaAplicada, montante, totalAoa } = calcularSimulacao();
+
+    const passos = [
+      { numero: 1, rotulo: "Montante" },
+      { numero: 2, rotulo: "Pagamento" },
+      { numero: 3, rotulo: "Confirmação" },
+      { numero: 4, rotulo: "Comprovativo" },
+    ];
+
+    let conteudoHtml = "";
+    if (passoAtual === 1) {
+      conteudoHtml = `
+        <div class="stepper-step-body">
+          <div class="timer-ribbon">
+            <span id="countdown-cotacao-badge" class="timer-badge" aria-live="polite">
+              ${icone("relogio", 14)} <span>Cotação válida: ${segundosRestantes}s</span>
+            </span>
+            <small class="text-suave">A taxa oficial é mantida durante o preenchimento.</small>
+          </div>
+
+          <div class="form-group mt-medium">
+            <label class="form-label">Tipo de Operação</label>
+            <div class="btn-group-toggle">
+              <button type="button" id="btn-tipo-compra" class="toggle-btn ${tipoOperacao === "compra" ? "ativo" : ""}">
+                Comprar Divisa
+              </button>
+              <button type="button" id="btn-tipo-venda" class="toggle-btn ${tipoOperacao === "venda" ? "ativo" : ""}">
+                Vender Divisa
+              </button>
+            </div>
+          </div>
+
+          <div class="form-row mt-medium">
+            <div class="form-group">
+              <label class="form-label" for="select-moeda-cambio">Moeda Estrangeira</label>
+              <select id="select-moeda-cambio" class="form-select">
+                <option value="USD" ${moeda === "USD" ? "selected" : ""}>USD — Dólar Americano</option>
+                <option value="EUR" ${moeda === "EUR" ? "selected" : ""}>EUR — Euro Europeu</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="input-montante-cambio">Montante em Divisa</label>
+              <input type="number" id="input-montante-cambio" class="form-input" min="10" step="10" value="${montanteDivisa}" required />
+            </div>
+          </div>
+
+          <div class="form-group mt-medium">
+            <label class="form-label" for="select-finalidade-cambio">Finalidade da Operação Cambial</label>
+            <select id="select-finalidade-cambio" class="form-select">
+              <option value="Despesas de viagem pessoal / turismo">Despesas de viagem pessoal / turismo</option>
+              <option value="Tratamento médico / saúde no exterior">Tratamento médico / saúde no exterior</option>
+              <option value="Educação e formação internacional">Educação e formação internacional</option>
+              <option value="Importação de mercadorias / serviços">Importação de mercadorias / serviços</option>
+              <option value="Outras despesas autorizadas pelo BNA">Outras despesas autorizadas pelo BNA</option>
+            </select>
+          </div>
+        </div>
+      `;
+    } else if (passoAtual === 2) {
+      conteudoHtml = `
+        <div class="stepper-step-body">
+          <h2 class="card-title-md">Escolha o Método de Pagamento</h2>
+          <p class="text-suave mb-medium">Selecione o canal para liquidação da sua operação cambial.</p>
+
+          <div class="payment-methods-grid">
+            <label class="payment-option ${metodoPagamento === "mcx" ? "selecionado" : ""}">
+              <input type="radio" name="metodo-pag" value="mcx" ${metodoPagamento === "mcx" ? "checked" : ""} />
+              <div class="payment-option-content">
+                <strong>Multicaixa Express</strong>
+                <span>Confirmação imediata e aprovação pelo telemóvel</span>
+              </div>
+            </label>
+
+            <label class="payment-option ${metodoPagamento === "ref" ? "selecionado" : ""}">
+              <input type="radio" name="metodo-pag" value="ref" ${metodoPagamento === "ref" ? "checked" : ""} />
+              <div class="payment-option-content">
+                <strong>Pagamento por Referência</strong>
+                <span>Gera entidade e referência para pagamento no Multicaixa</span>
+              </div>
+            </label>
+
+            <label class="payment-option ${metodoPagamento === "balcao" ? "selecionado" : ""}">
+              <input type="radio" name="metodo-pag" value="balcao" ${metodoPagamento === "balcao" ? "checked" : ""} />
+              <div class="payment-option-content">
+                <strong>Pagamento no Balcão NZAIDI</strong>
+                <span>Liquidação direta e entrega física no balcão autorizado</span>
+              </div>
+            </label>
+          </div>
+
+          ${
+            metodoPagamento === "mcx"
+              ? `
+            <div class="form-group mt-medium p-small bg-suave border-rounded">
+              <label class="form-label" for="input-tel-mcx">Número de Telemóvel Multicaixa Express</label>
+              <input type="tel" id="input-tel-mcx" class="form-input" placeholder="9XX XXX XXX" value="${telefoneMcx}" />
+              <small class="form-hint">Receberá um pedido de autorização na aplicação Multicaixa Express.</small>
+            </div>
+          `
+              : ""
+          }
+        </div>
+      `;
+    } else if (passoAtual === 3) {
+      conteudoHtml = `
+        <div class="stepper-step-body">
+          <h2 class="card-title-md">Confirmação dos Dados</h2>
+          <p class="text-suave mb-medium">Reveja cuidadosamente todos os elementos antes de concluir o seu pedido.</p>
+
+          <div class="confirmation-review-box">
+            <div class="review-row">
+              <span>Tipo de Operação:</span>
+              <strong>${tipoOperacao === "compra" ? "Compra de Divisa" : "Venda de Divisa"}</strong>
+            </div>
+            <div class="review-row">
+              <span>Moeda e Montante:</span>
+              <strong>${formatarMontante(montante, moeda)}</strong>
+            </div>
+            <div class="review-row">
+              <span>Taxa Exata Aplicada:</span>
+              <strong class="text-primario">${formatarTaxa(taxaAplicada, 4)} AOA</strong>
+            </div>
+            <div class="review-row">
+              <span>Total em Kwanzas:</span>
+              <strong class="text-huge">${formatarMontante(totalAoa, "AOA")}</strong>
+            </div>
+            <div class="review-row">
+              <span>Método Escolhido:</span>
+              <strong style="text-transform:uppercase">${metodoPagamento}</strong>
+            </div>
+            <div class="review-row">
+              <span>Finalidade:</span>
+              <span>${finalidade}</span>
+            </div>
+          </div>
+
+          <div class="alert-box alert-info mt-medium">
+            ${icone("seguranca", 18)}
+            <span>Ao confirmar, a sua taxa de câmbio é bloqueada nos nossos sistemas sob supervisão do BNA.</span>
+          </div>
+        </div>
+      `;
+    } else {
+      conteudoHtml = `
+        <div class="stepper-step-body text-center p-large">
+          <div class="success-icon-wrap text-sucesso mb-medium">
+            ${icone("sucesso", 48)}
+          </div>
+          <h2 class="card-title-lg">Pedido Registado com Sucesso!</h2>
+          <p class="text-suave">O seu pedido foi registado com a referência única <strong>${pedidoCriadoSucesso?.id || "NZ-CAMB-001"}</strong>.</p>
+
+          <div class="success-receipt-card mt-large">
+            <div class="receipt-row">
+              <span>Referência:</span>
+              <code>${pedidoCriadoSucesso?.id || "NZ-CAMB-001"}</code>
+            </div>
+            <div class="receipt-row">
+              <span>Montante:</span>
+              <strong>${formatarMontante(montante, moeda)}</strong>
+            </div>
+            <div class="receipt-row">
+              <span>Total Liquidado:</span>
+              <strong>${formatarMontante(totalAoa, "AOA")}</strong>
+            </div>
+          </div>
+
+          <div class="stepper-final-actions mt-large">
+            <a href="#/cambio/${pedidoCriadoSucesso?.id || ""}" class="btn btn-secondary">
+              ${icone("ver", 18)} ${TEXTOS.botoes.verPedido}
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+              ${icone("descarregar", 18)} ${TEXTOS.botoes.descarregarComprovativo}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    const resumoLateralHtml = `
+      <div class="stepper-side-summary">
+        <div class="summary-line">
+          <span>Taxa Oficial Fixada:</span>
+          <strong>${formatarTaxa(taxaAplicada, 4)}</strong>
+        </div>
+        <div class="summary-line">
+          <span>Montante Divisa:</span>
+          <strong>${formatarMontante(montante, moeda)}</strong>
+        </div>
+        <hr class="summary-hr" />
+        <div class="summary-total-line">
+          <span>Total Estimado:</span>
+          <span class="summary-total-val">${formatarMontante(totalAoa, "AOA")}</span>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = renderizarM2Assistente({
+      titulo: "Novo Pedido de Câmbio",
+      passos,
+      passoAtual,
+      conteudoHtml,
+      resumoHtml: resumoLateralHtml,
+      podeVoltar: passoAtual > 1 && passoAtual < 4,
+      podeContinuar: passoAtual < 4,
+      rotuloContinuar: passoAtual === 3 ? TEXTOS.botoes.confirmarPedido : TEXTOS.botoes.continuar,
+      rotuloVoltar: TEXTOS.botoes.voltar,
+      aCarregar: aSubmeter,
+    });
+
+    if (passoAtual === 1) iniciarTimerCotacao();
+
+    // Eventos do Assistente
+    container.querySelector("#btn-tipo-compra")?.addEventListener("click", () => {
       tipoOperacao = "compra";
       render();
     });
 
-    container.querySelector("#btn-op-venda")?.addEventListener("click", () => {
+    container.querySelector("#btn-tipo-venda")?.addEventListener("click", () => {
       tipoOperacao = "venda";
       render();
     });
 
-    container.querySelector("#select-moeda")?.addEventListener("change", (e) => {
-      moeda = (e.target as HTMLSelectElement).value as "USD" | "EUR";
+    container.querySelector("#select-moeda-cambio")?.addEventListener("change", (e) => {
+      moeda = (e.target as HTMLSelectElement).value as any;
       render();
     });
 
-    container.querySelector("#input-montante")?.addEventListener("input", (e) => {
+    container.querySelector("#input-montante-cambio")?.addEventListener("input", (e) => {
       montanteDivisa = (e.target as HTMLInputElement).value;
-      const { taxa: novaTaxa, totalAoa: novoTotal } = calcularEstimativa();
-      const elTotal = container.querySelector(".taxa-preco");
-      // Atualização rápida de estimativa sem re-renderizar todo o dom
-      render();
     });
 
-    container.querySelector("#form-cambio")?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const fin = (container.querySelector("#select-finalidade") as HTMLSelectElement).value;
+    container.querySelector("#select-finalidade-cambio")?.addEventListener("change", (e) => {
+      finalidade = (e.target as HTMLSelectElement).value;
+    });
 
-      try {
-        submetendo = true;
-        erroMsg = "";
-        sucessoMsg = "";
+    container.querySelectorAll("input[name='metodo-pag']").forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        metodoPagamento = (e.target as HTMLInputElement).value;
         render();
+      });
+    });
 
-        const novoPedido = await api.criarPedidoCambio({
-          tipoOperacao,
-          moeda,
-          montanteDivisa,
-          finalidade: fin,
-        });
+    container.querySelector("#input-tel-mcx")?.addEventListener("input", (e) => {
+      telefoneMcx = (e.target as HTMLInputElement).value;
+    });
 
-        sucessoMsg = `Pedido ${novoPedido.id} registado com sucesso! Pode levantar no balcão com o seu documento de identificação.`;
-        await carregarDados();
-      } catch (err: any) {
-        erroMsg = err.message || "Erro ao registar o pedido de câmbio.";
-      } finally {
-        submetendo = false;
+    container.querySelector("#btn-m2-voltar")?.addEventListener("click", () => {
+      if (passoAtual > 1) {
+        passoAtual--;
         render();
+      }
+    });
+
+    container.querySelector("#btn-m2-continuar")?.addEventListener("click", async () => {
+      if (passoAtual === 1) {
+        if (!montanteDivisa || parseFloat(montanteDivisa) <= 0) {
+          alert("Introduza um montante válido superior a zero.");
+          return;
+        }
+        passoAtual = 2;
+        render();
+      } else if (passoAtual === 2) {
+        passoAtual = 3;
+        render();
+      } else if (passoAtual === 3) {
+        try {
+          aSubmeter = true;
+          render();
+          const novo = await api.criarPedidoCambio({
+            tipoOperacao,
+            moeda,
+            montanteDivisa,
+            finalidade,
+            metodoPagamento,
+          });
+          pedidoCriadoSucesso = novo;
+          passoAtual = 4;
+          if (timerIntervalo) clearInterval(timerIntervalo);
+        } catch (err: any) {
+          alert(err.message || TEXTOS.erros.generico);
+        } finally {
+          aSubmeter = false;
+          render();
+        }
       }
     });
   }
 
-  render();
+  async function renderDetalhe(id: string) {
+    const pedido = pedidos.find((p) => p.id === id) || (await api.obterPedidoCambio(id));
+    if (!pedido) {
+      container.innerHTML = `
+        <div class="m1-empty-state">
+          <p>Pedido de câmbio não encontrado.</p>
+          <a href="#/cambio" class="btn btn-secondary mt-small">${TEXTOS.botoes.voltar}</a>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = renderizarM3Detalhe({
+      titulo: `Pedido de Câmbio ${pedido.id}`,
+      subtitulo: `Criado a ${formatarDataHora(pedido.criadoEm)} sob normativo do Banco Nacional de Angola`,
+      referencia: pedido.id,
+      estadoBadgeHtml: `<span class="badge badge-${pedido.estado}">${obterRotuloEstadoCambio(pedido.estado)}</span>`,
+      linhaTemporal: [
+        {
+          titulo: "Registo da Ordem de Câmbio",
+          descricao: "Intenção de câmbio submetida no portal oficial.",
+          dataHora: formatarDataHora(pedido.criadoEm),
+          estado: "concluido",
+        },
+        {
+          titulo: "Verificação e Liquidação Financeira",
+          descricao: "Aferição do pagamento e emissão do comprovativo com selo BNA.",
+          estado: pedido.estado === "concluido" ? "concluido" : "atual",
+        },
+        {
+          titulo: "Borderô Emitido e Conclusão",
+          descricao: "Operação arquivada nos reportes regulamentares.",
+          estado: pedido.estado === "concluido" ? "concluido" : "pendente",
+        },
+      ],
+      dadosPrincipais: [
+        { rotulo: "Operação", valor: pedido.tipoOperacao === "compra" ? "Compra de Divisa" : "Venda de Divisa" },
+        { rotulo: "Moeda Estrangeira", valor: pedido.moeda },
+        { rotulo: "Montante em Divisa", valor: formatarMontante(pedido.montanteDivisa, pedido.moeda), destaque: true },
+        { rotulo: "Taxa Fixada", valor: `${formatarTaxa(pedido.taxaProposta, 4)} AOA` },
+        { rotulo: "Finalidade Declarada", valor: pedido.finalidade },
+        { rotulo: "Código de Rastreio", valor: pedido.id, copiavel: true },
+      ],
+      resumoValoresHtml: `
+        <div class="summary-line">
+          <span>Montante em Divisa:</span>
+          <strong>${formatarMontante(pedido.montanteDivisa, pedido.moeda)}</strong>
+        </div>
+        <div class="summary-line">
+          <span>Taxa Proposta Oficial:</span>
+          <strong>${formatarTaxa(pedido.taxaProposta, 4)}</strong>
+        </div>
+        <hr class="summary-hr" />
+        <div class="summary-total-line">
+          <span>Total em Kwanzas:</span>
+          <span class="summary-total-val">${formatarMontante(pedido.totalAoaEstimado, "AOA")}</span>
+        </div>
+      `,
+      botaoVoltarRota: "/cambio",
+      botaoComprovativo: {
+        rotulo: TEXTOS.botoes.descarregarComprovativo,
+        onClick: () => window.print(),
+      },
+    });
+
+    container.querySelector("#btn-m3-comprovativo")?.addEventListener("click", () => {
+      window.print();
+    });
+  }
+
   carregarDados();
+
+  return () => {
+    if (timerIntervalo) clearInterval(timerIntervalo);
+  };
 }

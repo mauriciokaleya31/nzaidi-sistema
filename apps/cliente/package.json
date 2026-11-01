@@ -12,7 +12,8 @@
   "dependencies": {
     "@nzaidi/design-system": "*",
     "@nzaidi/dominio": "*",
-    "decimal.js": "^10.6.0"
+    "decimal.js": "^10.6.0",
+    "lucide": "^1.66.0"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
