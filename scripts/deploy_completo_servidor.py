@@ -81,6 +81,7 @@ install_cmd = """
 mkdir -p /mnt/home102/nzaidiao/app.nzaidi.ao/cliente
 rm -rf /mnt/home102/nzaidiao/app.nzaidi.ao/cliente/assets
 tar -xzf /mnt/home102/nzaidiao/tmp_deploy/cliente_dist.tar.gz -C /mnt/home102/nzaidiao/app.nzaidi.ao/cliente
+cp /mnt/home102/nzaidiao/app.nzaidi.ao/cliente/*.png /mnt/home102/nzaidiao/app.nzaidi.ao/ 2>/dev/null || true
 
 # 2. Atualizar Portal do Cliente em homologacao.nzaidi.ao
 mkdir -p /mnt/home102/nzaidiao/homologacao.nzaidi.ao/cliente

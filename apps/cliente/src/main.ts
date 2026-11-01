@@ -659,7 +659,8 @@ function renderizarAppShell() {
       <aside class="sidebar-desktop">
         <div class="sidebar-brand-box">
           <a class="marca dark-brand" href="#dashboard" aria-label="NZAIDI, Início">
-            <img src="/logotipo.png" alt="NZAIDI" />
+            <img src="./simbolo.png" alt="NZAIDI" width="40" height="40" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
+            <span class="marca-fallback-svg" style="display:none; width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,#072042,#0D3873); border:1.5px solid #F2C879; align-items:center; justify-content:center; color:#F2C879; font-weight:800; font-size:16px;">NZ</span>
             <b>NZAIDI</b>
           </a>
           <span class="selo-portal-sidebar">Portal do cliente</span>
@@ -698,7 +699,8 @@ function renderizarAppShell() {
         <!-- Topo Mobile Responsivo (visível em telemóveis e tablets) -->
         <header class="topo-mobile-bar">
           <div class="topo-mobile-marca">
-            <img src="/logotipo.png" alt="NZAIDI" width="32" height="32" />
+            <img src="./simbolo.png" alt="NZAIDI" width="34" height="34" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
+            <span class="marca-fallback-svg" style="display:none; width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#072042,#0D3873); border:1px solid #F2C879; align-items:center; justify-content:center; color:#F2C879; font-weight:800; font-size:14px;">NZ</span>
             <span>NZAIDI</span>
           </div>
           <div class="topo-mobile-acoes">
@@ -712,7 +714,7 @@ function renderizarAppShell() {
           </div>
         </header>
 
-        <!-- Topo com Selo BNA, Data e Alternância de Tema (Desktop) -->
+        <!-- Topo com Selo BNA, Data e Ações Alinhadas à Direita (Desktop) -->
         <header class="topo-desktop-bar">
           <div class="bna-indicator-badge">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -722,26 +724,22 @@ function renderizarAppShell() {
           </div>
 
           <div class="topo-desktop-actions">
-            <span style="font-size: 13px; color: var(--suave); font-weight: 600;">${dataHoje}</span>
-            <button id="btn-topo-chat-suporte" class="btn-suporte-topo" type="button">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-              <span>Apoio ao Cliente</span>
-            </button>
+            <span class="data-topo-desktop">${dataHoje}</span>
             
             <!-- Botão e Dropdown de Notificações -->
             <div class="notificacoes-topo-wrapper" style="position: relative;">
-              <button id="btn-notificacoes-topo" class="btn-notificacao-sino" type="button" aria-label="Notificações" style="position: relative; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #08264F;">
+              <button id="btn-notificacoes-topo" class="btn-notificacao-sino" type="button" aria-label="Notificações">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                <span id="badge-notificacoes" style="display: none; position: absolute; top: -4px; right: -4px; background: #b42318; color: #ffffff; font-size: 0.65rem; font-weight: 800; border-radius: 99px; min-width: 18px; height: 18px; padding: 0 4px; display: flex; align-items: center; justify-content: center; border: 2px solid #ffffff;">0</span>
+                <span id="badge-notificacoes" class="badge-notificacao-contador" style="display: none;">0</span>
               </button>
 
-              <div id="dropdown-notificacoes" style="display: none; position: absolute; right: 0; top: 48px; width: 340px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 12px 30px rgba(8,38,79,0.12); z-index: 1000; overflow: hidden;">
-                <div style="padding: 12px 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
-                  <strong style="color: #08264F; font-size: 0.85rem;">Notificações</strong>
-                  <button id="btn-marcar-todas-lidas" type="button" style="border: 0; background: transparent; color: #0e8f6e; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Marcar todas como lidas</button>
+              <div id="dropdown-notificacoes" class="dropdown-notificacoes-painel" style="display: none;">
+                <div class="dropdown-notificacoes-cabecalho">
+                  <strong>Notificações</strong>
+                  <button id="btn-marcar-todas-lidas" type="button">Marcar todas como lidas</button>
                 </div>
-                <div id="lista-notificacoes-topo" style="max-height: 320px; overflow-y: auto; padding: 6px 0;">
-                  <div style="padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.8rem;">A carregar notificações...</div>
+                <div id="lista-notificacoes-topo" class="lista-notificacoes-corpo">
+                  <div class="notificacoes-vazio">A carregar notificações...</div>
                 </div>
               </div>
             </div>
@@ -1105,7 +1103,6 @@ function renderizarAppShell() {
     window.dispatchEvent(new CustomEvent("abrir-suporte"));
   };
   document.getElementById("sidebar-link-suporte")?.addEventListener("click", abrirSuporte);
-  document.getElementById("btn-topo-chat-suporte")?.addEventListener("click", abrirSuporte);
   document.getElementById("btn-mobile-chat-suporte")?.addEventListener("click", abrirSuporte);
 
   // Logout
@@ -1145,7 +1142,7 @@ async function iniciar() {
   appRoot.innerHTML = `
     <div style="min-height: 100vh; display: grid; place-items: center; background: #061A3A; color: #fff; font-family: Sora, sans-serif;">
       <div style="text-align: center;">
-        <img src="/logotipo.png" width="64" height="64" style="margin-bottom: 16px; border-radius: 12px;" />
+        <img src="./simbolo.png" alt="NZAIDI" width="64" height="64" style="margin-bottom: 16px; border-radius: 14px; object-fit: cover;" onerror="this.style.display='none';" />
         <div style="font-size: 1.2rem; font-weight: 700; letter-spacing: 0.1em;">NZAIDI</div>
         <div style="font-size: 0.85rem; color: #D5983E; margin-top: 6px;">A carregar Portal do Cliente...</div>
       </div>
