@@ -981,6 +981,7 @@ main{max-width:100%;width:100%;margin:0;padding:24px 32px 120px;box-sizing:borde
 
 /* Widget e Janela de Chat de Suporte */
 .btn-chat-flutuante {
+  display: none !important;
   position: fixed;
   bottom: 84px;
   right: 24px;
@@ -1969,4 +1970,65 @@ main{max-width:100%;width:100%;margin:0;padding:24px 32px 120px;box-sizing:borde
   justify-content: flex-end;
   gap: 12px;
   margin-top: 20px;
+}
+
+
+/* ==========================================================================
+   ESTILOS PREMIUM DO CENTRO DE SUPORTE OFICIAL NZAIDI (#suporte)
+   ========================================================================== */
+#nzaidi-chat-suporte-wrapper {
+  display: none !important;
+}
+
+.canal-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.canal-card-link:hover .canal-card {
+  transform: translateY(-3px);
+  border-color: rgba(213, 152, 62, 0.6) !important;
+  box-shadow: 0 12px 30px rgba(6, 26, 58, 0.3) !important;
+}
+
+:root[data-theme="dark"] .canal-card {
+  background: rgba(14, 29, 56, 0.7) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:root[data-theme="dark"] .canal-card-link:hover .canal-card {
+  background: rgba(18, 38, 72, 0.9) !important;
+  border-color: rgba(242, 200, 121, 0.5) !important;
+}
+
+.sugestao-pill-suporte {
+  transition: all 0.2s ease !important;
+}
+
+.sugestao-pill-suporte:hover {
+  background: rgba(213, 152, 62, 0.15) !important;
+  border-color: var(--ouro) !important;
+  color: var(--ouro) !important;
+  transform: translateX(3px);
+}
+
+:root[data-theme="dark"] .sugestao-pill-suporte {
+  background: rgba(7, 18, 38, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.faq-item-header:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+:root[data-theme="dark"] .faq-item-header:hover {
+  background: rgba(213, 152, 62, 0.08) !important;
+}
+
+@media (max-width: 991px) {
+  .suporte-hero-card {
+    padding: 24px 20px !important;
+  }
+  .card.p-large[style*="grid-template-columns: 1fr 340px"] {
+    grid-template-columns: 1fr !important;
+  }
 }

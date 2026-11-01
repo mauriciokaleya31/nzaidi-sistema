@@ -716,9 +716,9 @@ function renderizarAppShell() {
           </div>
           <div class="topo-mobile-acoes">
             <button class="btn-tema-toggle btn-mobile-acao" type="button" aria-label="Alternar tema"></button>
-            <button id="btn-mobile-chat-suporte" class="btn-mobile-acao" type="button" title="Apoio e Suporte">
+            <a href="#suporte" id="btn-mobile-chat-suporte" class="btn-mobile-acao" title="Centro de Suporte" aria-label="Centro de Suporte" style="text-decoration:none;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-            </button>
+            </a>
             <a href="#perfil" class="topo-mobile-avatar" aria-label="Minha conta">
               ${cliente?.avatarUrl || localStorage.getItem("nzaidi_avatar_url") ? `<img src="${cliente?.avatarUrl || localStorage.getItem("nzaidi_avatar_url")}" alt="Perfil" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />` : iniciais}
             </a>
@@ -1107,14 +1107,11 @@ function renderizarAppShell() {
   document.getElementById("btn-toggle-theme")?.addEventListener("click", alternarTema);
   atualizarBotaoTema();
 
-  // Inicializar Chat de Suporte
-  inicializarChatSuporte();
-
-  const abrirSuporte = () => {
-    window.dispatchEvent(new CustomEvent("abrir-suporte"));
-  };
-  document.getElementById("sidebar-link-suporte")?.addEventListener("click", abrirSuporte);
-  document.getElementById("btn-mobile-chat-suporte")?.addEventListener("click", abrirSuporte);
+  // Remover qualquer botão ou widget flutuante de chat residual
+  const chatWrapperResidual = document.getElementById("nzaidi-chat-suporte-wrapper");
+  if (chatWrapperResidual) {
+    chatWrapperResidual.remove();
+  }
 
   // Logout
   const fazerLogout = async () => {
