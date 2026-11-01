@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  base: "/",
+  base: "./",
   resolve: {
     alias: {
       "@nzaidi/dominio": path.resolve(__dirname, "../../packages/dominio/src/index.ts"),
@@ -27,5 +27,12 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        entryFileNames: `assets/portal-cliente-${Date.now()}.js`,
+        chunkFileNames: `assets/chunk-${Date.now()}.js`,
+        assetFileNames: `assets/estilo-${Date.now()}.[ext]`,
+      },
+    },
   },
 });
