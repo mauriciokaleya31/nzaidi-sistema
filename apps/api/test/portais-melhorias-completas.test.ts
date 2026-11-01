@@ -528,8 +528,12 @@ describe("NZAIDI — Testes Obrigatórios: Portais, Suporte, 2FA, Avatar e Notif
       "apps/site-publico/public/logotipo-completo.png",
     ];
 
+    const rootDir = process.cwd().includes(path.join("apps", "api")) || process.cwd().endsWith("apps/api")
+      ? path.resolve(process.cwd(), "../..")
+      : process.cwd();
+
     for (const relPath of locaisLogotipo) {
-      const fullPath = path.resolve(process.cwd(), relPath);
+      const fullPath = path.resolve(rootDir, relPath);
       expect(fs.existsSync(fullPath)).toBe(true);
       const stat = fs.statSync(fullPath);
       expect(stat.size).toBeGreaterThan(10_000); // Garante que a imagem é válida e não um ficheiro vazio

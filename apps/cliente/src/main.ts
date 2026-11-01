@@ -527,6 +527,10 @@ function alternarVista(rotaNome: string) {
     vistaAlvo.classList.add("entra");
     animarContadores(vistaAlvo);
 
+    if (r === "dashboard") {
+      atualizarSaudacaoENome();
+    }
+
         if (r === "suporte") {
       const containerSuporte = document.getElementById("suporte-view-container");
       if (containerSuporte) {
@@ -582,9 +586,44 @@ async function carregarDadosReais() {
   } catch (e) {}
 }
 
+function extrairPrimeiroEUltimoNome(nomeCompleto: string): string {
+  const partes = (nomeCompleto || "").trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return "Manuel";
+  if (partes.length === 1) return partes[0];
+  return `${partes[0]} ${partes[1]}`;
+}
+
+function atualizarSaudacaoENome(nomeParam?: string) {
+  const elSaudacao = document.getElementById("saudacao");
+  const elNome = document.getElementById("dash-cliente-nome");
+  const saudacao = obterSaudacaoLuanda();
+  
+  const nomeReal = nomeParam || authState.cliente?.nome || localStorage.getItem("nzaidi_cliente_nome") || "Manuel Domingos";
+  if (authState.cliente?.nome) {
+    try {
+      localStorage.setItem("nzaidi_cliente_nome", authState.cliente.nome);
+    } catch {}
+  }
+  const nomeExibir = extrairPrimeiroEUltimoNome(nomeReal);
+
+  if (elSaudacao) {
+    elSaudacao.textContent = saudacao;
+  }
+  if (elNome) {
+    elNome.textContent = nomeExibir;
+    elNome.title = nomeReal;
+  }
+}
+
 function renderizarAppShell() {
   const cliente = authState.cliente;
-  const clienteNome = cliente?.nome || "Cliente NZAIDI";
+  const clienteNome = cliente?.nome || localStorage.getItem("nzaidi_cliente_nome") || "Manuel Domingos";
+  if (cliente?.nome) {
+    try {
+      localStorage.setItem("nzaidi_cliente_nome", cliente.nome);
+    } catch {}
+  }
+  const primeiroNomeExibir = extrairPrimeiroEUltimoNome(clienteNome);
   const iniciais = clienteNome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
   const saudacao = obterSaudacaoLuanda();
   const dataHoje = formatarDataLuanda();
@@ -708,7 +747,7 @@ function renderizarAppShell() {
   <div class="heroi">
     <div>
       <span class="selo" style="--i:0"><svg width="16" height="16"><use href="#i-escudo"/></svg>Conta verificada</span>
-      <h1 id="t-dash" style="--i:1"><span id="saudacao">Olá</span>, <span id="dash-cliente-nome">${clienteNome}</span></h1>
+      <h1 id="t-dash" style="--i:1"><span id="saudacao">${saudacao}</span>, <span id="dash-cliente-nome">${primeiroNomeExibir}</span></h1>
       <p style="--i:2">O que quer fazer hoje? Troque moeda ou envie dinheiro para quem gosta, com a taxa à vista antes de confirmar.</p>
       <div class="acoes" style="--i:3">
         <a class="btn btn-ouro" href="#cambio"><svg><use href="#i-troca"/></svg>Trocar moeda</a>
@@ -968,17 +1007,8 @@ function renderizarAppShell() {
   inicializarConversorCambio();
   inicializarUploadDocumentos();
 
-  // Saudação
-  const elSaudacao = document.getElementById("saudacao");
-  if (elSaudacao) elSaudacao.textContent = saudacao;
-
-  // Alternador de Tema
-  
-  // Atualizar nome no banner caso necessário
-  const elNome = document.getElementById("dash-cliente-nome");
-  if (elNome && authState.cliente?.nome) {
-    elNome.textContent = authState.cliente.nome;
-  }
+  // Saudação e Nome Dinâmico do Cliente
+  atualizarSaudacaoENome(clienteNome);
 
   // --- Centro de Notificações e Sincronização em Tempo Real ---
   async function atualizarNotificacoesTopo() {
@@ -1116,6 +1146,7 @@ async function iniciar() {
   await authState.inicializar();
   await carregarDadosReais();
   renderizarApp();
+  atualizarSaudacaoENome();
 }
 
 iniciar();
