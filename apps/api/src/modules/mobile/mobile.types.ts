@@ -90,5 +90,8 @@ export interface MobileTokensResponse {
     deviceId: string;
     plataforma: "android" | "ios";
     status: string;
+    nomeDispositivo?: string;
+    versaoSo?: string;
+    versaoApp?: string;
   };
 }

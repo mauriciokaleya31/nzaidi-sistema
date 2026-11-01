@@ -641,6 +641,7 @@ function renderizarAppShell() {
     <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="gOuro" x1="0" x2="1"><stop offset="0" stop-color="#F2C879"/><stop offset="1" stop-color="#D5983E"/></linearGradient>
+    <linearGradient id="gMarcaMarinho" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#072042"/><stop offset="1" stop-color="#0D3873"/></linearGradient>
     <symbol id="i-casa" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
     <symbol id="i-troca" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 4v14m0 0l-3-3m3 3l3-3M17 20V6m0 0l-3 3m3-3l3 3"/></symbol>
     <symbol id="i-aviao" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></symbol>
@@ -659,8 +660,13 @@ function renderizarAppShell() {
       <aside class="sidebar-desktop">
         <div class="sidebar-brand-box">
           <a class="marca dark-brand" href="#dashboard" aria-label="NZAIDI, Início">
-            <img src="./simbolo.png" alt="NZAIDI" width="40" height="40" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
-            <span class="marca-fallback-svg" style="display:none; width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,#072042,#0D3873); border:1.5px solid #F2C879; align-items:center; justify-content:center; color:#F2C879; font-weight:800; font-size:16px;">NZ</span>
+            <span class="marca-emblema-svg" aria-hidden="true" style="display:inline-flex; width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,#072042,#0D3873); border:1.5px solid #F2C879; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(6,26,58,0.4); flex-shrink:0;">
+              <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+                <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" fill="url(#gOuro)" opacity="0.25"/>
+                <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" stroke="#F2C879" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M10 18V10L18 18V10" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
             <b>NZAIDI</b>
           </a>
           <span class="selo-portal-sidebar">Portal do cliente</span>
@@ -699,8 +705,13 @@ function renderizarAppShell() {
         <!-- Topo Mobile Responsivo (visível em telemóveis e tablets) -->
         <header class="topo-mobile-bar">
           <div class="topo-mobile-marca">
-            <img src="./simbolo.png" alt="NZAIDI" width="34" height="34" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';" />
-            <span class="marca-fallback-svg" style="display:none; width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#072042,#0D3873); border:1px solid #F2C879; align-items:center; justify-content:center; color:#F2C879; font-weight:800; font-size:14px;">NZ</span>
+            <span class="marca-emblema-svg" aria-hidden="true" style="display:inline-flex; width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,#072042,#0D3873); border:1.2px solid #F2C879; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(6,26,58,0.35); flex-shrink:0;">
+              <svg width="20" height="20" viewBox="0 0 28 28" fill="none">
+                <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" fill="url(#gOuro)" opacity="0.25"/>
+                <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" stroke="#F2C879" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M10 18V10L18 18V10" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
             <span>NZAIDI</span>
           </div>
           <div class="topo-mobile-acoes">
@@ -714,16 +725,16 @@ function renderizarAppShell() {
           </div>
         </header>
 
-        <!-- Topo com Selo BNA, Data e Ações Alinhadas à Direita (Desktop) -->
+        <!-- Topo com Selo BNA, Data e Ações Alinhadas no Lado Direito (Desktop) -->
         <header class="topo-desktop-bar">
-          <div class="bna-indicator-badge">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-            </svg>
-            <span>Supervisão BNA · NZAIDI Câmbios</span>
-          </div>
+          <div class="topo-desktop-actions-right">
+            <div class="bna-indicator-badge">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <span>Supervisão BNA · NZAIDI Câmbios</span>
+            </div>
 
-          <div class="topo-desktop-actions">
             <span class="data-topo-desktop">${dataHoje}</span>
             
             <!-- Botão e Dropdown de Notificações -->
