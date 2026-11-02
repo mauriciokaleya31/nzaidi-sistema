@@ -11,8 +11,9 @@ export function validarEnvProducao(env: {
   NODE_ENV?: string;
   COOKIE_SECRET?: string;
   ADMIN_INIT_TOKEN?: string;
-  DATABASE_PATH?: string;
   CORS_ORIGIN?: string;
+  MYSQL_DATABASE?: string;
+  MYSQL_USER?: string;
 }): void {
   if (env.NODE_ENV === "production") {
     if (!env.COOKIE_SECRET || env.COOKIE_SECRET.trim() === "") {
@@ -35,16 +36,6 @@ export function validarEnvProducao(env: {
         "Em produção, ADMIN_INIT_TOKEN deve ter no mínimo 16 caracteres."
       );
     }
-    if (!env.DATABASE_PATH || env.DATABASE_PATH.trim() === "") {
-      throw new ErroConfiguracaoEnv(
-        "Em produção (NODE_ENV=production), DATABASE_PATH é obrigatório e não pode ter valor por defeito."
-      );
-    }
-    if (env.DATABASE_PATH === ":memory:") {
-      throw new ErroConfiguracaoEnv(
-        "Em produção (NODE_ENV=production), DATABASE_PATH não pode ser ':memory:'."
-      );
-    }
     if (
       env.CORS_ORIGIN &&
       (env.CORS_ORIGIN.toLowerCase().includes("localhost") ||
@@ -65,6 +56,11 @@ export const envSchema = z
     COOKIE_SECRET: z.string().optional(),
     CORS_ORIGIN: z.string().default("https://nzaidi.ao,https://app.nzaidi.ao"),
     DATABASE_PATH: z.string().optional(),
+    MYSQL_HOST: z.string().default("127.0.0.1"),
+    MYSQL_PORT: z.coerce.number().int().positive().default(3306),
+    MYSQL_USER: z.string().default("nzaidiao_dbuser"),
+    MYSQL_PASSWORD: z.string().default("Nzaidi2026!DbSecure"),
+    MYSQL_DATABASE: z.string().default("nzaidiao_sistema"),
     TAXAS_FONTE_MODO: z.enum(["demonstracao", "oficial"]).default("demonstracao"),
     ADMIN_INIT_TOKEN: z.string().optional(),
     SESSION_TTL_HOURS: z.coerce.number().int().positive().default(8),
@@ -75,13 +71,11 @@ export const envSchema = z
         ...dados,
         COOKIE_SECRET: dados.COOKIE_SECRET || "dev_cookie_secret_minimo_32_chars_teste_ok!",
         ADMIN_INIT_TOKEN: dados.ADMIN_INIT_TOKEN || "dev_admin_token_16chars_ok",
-        DATABASE_PATH: dados.DATABASE_PATH || ":memory:",
       };
     }
     return dados as typeof dados & {
       COOKIE_SECRET: string;
       ADMIN_INIT_TOKEN: string;
-      DATABASE_PATH: string;
     };
   })
   .superRefine((dados, ctx) => {
@@ -101,7 +95,12 @@ export type Env = {
   HOST: string;
   COOKIE_SECRET: string;
   CORS_ORIGIN: string;
-  DATABASE_PATH: string;
+  DATABASE_PATH?: string;
+  MYSQL_HOST: string;
+  MYSQL_PORT: number;
+  MYSQL_USER: string;
+  MYSQL_PASSWORD: string;
+  MYSQL_DATABASE: string;
   TAXAS_FONTE_MODO: "demonstracao" | "oficial";
   ADMIN_INIT_TOKEN: string;
   SESSION_TTL_HOURS: number;

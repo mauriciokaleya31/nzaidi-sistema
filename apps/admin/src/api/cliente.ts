@@ -1524,7 +1524,7 @@ export class AdminApiClient {
     return res.dados || [];
   }
 
-  public async dispararMobilePush(dados: { titulo: string; mensagem: string; plataformaAlvo?: string; segmento?: string }): Promise<any> {
+  public async dispararMobilePush(dados: { titulo: string; mensagem: string; categoria?: string; plataformaAlvo?: string; segmento?: string }): Promise<any> {
     const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/push", {
       method: "POST",
       body: JSON.stringify(dados),

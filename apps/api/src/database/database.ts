@@ -1,4 +1,5 @@
-import { DatabaseSync } from "node:sqlite";
+import { MySQLDatabaseSync, type DatabaseSync } from "./mysql.js";
+export type { DatabaseSync };
 
 export interface DatabaseContext {
   db: DatabaseSync;
@@ -1600,44 +1601,20 @@ export function comTransacao<T>(db: DatabaseSync, acao: () => T): T {
   }
 }
 
-export function criarConexaoBanco(caminho = ":memory:"): DatabaseSync {
-  const db = new DatabaseSync(caminho);
-  inicializarSchema(db);
-  
-    // Migração defensiva: colunas de 2FA em clientes_credenciais e usuarios
-    try {
-      const infoCred = db.prepare("PRAGMA table_info(clientes_credenciais);").all() as any[];
-      const colsCred = infoCred.map((c) => c.name);
-      if (!colsCred.includes("dois_fatores_ativo")) {
-        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_ativo INTEGER NOT NULL DEFAULT 0;");
-      }
-      if (!colsCred.includes("dois_fatores_segredo")) {
-        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_segredo TEXT;");
-      }
-      if (!colsCred.includes("dois_fatores_backup_codigos")) {
-        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_backup_codigos TEXT;");
-      }
-      if (!colsCred.includes("dois_fatores_ativado_em")) {
-        db.exec("ALTER TABLE clientes_credenciais ADD COLUMN dois_fatores_ativado_em TEXT;");
-      }
+export function criarConexaoBanco(configOuCaminho?: any): DatabaseSync {
+  const host = (configOuCaminho && typeof configOuCaminho === "object" && configOuCaminho.MYSQL_HOST) || process.env.MYSQL_HOST || "127.0.0.1";
+  const port = Number((configOuCaminho && typeof configOuCaminho === "object" && configOuCaminho.MYSQL_PORT) || process.env.MYSQL_PORT || 3306);
+  const user = (configOuCaminho && typeof configOuCaminho === "object" && configOuCaminho.MYSQL_USER) || process.env.MYSQL_USER || "nzaidiao_dbuser";
+  const password = (configOuCaminho && typeof configOuCaminho === "object" && configOuCaminho.MYSQL_PASSWORD) || process.env.MYSQL_PASSWORD || "Nzaidi2026!DbSecure";
+  const database = (configOuCaminho && typeof configOuCaminho === "object" && configOuCaminho.MYSQL_DATABASE) || process.env.MYSQL_DATABASE || "nzaidiao_sistema";
 
-      const infoUsr = db.prepare("PRAGMA table_info(usuarios);").all() as any[];
-      const colsUsr = infoUsr.map((c) => c.name);
-      if (!colsUsr.includes("dois_fatores_ativo")) {
-        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_ativo INTEGER NOT NULL DEFAULT 0;");
-      }
-      if (!colsUsr.includes("dois_fatores_segredo")) {
-        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_segredo TEXT;");
-      }
-      if (!colsUsr.includes("dois_fatores_backup_codigos")) {
-        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_backup_codigos TEXT;");
-      }
-      if (!colsUsr.includes("dois_fatores_ativado_em")) {
-        db.exec("ALTER TABLE usuarios ADD COLUMN dois_fatores_ativado_em TEXT;");
-      }
-    } catch (e) {
-      // Ignorar se já existem
-    }
+  const db = new MySQLDatabaseSync({
+    host,
+    port,
+    user,
+    password,
+    database
+  });
 
   return db;
 }

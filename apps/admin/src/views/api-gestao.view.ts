@@ -1,4 +1,4 @@
-import { api } from "../api/cliente";
+import { api } from "../api/cliente.js";
 
 type AbaAtiva =
   | "visao-geral"
@@ -9,6 +9,7 @@ type AbaAtiva =
   | "paises-remessas"
   | "dispositivos"
   | "localizacoes"
+  | "localizacao"
   | "notificacoes"
   | "versoes"
   | "auditoria";
@@ -18,7 +19,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
     const hash = window.location.hash || "";
     const partes = hash.split("/");
     if (partes.length >= 2) {
-      const sub = partes[1].split("?")[0] as AbaAtiva;
+      const sub = (partes[1] || "").split("?")[0] as AbaAtiva;
       const validas: AbaAtiva[] = [
         "visao-geral",
         "visual",
@@ -28,6 +29,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
         "paises-remessas",
         "dispositivos",
         "localizacoes",
+        "localizacao",
         "notificacoes",
         "versoes",
         "auditoria"
@@ -85,7 +87,6 @@ export function renderizarApiGestao(container: HTMLElement): void {
       historicoAuditoria = resAudit || [];
       telemetriaDashboard = resDash || null;
       paisesRemessas = resPaises || [];
-      metricasPush = resMetricas || null;
       carregando = false;
       render();
     } catch (err: any) {
@@ -1581,7 +1582,6 @@ export function renderizarApiGestao(container: HTMLElement): void {
         exibindoModalPais = false;
         const resPaises = await api.listarPaisesRemessas().catch(() => []);
         paisesRemessas = resPaises || [];
-      metricasPush = resMetricas || null;
         render();
       } catch (err: any) {
         mensagemErro = err.message || "Erro ao cadastrar país de remessa.";
@@ -1599,7 +1599,6 @@ export function renderizarApiGestao(container: HTMLElement): void {
           mensagemSucesso = !ativoAtual ? "País ativado para remessas com sucesso." : "País desativado temporariamente.";
           const resPaises = await api.listarPaisesRemessas().catch(() => []);
           paisesRemessas = resPaises || [];
-      metricasPush = resMetricas || null;
           render();
         } catch (err: any) {
           mensagemErro = err.message || "Erro ao alternar status do país.";
@@ -1618,7 +1617,6 @@ export function renderizarApiGestao(container: HTMLElement): void {
             mensagemSucesso = "País removido com sucesso.";
             const resPaises = await api.listarPaisesRemessas().catch(() => []);
             paisesRemessas = resPaises || [];
-      metricasPush = resMetricas || null;
             render();
           } catch (err: any) {
             mensagemErro = err.message || "Erro ao excluir país de remessa.";

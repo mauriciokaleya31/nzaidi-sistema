@@ -188,7 +188,7 @@ export async function executarRotinaDiariaBna(
 async function cli() {
   try {
     const env = obterEnv();
-    const db = criarConexaoBanco(env.DATABASE_PATH);
+    const db = criarConexaoBanco(env) as any;
 
     const resultado = await executarRotinaDiariaBna(db);
     console.log(`[CRON BNA] Execução concluída com sucesso!`);

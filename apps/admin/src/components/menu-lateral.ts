@@ -321,7 +321,7 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
     return authState.temPermissao(item.permissaoRequerida);
   });
 
-  const rotaBase = rotaAtual.split("?")[0];
+  const rotaBase = rotaAtual.split("?")[0] || "";
 
   const linksHtml = itensVisiveis
     .map((item) => {

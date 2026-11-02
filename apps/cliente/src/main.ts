@@ -589,8 +589,10 @@ async function carregarDadosReais() {
 function extrairPrimeiroEUltimoNome(nomeCompleto: string): string {
   const partes = (nomeCompleto || "").trim().split(/\s+/).filter(Boolean);
   if (partes.length === 0) return "Manuel";
-  if (partes.length === 1) return partes[0];
-  return `${partes[0]} ${partes[1]}`;
+  const p0 = partes[0] || "Manuel";
+  if (partes.length === 1) return p0;
+  const p1 = partes[1] || "";
+  return `${p0} ${p1}`.trim();
 }
 
 function atualizarSaudacaoENome(nomeParam?: string) {

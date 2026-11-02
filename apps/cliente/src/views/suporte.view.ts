@@ -287,10 +287,11 @@ export function renderizarCentroSuporte(container: HTMLElement): void {
         ticketDescricao = txtDesc;
 
         try {
-          await api.criarAtendimentoSuporte(
-            `[${ticketCategoria.toUpperCase()}] ${ticketAssunto}`,
-            ticketDescricao
-          );
+          await api.criarAtendimentoSuporte({
+            assunto: `[${ticketCategoria.toUpperCase()}] ${ticketAssunto}`,
+            categoria: ticketCategoria,
+            mensagemInicial: ticketDescricao
+          });
         } catch {}
 
         ticketEnviado = true;
