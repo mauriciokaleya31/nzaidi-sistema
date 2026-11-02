@@ -1452,12 +1452,46 @@ export function inicializarSchema(db: DatabaseSync): void {
       mensagem TEXT NOT NULL,
       plataforma_alvo TEXT NOT NULL CHECK(plataforma_alvo IN ('todas', 'android', 'ios')),
       segmento TEXT NOT NULL DEFAULT 'todos',
+      categoria TEXT NOT NULL DEFAULT 'geral',
       total_destinatarios INTEGER NOT NULL DEFAULT 0,
       total_entregas INTEGER NOT NULL DEFAULT 0,
       total_falhas INTEGER NOT NULL DEFAULT 0,
+      total_abertos INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL CHECK(status IN ('pendente', 'enviado', 'falha')),
+      dados_extras TEXT,
       enviado_por TEXT NOT NULL,
       enviado_em TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS mobile_notificacoes_dispositivos (
+      id TEXT PRIMARY KEY,
+      push_id TEXT NOT NULL,
+      cliente_id TEXT,
+      dispositivo_id TEXT NOT NULL,
+      plataforma TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'enviado',
+      erro_motivo TEXT,
+      enviado_em TEXT NOT NULL,
+      entregue_em TEXT,
+      aberto_em TEXT,
+      FOREIGN KEY (push_id) REFERENCES mobile_notificacoes_push(id) ON DELETE CASCADE,
+      FOREIGN KEY (dispositivo_id) REFERENCES dispositivos_moveis(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_mnd_push ON mobile_notificacoes_dispositivos(push_id);
+    CREATE INDEX IF NOT EXISTS idx_mnd_disp ON mobile_notificacoes_dispositivos(dispositivo_id);
+    CREATE INDEX IF NOT EXISTS idx_mnd_cli ON mobile_notificacoes_dispositivos(cliente_id);
+    CREATE INDEX IF NOT EXISTS idx_mnd_status ON mobile_notificacoes_dispositivos(status);
+
+    CREATE TABLE IF NOT EXISTS mobile_preferencias_notificacoes (
+      cliente_id TEXT PRIMARY KEY,
+      notif_cambio INTEGER NOT NULL DEFAULT 1,
+      notif_remessas INTEGER NOT NULL DEFAULT 1,
+      notif_seguranca INTEGER NOT NULL DEFAULT 1,
+      notif_comunicados INTEGER NOT NULL DEFAULT 1,
+      som_ativo INTEGER NOT NULL DEFAULT 1,
+      vibracao_ativa INTEGER NOT NULL DEFAULT 1,
+      atualizado_em TEXT NOT NULL,
+      FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE
     );
 
     CREATE TABLE IF NOT EXISTS mobile_auditoria_config (

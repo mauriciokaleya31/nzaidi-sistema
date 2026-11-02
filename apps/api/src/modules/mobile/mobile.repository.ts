@@ -1,5 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import crypto from "node:crypto";
+import { PushDispatcherService } from "./push-dispatcher.service.js";
 
 export interface DispositivoMovel {
   id: string;
@@ -51,7 +52,11 @@ export interface RequisicaoLog {
 }
 
 export class MobileRepository {
-  constructor(private db: DatabaseSync) {}
+  public pushDispatcher: PushDispatcherService;
+
+  constructor(private db: DatabaseSync) {
+    this.pushDispatcher = new PushDispatcherService(this.db as any);
+  }
 
   public hashToken(token: string): string {
     return crypto.createHash("sha256").update(token).digest("hex");
@@ -924,13 +929,46 @@ export class MobileRepository {
     return this.db.prepare(sql).all(...params);
   }
 
-  public dispararNotificacaoPush(dados: {
+  public async dispararNotificacaoPush(dados: {
     titulo: string;
     mensagem: string;
     plataformaAlvo: "todas" | "android" | "ios";
     segmento?: string;
+    categoria?: "cambio" | "remessas" | "seguranca" | "comunicado" | "geral";
+    clienteId?: string | null;
     adminNome: string;
-  }): any {
+  }): Promise<any> {
+    return this.pushDispatcher.dispararPush({
+      titulo: dados.titulo,
+      mensagem: dados.mensagem,
+      plataformaAlvo: dados.plataformaAlvo,
+      categoria: dados.categoria || "geral",
+      clienteId: dados.clienteId,
+      adminNome: dados.adminNome,
+    });
+  }
+
+  public confirmarEntregaPush(pushId: string, dispositivoId: string): void {
+    this.pushDispatcher.confirmarEntrega(pushId, dispositivoId);
+  }
+
+  public confirmarAberturaPush(pushId: string, dispositivoId: string): void {
+    this.pushDispatcher.confirmarAbertura(pushId, dispositivoId);
+  }
+
+  public obterPreferenciasNotificacoes(clienteId: string): any {
+    return this.pushDispatcher.obterPreferencias(clienteId);
+  }
+
+  public salvarPreferenciasNotificacoes(clienteId: string, prefs: any): void {
+    this.pushDispatcher.salvarPreferencias(clienteId, prefs);
+  }
+
+  public obterMetricasPush(): any {
+    return this.pushDispatcher.obterMetricasPush();
+  }
+
+  public _old_dispararNotificacaoPush(dados: any): any {
     const id = crypto.randomUUID();
     const agora = new Date().toISOString();
 

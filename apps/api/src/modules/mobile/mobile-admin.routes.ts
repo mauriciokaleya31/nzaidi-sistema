@@ -438,11 +438,13 @@ export function registrarRotasMobileAdmin(
         return reply.status(400).send({ sucesso: false, erro: "Titulo e mensagem sao obrigatorios." });
       }
       const operador = request.usuario!;
-      const resultado = mobileRepo.dispararNotificacaoPush({
+      const resultado = await mobileRepo.dispararNotificacaoPush({
         titulo: body.titulo,
         mensagem: body.mensagem,
         plataformaAlvo: body.plataformaAlvo || "todas",
         segmento: body.segmento || "todos",
+        categoria: body.categoria || "geral",
+        clienteId: body.clienteId || null,
         adminNome: operador.nome,
       });
 
@@ -450,13 +452,15 @@ export function registrarRotasMobileAdmin(
         autorId: operador.id,
         acao: "ENVIAR_PUSH_MOBILE",
         recurso: "mobile_notificacoes_push",
-        recursoId: resultado.id,
-        detalhes: { titulo: body.titulo, plataforma: body.plataformaAlvo },
+        recursoId: resultado.pushId || resultado.id,
+        detalhes: { titulo: body.titulo, plataforma: body.plataformaAlvo, status: resultado.status },
       });
 
       return reply.status(201).send({
         sucesso: true,
-        mensagem: "Notificação push transmitida aos dispositivos elegíveis.",
+        mensagem: resultado.status === "aguardando_credenciais"
+          ? "Notificação agendada no sistema (aguardando credenciais oficiais FCM/APNs)."
+          : "Notificação push transmitida aos dispositivos elegíveis.",
         dados: resultado,
       });
     }
@@ -468,6 +472,15 @@ export function registrarRotasMobileAdmin(
     async (_request, reply) => {
       const hist = mobileRepo.listarHistoricoPush();
       return reply.status(200).send({ sucesso: true, dados: hist });
+    }
+  );
+
+  app.get(
+    "/api/v1/admin/mobile/push/metricas",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (_request, reply) => {
+      const metricas = mobileRepo.obterMetricasPush();
+      return reply.status(200).send({ sucesso: true, dados: metricas });
     }
   );
 

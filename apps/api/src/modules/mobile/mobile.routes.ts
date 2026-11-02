@@ -622,6 +622,76 @@ export function registrarRotasMobile(
     }
   );
 
+  // Confirmação de Entrega da Notificação no Dispositivo (Ack em Background)
+  app.post(
+    "/api/v1/mobile/notificacoes/:id/entregue",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { dispositivoId } = request.mobileSessao!;
+      const { id } = request.params as { id: string };
+      mobileRepo.confirmarEntregaPush(id, dispositivoId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Entrega da notificação confirmada com sucesso.",
+        dados: { pushId: id, dispositivoId, entregueEm: new Date().toISOString() },
+      });
+    }
+  );
+
+  // Confirmação de Abertura / Visualização da Notificação pelo Cliente
+  app.post(
+    "/api/v1/mobile/notificacoes/:id/aberta",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { dispositivoId } = request.mobileSessao!;
+      const { id } = request.params as { id: string };
+      mobileRepo.confirmarAberturaPush(id, dispositivoId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Abertura da notificação confirmada com sucesso.",
+        dados: { pushId: id, dispositivoId, abertoEm: new Date().toISOString() },
+      });
+    }
+  );
+
+  // Consulta de Preferências de Notificações do Cliente
+  app.get(
+    "/api/v1/mobile/preferencias-notificacoes",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const prefs = mobileRepo.obterPreferenciasNotificacoes(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        dados: prefs,
+      });
+    }
+  );
+
+  // Atualização de Preferências de Notificações do Cliente
+  app.put(
+    "/api/v1/mobile/preferencias-notificacoes",
+    { preHandler: [exigirMobileAuth] },
+    async (request, reply) => {
+      const { clienteId } = request.mobileSessao!;
+      const body = (request.body as any) || {};
+      mobileRepo.salvarPreferenciasNotificacoes(clienteId, {
+        notifCambio: body.notifCambio ?? body.notif_cambio,
+        notifRemessas: body.notifRemessas ?? body.notif_remessas,
+        notifSeguranca: body.notifSeguranca ?? body.notif_seguranca,
+        notifComunicados: body.notifComunicados ?? body.notif_comunicados,
+        somAtivo: body.somAtivo ?? body.som_ativo,
+        vibracaoAtiva: body.vibracaoAtiva ?? body.vibracao_ativa,
+      });
+      const prefsAtualizadas = mobileRepo.obterPreferenciasNotificacoes(clienteId);
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "Preferências de notificações atualizadas com sucesso.",
+        dados: prefsAtualizadas,
+      });
+    }
+  );
+
 
   // --- REMOTE CONFIG CENTRALIZADO PARA ANDROID & IOS ---
   app.get("/api/v1/mobile/config", async (_request, reply) => {

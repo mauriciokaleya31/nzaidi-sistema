@@ -1537,6 +1537,11 @@ export class AdminApiClient {
     return res.dados || [];
   }
 
+  public async obterMetricasMobilePush(): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/push/metricas");
+    return res.dados || null;
+  }
+
   public async listarMobileAuditoria(): Promise<any[]> {
     const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/auditoria");
     return res.dados || [];

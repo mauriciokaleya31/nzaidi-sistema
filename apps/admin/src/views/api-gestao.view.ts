@@ -49,6 +49,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
   let dispositivos: any[] = [];
   let localizacoes: any[] = [];
   let historicoPush: any[] = [];
+  let metricasPush: any = null;
   let historicoAuditoria: any[] = [];
   let telemetriaDashboard: any = null;
   let paisesRemessas: any[] = [];
@@ -64,7 +65,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
 
   async function carregarDados(): Promise<void> {
     try {
-      const [resConfig, resDisp, resLoc, resPush, resAudit, resDash, resPaises] = await Promise.all([
+      const [resConfig, resDisp, resLoc, resPush, resAudit, resDash, resPaises, resMetricas] = await Promise.all([
         api.obterMobileConfigCompleta().catch(() => ({ configs: {}, banners: [], avisos: [] })),
         api.listarMobileDispositivos().catch(() => []),
         api.listarMobileLocalizacoes().catch(() => []),
@@ -72,6 +73,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
         api.listarMobileAuditoria().catch(() => []),
         api.obterMobileDashboard().catch(() => null),
         api.listarPaisesRemessas().catch(() => []),
+        api.obterMetricasMobilePush().catch(() => null),
       ]);
 
       configs = resConfig.configs || {};
@@ -83,6 +85,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
       historicoAuditoria = resAudit || [];
       telemetriaDashboard = resDash || null;
       paisesRemessas = resPaises || [];
+      metricasPush = resMetricas || null;
       carregando = false;
       render();
     } catch (err: any) {
@@ -968,12 +971,67 @@ export function renderizarApiGestao(container: HTMLElement): void {
           </div>
         </div>
 
+        <!-- Métricas de Desempenho e Estado das Credenciais Push -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
+          <div style="background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #08264f;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Transmissões</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #08264f; margin-top: 4px;">${metricasPush?.totalDisparos || historicoPush.length || 0}</div>
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">Envios registrados</div>
+          </div>
+          <div style="background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Dispositivos Alcançados</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #2563eb; margin-top: 4px;">${metricasPush?.totalDestinatarios || 0}</div>
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">Aparelhos ativos</div>
+          </div>
+          <div style="background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #0e8f6e;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Entregas Confirmadas</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #0e8f6e; margin-top: 4px;">${metricasPush?.totalEntregas || 0}</div>
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">Recepção em 2º plano</div>
+          </div>
+          <div style="background: #fff; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #d9a441;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase;">Notificações Abertas</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: #d9a441; margin-top: 4px;">${metricasPush?.totalAbertos || 0}</div>
+            <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">Taxa: <strong>${metricasPush?.taxaAbertura || '0.0%'}</strong></div>
+          </div>
+        </div>
+
+        <!-- Painel de Auditoria de Credenciais Oficiais -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div style="padding: 16px 20px; border-radius: 12px; background: ${metricasPush?.credenciais?.fcm?.disponivel ? '#f0fdf4' : '#fffbeb'}; border: 1px solid ${metricasPush?.credenciais?.fcm?.disponivel ? '#86efac' : '#fde68a'};">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <strong style="color: #08264f; font-size: 0.9rem;">Android: Firebase Cloud Messaging (FCM)</strong>
+              <span style="font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: ${metricasPush?.credenciais?.fcm?.disponivel ? '#166534' : '#b45309'}; color: #fff;">
+                ${metricasPush?.credenciais?.fcm?.disponivel ? 'CONECTADO / ATIVO' : 'AGUARDANDO FICHEIRO'}
+              </span>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 0.8rem; color: #475569; line-height: 1.4;">
+              ${metricasPush?.credenciais?.fcm?.disponivel 
+                ? 'Credenciais Google Service Account validadas e prontas para envio em massa.' 
+                : 'Para envio real via Google, depositar o ficheiro <code>firebase-service-account.json</code> em <code>/mnt/home102/nzaidiao/config/</code>.'}
+            </p>
+          </div>
+
+          <div style="padding: 16px 20px; border-radius: 12px; background: ${metricasPush?.credenciais?.apns?.disponivel ? '#f0fdf4' : '#fffbeb'}; border: 1px solid ${metricasPush?.credenciais?.apns?.disponivel ? '#86efac' : '#fde68a'};">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <strong style="color: #08264f; font-size: 0.9rem;">iOS: Apple Push Notification service (APNs)</strong>
+              <span style="font-size: 0.75rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: ${metricasPush?.credenciais?.apns?.disponivel ? '#166534' : '#b45309'}; color: #fff;">
+                ${metricasPush?.credenciais?.apns?.disponivel ? 'CONECTADO / ATIVO' : 'AGUARDANDO CHAVE .P8'}
+              </span>
+            </div>
+            <p style="margin: 8px 0 0; font-size: 0.8rem; color: #475569; line-height: 1.4;">
+              ${metricasPush?.credenciais?.apns?.disponivel 
+                ? 'Chave de assinatura Apple APNs (.p8) validada e ativa.' 
+                : 'Para envio direto aos iPhones/iPads, depositar a chave <code>AuthKey_APNS.p8</code> da Apple Developer em <code>/mnt/home102/nzaidiao/config/</code>.'}
+            </p>
+          </div>
+        </div>
+
         <!-- Bloco de Disparo de Notificações Push -->
         <div class="cartao" style="padding: 24px; border-radius: 14px; background: #fff; border: 1px solid #e2e8f0;">
           <h3 style="margin-top: 0; font-size: 1.2rem; color: #08264f;">Disparo Remoto de Notificações Push (FCM / APNs)</h3>
-          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;">Transmissão imediata de alertas push aos dispositivos móveis cadastrados.</p>
+          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.25rem;">Transmissão imediata de alertas push aos dispositivos móveis cadastrados com rastreio de entrega e leitura.</p>
 
-          <form id="form-disparo-push" style="display: grid; gap: 1rem; max-width: 650px;">
+          <form id="form-disparo-push" style="display: grid; gap: 1rem; max-width: 720px;">
             <div>
               <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #08264f; margin-bottom: 6px;">Título da Notificação</label>
               <input type="text" id="inp-push-titulo" required placeholder="Ex: Novas cotações atualizadas" class="ctl" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;" />
@@ -984,7 +1042,18 @@ export function renderizarApiGestao(container: HTMLElement): void {
               <textarea id="inp-push-mensagem" required rows="3" placeholder="Ex: Consulte agora as novas taxas de câmbio USD e EUR no balcão NZAIDI." class="ctl" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: inherit;"></textarea>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+              <div>
+                <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #08264f; margin-bottom: 6px;">Categoria</label>
+                <select id="sel-push-categoria" class="ctl" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                  <option value="geral">Geral / Informativo</option>
+                  <option value="cambio">Cotações & Câmbio</option>
+                  <option value="remessas">Remessas Internacionais</option>
+                  <option value="seguranca">Segurança & Conta</option>
+                  <option value="comunicado">Comunicado Oficial</option>
+                </select>
+              </div>
+
               <div>
                 <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #08264f; margin-bottom: 6px;">Plataforma Alvo</label>
                 <select id="sel-push-plataforma" class="ctl" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
@@ -1512,6 +1581,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
         exibindoModalPais = false;
         const resPaises = await api.listarPaisesRemessas().catch(() => []);
         paisesRemessas = resPaises || [];
+      metricasPush = resMetricas || null;
         render();
       } catch (err: any) {
         mensagemErro = err.message || "Erro ao cadastrar país de remessa.";
@@ -1529,6 +1599,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
           mensagemSucesso = !ativoAtual ? "País ativado para remessas com sucesso." : "País desativado temporariamente.";
           const resPaises = await api.listarPaisesRemessas().catch(() => []);
           paisesRemessas = resPaises || [];
+      metricasPush = resMetricas || null;
           render();
         } catch (err: any) {
           mensagemErro = err.message || "Erro ao alternar status do país.";
@@ -1547,6 +1618,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
             mensagemSucesso = "País removido com sucesso.";
             const resPaises = await api.listarPaisesRemessas().catch(() => []);
             paisesRemessas = resPaises || [];
+      metricasPush = resMetricas || null;
             render();
           } catch (err: any) {
             mensagemErro = err.message || "Erro ao excluir país de remessa.";
@@ -1809,10 +1881,11 @@ export function renderizarApiGestao(container: HTMLElement): void {
       try {
         const titulo = (document.getElementById("inp-push-titulo") as HTMLInputElement).value;
         const mensagem = (document.getElementById("inp-push-mensagem") as HTMLTextAreaElement).value;
+        const categoria = ((document.getElementById("sel-push-categoria") as HTMLSelectElement)?.value || "geral") as any;
         const plataformaAlvo = (document.getElementById("sel-push-plataforma") as HTMLSelectElement).value;
         const segmento = (document.getElementById("sel-push-segmento") as HTMLSelectElement).value;
 
-        await api.dispararMobilePush({ titulo, mensagem, plataformaAlvo, segmento });
+        await api.dispararMobilePush({ titulo, mensagem, categoria, plataformaAlvo, segmento });
         mensagemSucesso = "Notificação push transmitida com sucesso para os aparelhos!";
         carregarDados();
       } catch (err: any) {
