@@ -6,6 +6,7 @@ type AbaAtiva =
   | "conteudos"
   | "contactos"
   | "funcionalidades"
+  | "paises-remessas"
   | "dispositivos"
   | "localizacoes"
   | "notificacoes"
@@ -13,7 +14,30 @@ type AbaAtiva =
   | "auditoria";
 
 export function renderizarApiGestao(container: HTMLElement): void {
-  let abaAtiva: AbaAtiva = "visao-geral";
+  function obterAbaInicial(): AbaAtiva {
+    const hash = window.location.hash || "";
+    const partes = hash.split("/");
+    if (partes.length >= 2) {
+      const sub = partes[1].split("?")[0] as AbaAtiva;
+      const validas: AbaAtiva[] = [
+        "visao-geral",
+        "visual",
+        "conteudos",
+        "contactos",
+        "funcionalidades",
+        "paises-remessas",
+        "dispositivos",
+        "localizacoes",
+        "notificacoes",
+        "versoes",
+        "auditoria"
+      ];
+      if (validas.includes(sub)) return sub;
+    }
+    return "visao-geral";
+  }
+
+  let abaAtiva: AbaAtiva = obterAbaInicial();
   let carregando = true;
   let mensagemSucesso: string | null = null;
   let mensagemErro: string | null = null;
@@ -27,10 +51,12 @@ export function renderizarApiGestao(container: HTMLElement): void {
   let historicoPush: any[] = [];
   let historicoAuditoria: any[] = [];
   let telemetriaDashboard: any = null;
+  let paisesRemessas: any[] = [];
 
   // Modais / Formulários expansíveis inline
   let exibindoModalBanner = false;
   let exibindoModalAviso = false;
+  let exibindoModalPais = false;
 
   // Filtros locais
   let filtroDispTermo = "";
@@ -38,13 +64,14 @@ export function renderizarApiGestao(container: HTMLElement): void {
 
   async function carregarDados(): Promise<void> {
     try {
-      const [resConfig, resDisp, resLoc, resPush, resAudit, resDash] = await Promise.all([
+      const [resConfig, resDisp, resLoc, resPush, resAudit, resDash, resPaises] = await Promise.all([
         api.obterMobileConfigCompleta().catch(() => ({ configs: {}, banners: [], avisos: [] })),
         api.listarMobileDispositivos().catch(() => []),
         api.listarMobileLocalizacoes().catch(() => []),
         api.listarHistoricoMobilePush().catch(() => []),
         api.listarMobileAuditoria().catch(() => []),
         api.obterMobileDashboard().catch(() => null),
+        api.listarPaisesRemessas().catch(() => []),
       ]);
 
       configs = resConfig.configs || {};
@@ -55,6 +82,7 @@ export function renderizarApiGestao(container: HTMLElement): void {
       historicoPush = resPush || [];
       historicoAuditoria = resAudit || [];
       telemetriaDashboard = resDash || null;
+      paisesRemessas = resPaises || [];
       carregando = false;
       render();
     } catch (err: any) {
@@ -1167,14 +1195,238 @@ export function renderizarApiGestao(container: HTMLElement): void {
     `;
   }
 
+
+  // --- ABA: PAÍSES DE DESTINO DE REMESSAS ---
+  function renderAbaPaisesRemessas(): string {
+    const totalPaises = paisesRemessas.length;
+    const ativos = paisesRemessas.filter((p: any) => p.ativo).length;
+    const inativos = totalPaises - ativos;
+    const moedasUnicas = Array.from(new Set(paisesRemessas.map((p: any) => p.moeda))).join(", ") || "EUR, BRL, ZAR, USD, GBP";
+
+    return `
+      <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        <!-- Indicadores Rápidos -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
+          <div class="cartao" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(59,130,246,0.15); display: flex; align-items: center; justify-content: center; color: #3b82f6;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            </div>
+            <div>
+              <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">TOTAL DE DESTINOS</div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: #0f172a;">${totalPaises} Países</div>
+            </div>
+          </div>
+
+          <div class="cartao" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(16,185,129,0.15); display: flex; align-items: center; justify-content: center; color: #10b981;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div>
+              <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">DESTINOS ATIVOS</div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">${ativos} Operacionais</div>
+            </div>
+          </div>
+
+          <div class="cartao" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(245,158,11,0.15); display: flex; align-items: center; justify-content: center; color: #f59e0b;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            </div>
+            <div>
+              <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">DESTINOS SUSPENSOS</div>
+              <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;">${inativos} Países</div>
+            </div>
+          </div>
+
+          <div class="cartao" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; color: #6366f1;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2"></circle><path d="M6 12h.01M18 12h.01"></path></svg>
+            </div>
+            <div>
+              <div style="font-size: 0.8rem; color: #64748b; font-weight: 600;">MOEDAS DE LIQUIDAÇÃO</div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #0f172a; word-break: break-all;">${moedasUnicas}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Ações -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: #0f172a; margin: 0;">Destinos Internacionais Autorizados para Envio</h3>
+            <p style="font-size: 0.88rem; color: #64748b; margin: 4px 0 0 0;">Os países activos abaixo aparecem imediatamente nas opções de remessa do NZAIDI Mobile (Android & iOS) e Portal do Cliente.</p>
+          </div>
+          <button id="btn-toggle-modal-pais" class="btn" style="background: #031d42; color: #ffffff; padding: 10px 20px; border-radius: 8px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>${exibindoModalPais ? "Fechar Formulário" : "＋ Cadastrar Novo País de Remessa"}</span>
+          </button>
+        </div>
+
+        <!-- Formulário Expansível Inline -->
+        ${
+          exibindoModalPais
+            ? `
+          <div class="cartao" style="padding: 1.75rem; border: 2px solid #cc9638; background: #fafafa; border-radius: 12px;">
+            <h4 style="font-size: 1.05rem; font-weight: 700; color: #031d42; margin-top: 0; margin-bottom: 1rem;">Cadastrar Novo Destino de Remessa</h4>
+            <form id="form-criar-pais-remessa" style="display: flex; flex-direction: column; gap: 1.25rem;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Nome do País *</label>
+                  <input type="text" id="inp-pais-nome" class="form-input" required placeholder="Ex: Portugal, Moçambique, França" style="width: 100%;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Código ISO (2 letras) *</label>
+                  <input type="text" id="inp-pais-iso" class="form-input" required maxlength="2" placeholder="Ex: PT, MZ, FR, ES" style="width: 100%; text-transform: uppercase;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Moeda de Recebimento *</label>
+                  <input type="text" id="inp-pais-moeda" class="form-input" required maxlength="3" placeholder="Ex: EUR, MZN, USD, GBP" style="width: 100%; text-transform: uppercase;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Bandeira Emoji</label>
+                  <input type="text" id="inp-pais-bandeira" class="form-input" placeholder="Ex: 🇵🇹, 🇲🇿, 🇫🇷" style="width: 100%;" />
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Canais Suportados de Entrega</label>
+                  <input type="text" id="inp-pais-canais" class="form-input" placeholder="Ex: Transferência Bancária (IBAN), M-Pesa" value="Transferência Bancária (IBAN)" style="width: 100%;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Prazo Estimado de Liquidação</label>
+                  <input type="text" id="inp-pais-tempo" class="form-input" placeholder="Ex: Mesmo dia útil, Até 2 horas" value="Mesmo dia útil" style="width: 100%;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Comissão Fixa (Kz)</label>
+                  <input type="number" id="inp-pais-comissao-fixa" class="form-input" placeholder="0.00" value="2500" step="100" style="width: 100%;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Comissão Percentual (%)</label>
+                  <input type="number" id="inp-pais-comissao-pct" class="form-input" placeholder="1.50" value="1.50" step="0.1" style="width: 100%;" />
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Limite Mínimo de Envio (Kz)</label>
+                  <input type="number" id="inp-pais-lim-min" class="form-input" placeholder="10000" value="10000" step="1000" style="width: 100%;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Limite Máximo por Operação (Kz)</label>
+                  <input type="number" id="inp-pais-lim-max" class="form-input" placeholder="10000000" value="10000000" step="50000" style="width: 100%;" />
+                </div>
+                <div>
+                  <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">Ordem de Apresentação</label>
+                  <input type="number" id="inp-pais-ordem" class="form-input" placeholder="1" value="${totalPaises + 1}" style="width: 100%;" />
+                </div>
+                <div style="display: flex; align-items: center; padding-top: 1.5rem;">
+                  <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #0f172a; cursor: pointer;">
+                    <input type="checkbox" id="chk-pais-ativo" checked style="width: 18px; height: 18px;" />
+                    <span>Disponibilizar Imediatamente na Aplicação</span>
+                  </label>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 0.5rem;">
+                <button type="button" id="btn-cancelar-pais" class="btn btn-secondary" style="padding: 10px 20px;">Cancelar</button>
+                <button type="submit" class="btn btn-primary" style="background: #10b981; border-color: #10b981; color: #ffffff; padding: 10px 24px; font-weight: 600;">Gravar País de Remessa</button>
+              </div>
+            </form>
+          </div>
+        `
+            : ""
+        }
+
+        <!-- Tabela de Países Cadastrados -->
+        <div class="cartao" style="padding: 0; overflow: hidden; border-radius: 12px;">
+          <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #ffffff;">
+            <h4 style="margin: 0; font-size: 1rem; font-weight: 700; color: #031d42;">Destinos Registados no Sistema (${paisesRemessas.length})</h4>
+            <span style="font-size: 0.82rem; color: #64748b;">Sincronizado atomicamente com SQLite</span>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="tabela" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; text-align: left; font-size: 0.8rem; color: #475569; text-transform: uppercase; letter-spacing: 0.04em;">
+                  <th style="padding: 14px 16px;">País de Destino</th>
+                  <th style="padding: 14px 16px;">Código ISO</th>
+                  <th style="padding: 14px 16px;">Moeda</th>
+                  <th style="padding: 14px 16px;">Canais Disponíveis</th>
+                  <th style="padding: 14px 16px;">Prazo de Entrega</th>
+                  <th style="padding: 14px 16px;">Limites Operacionais</th>
+                  <th style="padding: 14px 16px;">Comissões</th>
+                  <th style="padding: 14px 16px; text-align: center;">Estado</th>
+                  <th style="padding: 14px 16px; text-align: right;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  paisesRemessas.length === 0
+                    ? `<tr><td colspan="9" style="text-align: center; padding: 3rem; color: #94a3b8;">Nenhum país de remessa registado ainda.</td></tr>`
+                    : paisesRemessas
+                        .map(
+                          (p: any) => `
+                    <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; transition: background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                      <td style="padding: 14px 16px; font-weight: 700; color: #0f172a;">
+                        <span style="font-size: 1.25rem; margin-right: 8px;">${p.icone_bandeira || "🌐"}</span>
+                        <span>${p.nome}</span>
+                      </td>
+                      <td style="padding: 14px 16px;">
+                        <span style="background: #e2e8f0; color: #334155; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8rem;">${p.codigo_iso}</span>
+                      </td>
+                      <td style="padding: 14px 16px; font-weight: 700; color: #031d42;">
+                        ${p.moeda}
+                      </td>
+                      <td style="padding: 14px 16px; color: #475569; max-width: 220px;">
+                        <small>${p.canais || "Transferência Bancária (IBAN)"}</small>
+                      </td>
+                      <td style="padding: 14px 16px; color: #475569;">
+                        <span style="display: inline-flex; align-items: center; gap: 4px; color: #0284c7; font-weight: 600; font-size: 0.82rem;">
+                          ⏱ ${p.tempo_estimado || "Mesmo dia útil"}
+                        </span>
+                      </td>
+                      <td style="padding: 14px 16px; color: #475569; font-size: 0.82rem;">
+                        <div>Mín: <strong>Kz ${Number(p.limite_minimo_aoa || 10000).toLocaleString("pt-AO")}</strong></div>
+                        <div>Máx: <strong>Kz ${Number(p.limite_maximo_aoa || 10000000).toLocaleString("pt-AO")}</strong></div>
+                      </td>
+                      <td style="padding: 14px 16px; color: #475569; font-size: 0.82rem;">
+                        <div>Fixa: Kz ${Number(p.comissao_fixa_aoa || 0).toLocaleString("pt-AO")}</div>
+                        <div>Pct: ${p.comissao_percentual || "1.50"}%</div>
+                      </td>
+                      <td style="padding: 14px 16px; text-align: center;">
+                        <button class="btn-toggle-status-pais" data-id="${p.id}" data-ativo="${p.ativo ? 1 : 0}" title="Clique para alternar disponibilidade" style="border: none; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; background: ${p.ativo ? "#dcfce7" : "#fee2e2"}; color: ${p.ativo ? "#15803d" : "#b91c1c"};">
+                          ${p.ativo ? "● Ativo (Visível)" : "○ Desativado"}
+                        </button>
+                      </td>
+                      <td style="padding: 14px 16px; text-align: right;">
+                        <button class="btn-excluir-pais" data-id="${p.id}" data-nome="${p.nome}" title="Excluir país de remessa" style="background: none; border: 1px solid #fca5a5; color: #dc2626; padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  `
+                        )
+                        .join("")
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // --- VINCULAÇÃO DE EVENTOS ---
   function vincularEventos(): void {
-    // Abas de navegação
+    // Abas de navegação com transição suave sem recarregar a aplicação
     container.querySelectorAll(".tab-btn-mobile").forEach((btn) => {
       btn.addEventListener("click", () => {
         const aba = btn.getAttribute("data-aba") as AbaAtiva;
+        if (!aba || aba === abaAtiva) return;
         abaAtiva = aba;
-        window.location.hash = "#api-gestao/" + aba;
+        try {
+          // Atualiza a URL no navegador sem forçar hashchange disruptivo
+          window.history.replaceState(null, "", "#mobile/" + aba);
+        } catch {}
         render();
       });
     });
@@ -1219,6 +1471,85 @@ export function renderizarApiGestao(container: HTMLElement): void {
             carregarDados();
           } catch (e: any) {
             mensagemErro = e.message || "Falha ao bloquear dispositivo.";
+            render();
+          }
+        }
+      });
+    });
+
+
+    // --- Eventos Países de Remessas ---
+    document.getElementById("btn-toggle-modal-pais")?.addEventListener("click", () => {
+      exibindoModalPais = !exibindoModalPais;
+      render();
+    });
+
+    document.getElementById("btn-cancelar-pais")?.addEventListener("click", () => {
+      exibindoModalPais = false;
+      render();
+    });
+
+    document.getElementById("form-criar-pais-remessa")?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        const payload = {
+          nome: (document.getElementById("inp-pais-nome") as HTMLInputElement).value,
+          codigoIso: (document.getElementById("inp-pais-iso") as HTMLInputElement).value.toUpperCase().trim(),
+          moeda: (document.getElementById("inp-pais-moeda") as HTMLInputElement).value.toUpperCase().trim(),
+          iconeBandeira: (document.getElementById("inp-pais-bandeira") as HTMLInputElement).value.trim(),
+          canais: (document.getElementById("inp-pais-canais") as HTMLInputElement).value.trim(),
+          tempoEstimado: (document.getElementById("inp-pais-tempo") as HTMLInputElement).value.trim(),
+          comissaoFixaAoa: (document.getElementById("inp-pais-comissao-fixa") as HTMLInputElement).value,
+          comissaoPercentual: (document.getElementById("inp-pais-comissao-pct") as HTMLInputElement).value,
+          limiteMinimoAoa: (document.getElementById("inp-pais-lim-min") as HTMLInputElement).value,
+          limiteMaximoAoa: (document.getElementById("inp-pais-lim-max") as HTMLInputElement).value,
+          ordem: Number((document.getElementById("inp-pais-ordem") as HTMLInputElement).value) || 0,
+          ativo: (document.getElementById("chk-pais-ativo") as HTMLInputElement).checked,
+        };
+
+        await api.criarPaisRemessa(payload);
+        mensagemSucesso = "País de remessa cadastrado com sucesso e sincronizado no banco de dados!";
+        exibindoModalPais = false;
+        const resPaises = await api.listarPaisesRemessas().catch(() => []);
+        paisesRemessas = resPaises || [];
+        render();
+      } catch (err: any) {
+        mensagemErro = err.message || "Erro ao cadastrar país de remessa.";
+        render();
+      }
+    });
+
+    container.querySelectorAll(".btn-toggle-status-pais").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        const ativoAtual = btn.getAttribute("data-ativo") === "1";
+        if (!id) return;
+        try {
+          await api.alternarStatusPaisRemessa(id, !ativoAtual);
+          mensagemSucesso = !ativoAtual ? "País ativado para remessas com sucesso." : "País desativado temporariamente.";
+          const resPaises = await api.listarPaisesRemessas().catch(() => []);
+          paisesRemessas = resPaises || [];
+          render();
+        } catch (err: any) {
+          mensagemErro = err.message || "Erro ao alternar status do país.";
+          render();
+        }
+      });
+    });
+
+    container.querySelectorAll(".btn-excluir-pais").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        const nome = btn.getAttribute("data-nome") || "este país";
+        if (id && confirm("Deseja realmente remover " + nome + " dos destinos de remessa?")) {
+          try {
+            await api.excluirPaisRemessa(id);
+            mensagemSucesso = "País removido com sucesso.";
+            const resPaises = await api.listarPaisesRemessas().catch(() => []);
+            paisesRemessas = resPaises || [];
+            render();
+          } catch (err: any) {
+            mensagemErro = err.message || "Erro ao excluir país de remessa.";
             render();
           }
         }

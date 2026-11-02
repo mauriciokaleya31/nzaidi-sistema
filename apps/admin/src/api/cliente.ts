@@ -1650,6 +1650,40 @@ export class AdminApiClient {
     } catch {}
   }
 
+  // --- Gestão de Países de Remessas ---
+  public async listarPaisesRemessas(): Promise<any[]> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any[] }>("/api/v1/admin/mobile/paises-remessas");
+    return res.dados || [];
+  }
+
+  public async criarPaisRemessa(dados: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/paises-remessas", {
+      method: "POST",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async atualizarPaisRemessa(id: string, dados: any): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/paises-remessas/" + id, {
+      method: "PUT",
+      body: JSON.stringify(dados),
+    });
+    return res.dados;
+  }
+
+  public async alternarStatusPaisRemessa(id: string, ativo: boolean): Promise<any> {
+    const res = await this.requisitar<{ sucesso: boolean; dados: any }>("/api/v1/admin/mobile/paises-remessas/" + id + "/status", {
+      method: "PATCH",
+      body: JSON.stringify({ ativo }),
+    });
+    return res.dados;
+  }
+
+  public async excluirPaisRemessa(id: string): Promise<void> {
+    await this.requisitar("/api/v1/admin/mobile/paises-remessas/" + id, { method: "DELETE" });
+  }
 }
+
 
 export const api = new AdminApiClient();

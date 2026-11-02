@@ -427,14 +427,25 @@ export function registrarRotasMobile(
   app.get(
     "/api/v1/mobile/remessas/paises",
     async (_request, reply) => {
+      const paises = mobileRepo.listarPaisesRemessas(true);
       return reply.status(200).send({
         sucesso: true,
-        dados: [
-          { codigo: "PT", nome: "Portugal", moeda: "EUR" },
-          { codigo: "BR", nome: "Brasil", moeda: "USD" },
-          { codigo: "ZA", nome: "África do Sul", moeda: "USD" },
-          { codigo: "AE", nome: "Emirados Árabes Unidos", moeda: "USD" },
-        ],
+        total: paises.length,
+        dados: paises.map((p) => ({
+          id: p.id,
+          codigo: p.codigo_iso,
+          codigo_iso: p.codigo_iso,
+          nome: p.nome,
+          moeda: p.moeda,
+          canais: p.canais,
+          tempo_estimado: p.tempo_estimado,
+          comissao_fixa_aoa: p.comissao_fixa_aoa,
+          comissao_percentual: p.comissao_percentual,
+          limite_minimo_aoa: p.limite_minimo_aoa,
+          limite_maximo_aoa: p.limite_maximo_aoa,
+          ativo: p.ativo === 1,
+          icone_bandeira: p.icone_bandeira,
+        })),
       });
     }
   );

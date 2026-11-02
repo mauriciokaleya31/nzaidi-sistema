@@ -1006,4 +1006,122 @@ export class MobileRepository {
     }
     return { disponivel: true };
   }
+  // --- Gestão de Países de Remessas Internacionais ---
+
+  public listarPaisesRemessas(apenasAtivos = false): any[] {
+    let sql = "SELECT * FROM paises_remessas";
+    if (apenasAtivos) {
+      sql += " WHERE ativo = 1";
+    }
+    sql += " ORDER BY ordem ASC, nome ASC;";
+    try {
+      return this.db.prepare(sql).all() as any[];
+    } catch {
+      return [];
+    }
+  }
+
+  public obterPaisRemessaPorId(id: string): any | null {
+    try {
+      return (this.db.prepare("SELECT * FROM paises_remessas WHERE id = ?;").get(id) as any) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  public criarPaisRemessa(dados: {
+    codigoIso: string;
+    nome: string;
+    moeda: string;
+    canais?: string;
+    tempoEstimado?: string;
+    comissaoFixaAoa?: string;
+    comissaoPercentual?: string;
+    limiteMinimoAoa?: string;
+    limiteMaximoAoa?: string;
+    ativo?: boolean;
+    ordem?: number;
+    iconeBandeira?: string;
+  }): any {
+    const id = "pais-" + dados.codigoIso.toLowerCase().trim();
+    const agora = new Date().toISOString();
+    const ativoNum = dados.ativo === false ? 0 : 1;
+    const ordem = dados.ordem !== undefined ? Number(dados.ordem) : 0;
+
+    this.db.prepare(`
+      INSERT INTO paises_remessas (
+        id, codigo_iso, nome, moeda, canais, tempo_estimado,
+        comissao_fixa_aoa, comissao_percentual, limite_minimo_aoa, limite_maximo_aoa,
+        ativo, ordem, icone_bandeira, criado_em, atualizado_em
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(codigo_iso) DO UPDATE SET
+        nome = excluded.nome,
+        moeda = excluded.moeda,
+        canais = excluded.canais,
+        tempo_estimado = excluded.tempo_estimado,
+        comissao_fixa_aoa = excluded.comissao_fixa_aoa,
+        comissao_percentual = excluded.comissao_percentual,
+        limite_minimo_aoa = excluded.limite_minimo_aoa,
+        limite_maximo_aoa = excluded.limite_maximo_aoa,
+        ativo = excluded.ativo,
+        ordem = excluded.ordem,
+        icone_bandeira = excluded.icone_bandeira,
+        atualizado_em = excluded.atualizado_em;
+    `).run(
+      id,
+      dados.codigoIso.toUpperCase().trim(),
+      dados.nome.trim(),
+      dados.moeda.toUpperCase().trim(),
+      dados.canais || "Transferência Bancária (IBAN)",
+      dados.tempoEstimado || "Até 24 horas úteis",
+      dados.comissaoFixaAoa || "0.00",
+      dados.comissaoPercentual || "1.50",
+      dados.limiteMinimoAoa || "10000.00",
+      dados.limiteMaximoAoa || "10000000.00",
+      ativoNum,
+      ordem,
+      dados.iconeBandeira || "",
+      agora,
+      agora
+    );
+
+    return this.obterPaisRemessaPorId(id);
+  }
+
+  public atualizarPaisRemessa(id: string, dados: any): any {
+    const agora = new Date().toISOString();
+    const campos: string[] = [];
+    const valores: any[] = [];
+
+    if (dados.nome !== undefined) { campos.push("nome = ?"); valores.push(dados.nome.trim()); }
+    if (dados.moeda !== undefined) { campos.push("moeda = ?"); valores.push(dados.moeda.toUpperCase().trim()); }
+    if (dados.canais !== undefined) { campos.push("canais = ?"); valores.push(dados.canais); }
+    if (dados.tempoEstimado !== undefined) { campos.push("tempo_estimado = ?"); valores.push(dados.tempoEstimado); }
+    if (dados.comissaoFixaAoa !== undefined) { campos.push("comissao_fixa_aoa = ?"); valores.push(dados.comissaoFixaAoa); }
+    if (dados.comissaoPercentual !== undefined) { campos.push("comissao_percentual = ?"); valores.push(dados.comissaoPercentual); }
+    if (dados.limiteMinimoAoa !== undefined) { campos.push("limite_minimo_aoa = ?"); valores.push(dados.limiteMinimoAoa); }
+    if (dados.limiteMaximoAoa !== undefined) { campos.push("limite_maximo_aoa = ?"); valores.push(dados.limiteMaximoAoa); }
+    if (dados.ativo !== undefined) { campos.push("ativo = ?"); valores.push(dados.ativo ? 1 : 0); }
+    if (dados.ordem !== undefined) { campos.push("ordem = ?"); valores.push(Number(dados.ordem)); }
+    if (dados.iconeBandeira !== undefined) { campos.push("icone_bandeira = ?"); valores.push(dados.iconeBandeira); }
+
+    if (campos.length > 0) {
+      campos.push("atualizado_em = ?");
+      valores.push(agora);
+      valores.push(id);
+      this.db.prepare(`UPDATE paises_remessas SET ${campos.join(", ")} WHERE id = ?`).run(...valores);
+    }
+    return this.obterPaisRemessaPorId(id);
+  }
+
+  public alternarStatusPaisRemessa(id: string, ativo: boolean): any {
+    const agora = new Date().toISOString();
+    this.db.prepare("UPDATE paises_remessas SET ativo = ?, atualizado_em = ? WHERE id = ?").run(ativo ? 1 : 0, agora, id);
+    return this.obterPaisRemessaPorId(id);
+  }
+
+  public excluirPaisRemessa(id: string): boolean {
+    const res = this.db.prepare("DELETE FROM paises_remessas WHERE id = ?").run(id);
+    return ((res as any)?.changes ?? 0) > 0;
+  }
 }

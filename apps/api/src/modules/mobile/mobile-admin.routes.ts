@@ -480,4 +480,120 @@ export function registrarRotasMobileAdmin(
       return reply.status(200).send({ sucesso: true, dados: logs });
     }
   );
+  // 15. Gestão de Países de Destino das Remessas
+  app.get(
+    "/api/v1/admin/mobile/paises-remessas",
+    { preHandler: [exigirPermissao("ver_auditoria")] },
+    async (_request, reply) => {
+      const paises = mobileRepo.listarPaisesRemessas(false);
+      return reply.status(200).send({
+        sucesso: true,
+        total: paises.length,
+        dados: paises,
+      });
+    }
+  );
+
+  app.post(
+    "/api/v1/admin/mobile/paises-remessas",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const body = request.body as any;
+      if (!body.codigoIso || !body.nome || !body.moeda) {
+        return reply.status(400).send({
+          sucesso: false,
+          erro: "codigoIso, nome e moeda são campos obrigatórios.",
+        });
+      }
+      const operador = request.usuario!;
+      const pais = mobileRepo.criarPaisRemessa(body);
+
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "CRIAR_PAIS_REMESSA",
+        recurso: "paises_remessas",
+        recursoId: pais.id,
+        detalhes: { operador: operador.nome, pais: body.nome, iso: body.codigoIso },
+      });
+
+      return reply.status(201).send({
+        sucesso: true,
+        mensagem: "País de remessa cadastrado com sucesso.",
+        dados: pais,
+      });
+    }
+  );
+
+  app.put(
+    "/api/v1/admin/mobile/paises-remessas/:id",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = request.body as any;
+      const operador = request.usuario!;
+      const atualizado = mobileRepo.atualizarPaisRemessa(id, body);
+
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "ATUALIZAR_PAIS_REMESSA",
+        recurso: "paises_remessas",
+        recursoId: id,
+        detalhes: { operador: operador.nome, atualizacoes: Object.keys(body) },
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "País de remessa atualizado com sucesso.",
+        dados: atualizado,
+      });
+    }
+  );
+
+  app.patch(
+    "/api/v1/admin/mobile/paises-remessas/:id/status",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = request.body as { ativo: boolean };
+      const operador = request.usuario!;
+      const atualizado = mobileRepo.alternarStatusPaisRemessa(id, body.ativo);
+
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: body.ativo ? "ATIVAR_PAIS_REMESSA" : "DESATIVAR_PAIS_REMESSA",
+        recurso: "paises_remessas",
+        recursoId: id,
+        detalhes: { operador: operador.nome, ativo: body.ativo },
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: body.ativo ? "País ativado para remessas." : "País desativado para remessas.",
+        dados: atualizado,
+      });
+    }
+  );
+
+  app.delete(
+    "/api/v1/admin/mobile/paises-remessas/:id",
+    { preHandler: [exigirPermissao("alterar_taxas")] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const operador = request.usuario!;
+      mobileRepo.excluirPaisRemessa(id);
+
+      auditoriaRepo.registar({
+        autorId: operador.id,
+        acao: "EXCLUIR_PAIS_REMESSA",
+        recurso: "paises_remessas",
+        recursoId: id,
+        detalhes: { operador: operador.nome },
+      });
+
+      return reply.status(200).send({
+        sucesso: true,
+        mensagem: "País de remessa removido com sucesso.",
+      });
+    }
+  );
 }
