@@ -108,6 +108,7 @@ export const CriarClienteInputSchema = z.object({
   paisResidencia: z.string().optional().nullable(),
   pep: z.boolean().optional().default(false),
   avatarUrl: z.string().optional().nullable(),
+  senha: z.string().min(6, 'Palavra-passe deve ter no mínimo 6 caracteres').optional().nullable(),
 });
 
 export type CriarClienteInput = z.infer<typeof CriarClienteInputSchema>;
@@ -126,6 +127,7 @@ export const AtualizarClienteInputSchema = z.object({
   paisResidencia: z.string().optional().nullable(),
   pep: z.boolean().optional(),
   avatarUrl: z.string().optional().nullable(),
+  senha: z.string().min(6, 'Palavra-passe deve ter no mínimo 6 caracteres').optional().nullable(),
   estado: EstadoClienteSchema.optional(),
   nivelRisco: NivelRiscoSchema.optional(),
 });

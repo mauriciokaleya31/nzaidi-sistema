@@ -1,3 +1,4 @@
+import { hashSenha } from "../autenticacao/hash.js";
 import { randomUUID } from "node:crypto";
 import type { ClientesRepository } from "./clientes.repository.js";
 import type { AuditoriaRepository } from "../auditoria/auditoria.repository.js";
@@ -55,6 +56,19 @@ export class ClientesService {
     };
 
     this.clientesRepo.inserir(cliente);
+
+    if (dados.senha && dados.email) {
+      try {
+        const hash = await hashSenha(dados.senha);
+        (this as any).db?.prepare(`
+          INSERT INTO clientes_credenciais (cliente_id, email, telefone, senha_hash, criado_em, atualizado_em)
+          VALUES (?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE senha_hash = VALUES(senha_hash), atualizado_em = VALUES(atualizado_em)
+        `).run(cliente.id, dados.email.trim().toLowerCase(), cliente.telefone, hash, agora, agora);
+      } catch (e) {
+        console.warn("[CLIENTES SERVICE] Falha defensiva ao gravar credencial inicial:", e);
+      }
+    }
 
     this.auditoriaRepo.registar({
       autorId: operador.id,

@@ -507,6 +507,7 @@ export class AdminApiClient {
     telefone: string;
     email?: string | null;
     morada: string;
+    senha?: string | null;
   }): Promise<ClienteItem> {
     const res = await this.requisitar<{ sucesso: boolean; dados: ClienteItem }>("/api/v1/clientes", {
       method: "POST",

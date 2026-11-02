@@ -165,6 +165,24 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
               <input type="text" id="novo-morada" class="form-control" placeholder="ex.: Av. 4 de Fevereiro, Luanda" required minlength="5" />
             </div>
 
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label class="form-label" style="margin: 0; font-weight: 700; color: #061A3A;">Credenciais de Acesso à Conta (Opcional):</label>
+                <button type="button" id="btn-gerar-senha-novo-cli" class="btn btn-sm btn-outline-secondary" style="font-size: 11px; padding: 3px 8px;">Gerar Senha Segura</button>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label class="form-label" style="font-size: 12px;">Palavra-passe de Acesso:</label>
+                  <input type="text" id="novo-senha" class="form-control" placeholder="Mínimo 6 caracteres" minlength="6" autocomplete="off" />
+                </div>
+                <div>
+                  <label class="form-label" style="font-size: 12px;">Confirmar Palavra-passe:</label>
+                  <input type="text" id="novo-senha-conf" class="form-control" placeholder="Repita a palavra-passe" minlength="6" autocomplete="off" />
+                </div>
+              </div>
+              <small style="color: #64748B; font-size: 11px; margin-top: 4px; display: block;">Se definida, o cliente poderá aceder imediatamente ao Portal e à App Mobile com o seu e-mail e esta senha.</small>
+            </div>
+
             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
               <button type="button" class="btn btn-secondary" id="btn-cancelar-criar">Cancelar</button>
               <button type="submit" class="btn btn-primary">Registar Cliente</button>
@@ -558,8 +576,36 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
   });
 
   // Submeter Criação de Cliente
+  
+    container.querySelector("#btn-gerar-senha-novo-cli")?.addEventListener("click", () => {
+      const caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+      let gerada = "Nz@";
+      for (let i = 0; i < 7; i++) {
+        gerada += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+      }
+      const inpSenha = container.querySelector("#novo-senha") as HTMLInputElement;
+      const inpConf = container.querySelector("#novo-senha-conf") as HTMLInputElement;
+      if (inpSenha && inpConf) {
+        inpSenha.value = gerada;
+        inpConf.value = gerada;
+        mostrarToast("Palavra-passe gerada com sucesso: " + gerada, "sucesso");
+      }
+    });
+
   container.querySelector("#form-cadastrar-cliente")?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const senhaVal = (container.querySelector("#novo-senha") as HTMLInputElement)?.value.trim() || "";
+    const senhaConfVal = (container.querySelector("#novo-senha-conf") as HTMLInputElement)?.value.trim() || "";
+
+    if (senhaVal && senhaVal.length < 6) {
+      mostrarToast("A palavra-passe deve ter no mínimo 6 caracteres.", "erro");
+      return;
+    }
+    if (senhaVal && senhaVal !== senhaConfVal) {
+      mostrarToast("A palavra-passe e a confirmação não coincidem.", "erro");
+      return;
+    }
+
     const payload = {
       tipo: (container.querySelector("#novo-tipo") as HTMLSelectElement).value as any,
       tipoDocumento: (container.querySelector("#novo-tipo-doc") as HTMLSelectElement).value as any,
@@ -570,6 +616,7 @@ export async function renderizarClientes(container: HTMLElement): Promise<void> 
       telefone: (container.querySelector("#novo-telefone") as HTMLInputElement).value.trim(),
       email: (container.querySelector("#novo-email") as HTMLInputElement).value.trim() || null,
       morada: (container.querySelector("#novo-morada") as HTMLInputElement).value.trim(),
+      senha: senhaVal || null,
     };
 
     try {
