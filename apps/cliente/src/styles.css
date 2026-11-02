@@ -1466,9 +1466,10 @@ main{max-width:100%;width:100%;margin:0;padding:24px 32px 120px;box-sizing:borde
 }
 
 :root[data-theme="dark"] .card {
-  background: rgba(14, 29, 56, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
+  background: rgba(14, 29, 56, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
 .card.p-large {
@@ -1557,9 +1558,10 @@ main{max-width:100%;width:100%;margin:0;padding:24px 32px 120px;box-sizing:borde
 }
 
 :root[data-theme="dark"] .perfil-data-block {
-  background: rgba(7, 18, 38, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  background: rgba(18, 36, 68, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
 }
 
 .perfil-data-block:hover {
@@ -1568,8 +1570,9 @@ main{max-width:100%;width:100%;margin:0;padding:24px 32px 120px;box-sizing:borde
 }
 
 :root[data-theme="dark"] .perfil-data-block:hover {
-  background: rgba(14, 29, 56, 0.9);
-  border-color: rgba(242, 200, 121, 0.4);
+  background: rgba(24, 48, 88, 0.85);
+  border-color: rgba(242, 200, 121, 0.55);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .perfil-data-block.full-width {
