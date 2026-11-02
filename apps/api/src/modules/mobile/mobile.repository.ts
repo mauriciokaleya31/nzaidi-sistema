@@ -668,10 +668,13 @@ export class MobileRepository {
       faqs = JSON.parse(conf.conteudo_perguntas_frequentes || "[]");
     } catch {}
 
+    const rowMax = this.db.prepare("SELECT MAX(atualizado_em) as ultimo FROM mobile_config;").get() as any;
+    const versaoConfig = rowMax?.ultimo ? Math.floor(new Date(rowMax.ultimo).getTime() / 1000) : 1793570000;
+
     return {
       sucesso: true,
       timestamp: new Date().toISOString(),
-      versao_config: Math.floor(Date.now() / 1000),
+      versao_config: versaoConfig,
       visual: {
         logoUrl: conf.visual_logo_url || "/logotipo.png",
         simboloUrl: conf.visual_simbolo_url || "/simbolo.png",

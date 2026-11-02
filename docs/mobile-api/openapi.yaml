@@ -432,6 +432,94 @@ paths:
         '200':
           description: Todas as notificações marcadas como lidas
 
+  /config:
+    get:
+      summary: Remote Config Consolidado para Android e iOS
+      operationId: mobileObterRemoteConfig
+      description: >
+        Devolve as configurações institucionais ativas em tempo real gerenciadas remotamente
+        pelo Backoffice NZAIDI, incluindo parâmetros visuais (cores, logos, ícones),
+        contactos oficiais de suporte, banners, avisos, controlo de versões e estado de manutenção.
+      responses:
+        '200':
+          description: Configurações remotas consolidadas com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sucesso:
+                    type: boolean
+                    example: true
+                  timestamp:
+                    type: string
+                    example: "2026-11-01T22:30:00Z"
+                  versao_config:
+                    type: integer
+                    example: 1793572200
+                  visual:
+                    type: object
+                  contactos:
+                    type: object
+                  funcionalidades:
+                    type: object
+                  banners:
+                    type: array
+                    items:
+                      type: object
+                  avisos:
+                    type: array
+                    items:
+                      type: object
+                  versoes:
+                    type: object
+                  manutencao:
+                    type: object
+
+  /localizacao:
+    post:
+      summary: Registo de Localização Consentida pelo Utilizador
+      operationId: mobileRegistarLocalizacao
+      description: >
+        Regista as coordenadas e local aproximado do utilizador mediante consentimento explícito prévio.
+        Se o consentimento for revogado (consentimento=false), os dados são mantidos como não autorizados.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - consentimento
+              properties:
+                consentimento:
+                  type: boolean
+                  description: Consentimento explícito concedido pelo utilizador
+                  example: true
+                cidade:
+                  type: string
+                  example: "Luanda"
+                regiao:
+                  type: string
+                  example: "Luanda"
+                pais:
+                  type: string
+                  example: "Angola"
+                latitude:
+                  type: number
+                  example: -8.83833
+                longitude:
+                  type: number
+                  example: 13.23444
+                precisaoMetros:
+                  type: number
+                  example: 15
+      responses:
+        '200':
+          description: Localização ou revogação registada com sucesso
+
 components:
   securitySchemes:
     BearerAuth:

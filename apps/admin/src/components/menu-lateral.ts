@@ -43,6 +43,17 @@ const ITENS_MENU: ItemMenu[] = [
     icone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`,
   },
   {
+    id: "nav-mobile",
+    rota: "#mobile",
+    titulo: "Gestão da App Mobile",
+    icone: `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+      </svg>
+    `,
+  },
+  {
     id: "nav-clientes",
     rota: "#clientes",
     titulo: "Gestão de Clientes",
@@ -286,17 +297,6 @@ const ITENS_MENU: ItemMenu[] = [
     permissaoRequerida: "ver_auditoria",
   },
   {
-    id: "nav-api-gestao",
-    rota: "#api-gestao",
-    titulo: "Gestão de API & Mobile",
-    icone: `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-        <line x1="12" y1="18" x2="12.01" y2="18"></line>
-      </svg>
-    `,
-  },
-  {
     id: "nav-perfil",
     rota: "#perfil",
     titulo: "Meu Perfil",
@@ -325,7 +325,14 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
 
   const linksHtml = itensVisiveis
     .map((item) => {
-      const estaAtivo = rotaBase === item.rota;
+      const estaAtivo =
+        rotaBase === item.rota ||
+        (item.rota === "#mobile" &&
+          (rotaBase === "#mobile" ||
+            rotaBase === "#api-gestao" ||
+            rotaBase === "#gestao-mobile" ||
+            rotaBase.startsWith("#mobile/") ||
+            rotaBase.startsWith("#api-gestao/")));
 
       return `
         <li>
@@ -343,7 +350,13 @@ export function renderizarMenuLateral(container: HTMLElement, rotaAtual: string)
     <aside id="sidebar" class="sidebar app-sidebar" aria-label="Menu principal" style="width: 272px; min-width: 272px; background: linear-gradient(180deg, #031d42 0%, #021530 100%) !important; color: #ffffff !important;">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <img src="./simbolo.png" alt="NZAIDI" class="sidebar-logo" width="40" height="40" onerror="this.onerror=null; this.src='/simbolo.png';" />
+          <span class="sidebar-brand-svg" aria-hidden="true" style="display:inline-flex; width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg,#072042,#0D3873); border:1.5px solid #F2C879; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(6,26,58,0.4); flex-shrink:0;">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+              <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" fill="#F2C879" fill-opacity="0.25"/>
+              <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" stroke="#F2C879" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M10 18V10L18 18V10" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
           <div class="brand-meta">
             <span class="brand-title">NZAIDI</span>
             <span class="brand-sub">CÂMBIOS & VALORES</span>

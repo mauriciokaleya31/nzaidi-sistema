@@ -202,7 +202,10 @@ export class MobileService {
       dispositivo: {
         id: dispositivo.id,
         deviceId: dispositivo.device_id,
+        nomeDispositivo: dispositivo.nome_dispositivo,
         plataforma: dispositivo.plataforma,
+        versaoSo: dispositivo.versao_so,
+        versaoApp: dispositivo.versao_app,
         status: dispositivo.status,
       },
     };

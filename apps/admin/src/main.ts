@@ -36,7 +36,13 @@ async function renderizarAplicacao(): Promise<void> {
   if (authState.estaCarregando()) {
     appRoot.innerHTML = `
       <div class="app-loading-screen">
-        <img class="loading-logo" src="/simbolo.png" alt="" width="84" height="84" />
+        <span class="loading-logo-svg" style="display:inline-flex; width:84px; height:84px; border-radius:20px; background:linear-gradient(135deg,#072042,#0D3873); border:2.5px solid #F2C879; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(6,26,58,0.5); margin-bottom:16px;">
+          <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
+            <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" fill="#F2C879" fill-opacity="0.25"/>
+            <path d="M5 8.5L14 4L23 8.5V15C23 20.5 19 23.5 14 25C9 23.5 5 20.5 5 15V8.5Z" stroke="#F2C879" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M10 18V10L18 18V10" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
         <h2>NZAIDI CÂMBIOS</h2>
         <p class="text-muted">A verificar credenciais de acesso seguro...</p>
       </div>
@@ -240,8 +246,19 @@ async function renderizarAplicacao(): Promise<void> {
       case "#notificacoes":
         await renderizarNotificacoes(viewContainer);
         break;
-
-            case "#api-gestao":
+      case "#mobile":
+      case "#gestao-mobile":
+      case "#mobile/visao-geral":
+      case "#mobile/visual":
+      case "#mobile/conteudos":
+      case "#mobile/contactos":
+      case "#mobile/funcionalidades":
+      case "#mobile/dispositivos":
+      case "#mobile/localizacoes":
+      case "#mobile/notificacoes":
+      case "#mobile/versoes":
+      case "#mobile/auditoria":
+      case "#api-gestao":
       case "#api-gestao/monitorizacao":
       case "#api-gestao/requisicoes":
       case "#api-gestao/dispositivos":
