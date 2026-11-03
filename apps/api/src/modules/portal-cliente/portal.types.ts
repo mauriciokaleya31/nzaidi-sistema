@@ -1,18 +1,37 @@
 import { z } from "zod";
 
-export const RegistoClienteSchema = z.object({
-  nome: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
-  tipoPessoa: z.enum(["singular", "colectivo"]),
-  nif: z.string().min(5, "NIF inválido").max(20),
-  tipoDocumento: z.enum(["bi", "passaporte", "cartao_residente", "nif_empresa"]),
-  numeroDocumento: z.string().min(5, "Número de documento inválido").max(30),
-  dataNascimento: z.string().optional(),
-  nacionalidade: z.string().default("ANGOLANA"),
-  endereco: z.string().min(3, "Endereço deve ser fornecido"),
-  telefone: z.string().min(6, "Telefone inválido"),
-  email: z.string().email("Endereço de e-mail inválido"),
-  senha: z.string().min(8, "A senha deve ter pelo menos 8 caracteres"),
-});
+export const RegistoClienteSchema = z
+  .object({
+    nome: z.string().min(3, "Nome completo deve ter pelo menos 3 caracteres"),
+    tipoPessoa: z.enum(["singular", "colectivo"]).optional(),
+    tipo: z.enum(["singular", "colectivo"]).optional(),
+    nif: z.string().min(5, "NIF inválido").max(20),
+    tipoDocumento: z.enum(["bi", "passaporte", "cartao_residente", "nif_empresa"]).default("bi"),
+    numeroDocumento: z.string().min(5, "Número de documento inválido").max(30),
+    dataNascimento: z.string().optional(),
+    nacionalidade: z.string().default("ANGOLANA"),
+    endereco: z.string().optional(),
+    morada: z.string().optional(),
+    telefone: z.string().min(6, "Telefone inválido"),
+    email: z.string().email("Endereço de e-mail inválido"),
+    senha: z.string().min(8, "A senha deve ter pelo menos 8 caracteres"),
+  })
+  .refine(
+    (d) => (d.endereco && d.endereco.trim().length >= 3) || (d.morada && d.morada.trim().length >= 3),
+    {
+      message: "A morada / endereço deve ter pelo menos 3 caracteres",
+      path: ["morada"],
+    }
+  )
+  .transform((d) => {
+    const loc = (d.morada || d.endereco || "Luanda, Angola").trim();
+    return {
+      ...d,
+      tipoPessoa: d.tipoPessoa || d.tipo || "singular",
+      morada: loc,
+      endereco: loc,
+    };
+  });
 
 export type RegistoClienteInput = z.infer<typeof RegistoClienteSchema>;
 

@@ -165,6 +165,10 @@ class ApiService {
     const data = await response.json();
 
     if (!response.ok) {
+      if (data.detalhes && Array.isArray(data.detalhes) && data.detalhes.length > 0) {
+        const primeiro = data.detalhes.map((d: any) => `${d.campo || 'campo'}: ${d.mensagem}`).join("; ");
+        throw new Error(`${data.erro || "Dados inválidos"} (${primeiro})`);
+      }
       throw new Error(data.erro || data.mensagem || "Ocorreu um erro no servidor.");
     }
 

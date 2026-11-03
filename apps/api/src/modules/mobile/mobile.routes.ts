@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import type { MobileService } from "./mobile.service.js";
 import type { MobileRepository } from "./mobile.repository.js";
 import type { PortalClienteService } from "../portal-cliente/portal.service.js";
+import { RegistoClienteSchema } from "../portal-cliente/portal.types.js";
 import {
   MobileLoginSchema,
   MobileRecuperarSenhaSchema,
@@ -79,6 +80,27 @@ export function registrarRotasMobile(
   // ========================================================================
   // ROTAS DE AUTENTICAÇÃO MÓVEL
   // ========================================================================
+
+  app.post(
+    "/api/v1/mobile/auth/registo",
+    {
+      config: {
+        rateLimit: { max: 10, timeWindow: "1 minute" },
+      },
+    },
+    async (request, reply) => {
+      const dados = RegistoClienteSchema.parse(request.body);
+      const ip = request.ip;
+      const userAgent = request.headers["user-agent"];
+
+      const res = await portalService.registarCliente(dados, ip, userAgent);
+      return reply.status(201).send({
+        sucesso: true,
+        mensagem: "Registo móvel efetuado com sucesso.",
+        dados: res,
+      });
+    }
+  );
 
   app.post(
     "/api/v1/mobile/auth/login",

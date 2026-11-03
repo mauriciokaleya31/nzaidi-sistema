@@ -71,7 +71,7 @@ export class PortalClienteService {
         nacionalidade: input.nacionalidade.toUpperCase(),
         telefone: input.telefone.trim(),
         email: input.email.trim().toLowerCase(),
-        morada: input.endereco.trim(),
+        morada: (input.morada || input.endereco || "").trim(),
         estado: "ativo",
         estadoKyc: "pendente",
         nivelRisco: "baixo",

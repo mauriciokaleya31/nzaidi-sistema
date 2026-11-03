@@ -491,12 +491,14 @@ export function renderLoginView(container: HTMLElement, onSucesso: () => void): 
       const payload = {
         nome: dadosRegisto.nome,
         tipoPessoa: dadosRegisto.tipoPessoa,
+        tipo: dadosRegisto.tipoPessoa,
         nif: dadosRegisto.nif,
         tipoDocumento: dadosRegisto.tipoDocumento,
         numeroDocumento: dadosRegisto.numeroDocumento,
         telefone: dadosRegisto.telefone,
         email: dadosRegisto.email,
         morada: dadosRegisto.morada,
+        endereco: dadosRegisto.morada,
         senha: dadosRegisto.senha,
       };
 
